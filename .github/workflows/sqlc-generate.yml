@@ -1,0 +1,45 @@
+name: SQLC Generate and Commit
+
+on:
+  push:
+    branches:
+      - main # Adjust to your default branch if different
+
+jobs:
+  generate-sqlc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push commits
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24' # TODO: Adjust this to your project's Go version
+
+      - name: Install sqlc
+        run: |
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        # If you use a specific version of sqlc or a different installation method,
+        # please adjust this step accordingly.
+
+      - name: Generate SQLC
+        run: sqlc generate
+        # If your sqlc.yaml is not in the root or you need specific flags, adjust here.
+        # e.g., sqlc -f path/to/sqlc.yaml generate
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-generate sqlc code"
+          # This pattern assumes sqlc generates .go files in the db/ directory.
+          # Adjust if your generated files are located elsewhere or have different extensions.
+          file_pattern: "db/*.go"
+          # The action uses GITHUB_TOKEN by default, which should have push permissions.
+          # If you encounter permission issues, you might need to use a Personal Access Token (PAT)
+          # with appropriate permissions and store it as a secret.
+          # token: ${{ secrets.YOUR_PAT_WITH_PUSH_PERMISSION }}
