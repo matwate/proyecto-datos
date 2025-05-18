@@ -27,6 +27,7 @@ func main() {
 		con, err := pgx.Connect(ctx, url)
 		if err != nil {
 			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			fmt.Println("Error connecting to database:", err)
 			return
 		}
 		defer con.Close(ctx)
