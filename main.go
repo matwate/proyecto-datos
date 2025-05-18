@@ -14,12 +14,12 @@ import (
 func main() {
 	// Load environment variables from .env file
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK")
 	})
 
-	mux.HandleFunc("/api/v1/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v1/test", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		con, err := pgx.Connect(ctx, os.Getenv("POSTGRES_URL"))
 		if err != nil {
