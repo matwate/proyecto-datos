@@ -21,7 +21,10 @@ func main() {
 
 	mux.HandleFunc("/v1/test", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		con, err := pgx.Connect(ctx, os.Getenv("POSTGRES_URL"))
+
+		url := os.Getenv("POSTGRES_URL")
+		fmt.Println("Trying to connect to database with URL:", url)
+		con, err := pgx.Connect(ctx, url)
 		if err != nil {
 			http.Error(w, "Database connection error", http.StatusInternalServerError)
 			return
