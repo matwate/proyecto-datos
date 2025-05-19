@@ -16,7 +16,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "OK")
+		fmt.Fprintln(w, "OK HEALthY")
 	})
 
 	mux.HandleFunc("/v1/test", func(w http.ResponseWriter, r *http.Request) {
