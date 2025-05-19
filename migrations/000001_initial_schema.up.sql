@@ -1,3 +1,3 @@
 create table test (
-  id int
+  id int,
 );

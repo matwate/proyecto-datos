@@ -43,3 +43,8 @@ jobs:
           # If you encounter permission issues, you might need to use a Personal Access Token (PAT)
           # with appropriate permissions and store it as a secret.
           # token: ${{ secrets.YOUR_PAT_WITH_PUSH_PERMISSION }}
+          #
+      - name: Call the webhook for deployment
+        run: | 
+            curl -X POST -H "Content-Type: application/json" -d '{"secret":"your-secret-here"}' https://amazed-flounder-wired.ngrok-free.app/webhook/webhook
+
