@@ -2,7 +2,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "query.sql"
-    schema: "./migrations/"
+    schema: "./migrations/000002_put_relational_model.up.sql"
     gen:
       go:
         package: "db"

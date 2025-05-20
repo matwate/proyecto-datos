@@ -7,30 +7,23 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const testSelect = `-- name: TestSelect :many
-select id from test
+const selectEstudiante = `-- name: SelectEstudiante :one
+select estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro from ESTUDIANTES where estudiante_id = $1
 `
 
-func (q *Queries) TestSelect(ctx context.Context) ([]pgtype.Int4, error) {
-	rows, err := q.db.Query(ctx, testSelect)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []pgtype.Int4
-	for rows.Next() {
-		var id pgtype.Int4
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) SelectEstudiante(ctx context.Context, estudianteID int32) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, selectEstudiante, estudianteID)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+	)
+	return i, err
 }
