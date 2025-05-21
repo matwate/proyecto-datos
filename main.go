@@ -53,9 +53,9 @@ func main() {
 	// Add the login handler
 	mux.HandleFunc("/v1/login", handler.LoginHandler(queries))
 
-	mux.HandleFunc("/vi/docs", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/vi/swagger/", func(w http.ResponseWriter, r *http.Request) {
 		httpSwagger.URL(
-			"https://amazed-flounder-wired.ngrok-free.app:8080/v1/swagger/doc.json",
+			"https://amazed-flounder-wired.ngrok-free.app/api/v1/swagger/doc.json",
 		) // The url pointing to API definition
 	})
 	port := os.Getenv("PORT")
