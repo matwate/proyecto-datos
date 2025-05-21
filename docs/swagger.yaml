@@ -1,4 +1,4 @@
-basePath: /v1
+basePath: /api/
 definitions:
   db.Estudiante:
     properties:
