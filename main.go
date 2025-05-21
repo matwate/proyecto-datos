@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+
 	"github.com/matwate/proyecto-datos/db"
 	"github.com/matwate/proyecto-datos/handler"
 )
@@ -20,9 +21,9 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	dbURL := os.Getenv("DB_URL")
+	dbURL := os.Getenv("POSTGRES_URL")
 	if dbURL == "" {
-		log.Fatal("DB_URL environment variable is not set")
+		log.Fatal("POSTGRES_URL environment variable is not set")
 	}
 
 	conn, err := pgx.Connect(context.Background(), dbURL)
