@@ -74,7 +74,7 @@ CREATE TABLE TUTORIAS (
 );
 
 -- Restricción: Un estudiante solo puede tener 1 tutoría activa por materia al mismo tiempo
-CREATE UNIQUE INDEX idx_una_tutoria_activa_por_materia ON TUTORIAS (tipoestudiante_id, materia_id) 
+CREATE UNIQUE INDEX idx_una_tutoria_activa_por_materia ON TUTORIAS (estudiante_id, materia_id) 
 WHERE (estado = 'solicitada' OR estado = 'confirmada');
 
 -- Tabla de reportes
