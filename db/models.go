@@ -34,6 +34,7 @@ type Estudiante struct {
 	ProgramaAcademico string
 	Semestre          pgtype.Int4
 	FechaRegistro     pgtype.Timestamp
+	Ti                pgtype.Int4
 }
 
 type Materia struct {

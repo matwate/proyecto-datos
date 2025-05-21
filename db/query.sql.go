@@ -7,10 +7,38 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const loginEstudiante = `-- name: LoginEstudiante :one
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES
+WHERE correo = $1 AND ti = $2
+`
+
+type LoginEstudianteParams struct {
+	Correo string
+	Ti     pgtype.Int4
+}
+
+func (q *Queries) LoginEstudiante(ctx context.Context, arg LoginEstudianteParams) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, loginEstudiante, arg.Correo, arg.Ti)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+		&i.Ti,
+	)
+	return i, err
+}
+
 const selectEstudiante = `-- name: SelectEstudiante :one
-select estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro from ESTUDIANTES where estudiante_id = $1
+select estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti from ESTUDIANTES where estudiante_id = $1
 `
 
 func (q *Queries) SelectEstudiante(ctx context.Context, estudianteID int32) (Estudiante, error) {
@@ -24,6 +52,7 @@ func (q *Queries) SelectEstudiante(ctx context.Context, estudianteID int32) (Est
 		&i.ProgramaAcademico,
 		&i.Semestre,
 		&i.FechaRegistro,
+		&i.Ti,
 	)
 	return i, err
 }
