@@ -1,0 +1,114 @@
+basePath: /v1
+definitions:
+  db.Estudiante:
+    properties:
+      apellido:
+        type: string
+      correo:
+        type: string
+      estudianteID:
+        type: integer
+      fechaRegistro:
+        $ref: '#/definitions/pgtype.Timestamp'
+      nombre:
+        type: string
+      programaAcademico:
+        type: string
+      semestre:
+        $ref: '#/definitions/pgtype.Int4'
+      ti:
+        $ref: '#/definitions/pgtype.Int4'
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        example: Descriptive error message
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      correo:
+        description: Correo is the email of the student.
+        example: test@urosario.edu.co
+        type: string
+      ti:
+        description: TI is the student's identity number.
+        example: 123456789
+        type: integer
+    type: object
+  pgtype.InfinityModifier:
+    enum:
+    - 1
+    - 0
+    - -1
+    type: integer
+    x-enum-varnames:
+    - Infinity
+    - Finite
+    - NegativeInfinity
+  pgtype.Int4:
+    properties:
+      int32:
+        type: integer
+      valid:
+        type: boolean
+    type: object
+  pgtype.Timestamp:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        description: Time zone will be ignored when encoding to PostgreSQL.
+        type: string
+      valid:
+        type: boolean
+    type: object
+host: https://amazed-flounder-wired.ngrok-free.app:8080
+info:
+  contact: {}
+  description: This is the API for my project.
+  termsOfService: http://swagger.io/terms/
+  title: Proyecto de Ingenieria de  Datos API
+  version: "1.0"
+paths:
+  /v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a student using their email and TI (Tarjeta de Identidad).
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated. Returns student details.
+          schema:
+            $ref: '#/definitions/db.Estudiante'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Invalid credentials (user not found or TI mismatch)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error during login
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Student Login
+      tags:
+      - Authentication
+schemes:
+- http
+swagger: "2.0"
