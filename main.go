@@ -50,8 +50,9 @@ func main() {
 		fmt.Fprintln(w, "OK HEALthY")
 	})
 
-	// Add the login handler
-	mux.HandleFunc("/v1/login", handler.LoginHandler(queries))
+	// Wrap the login handler with the LoggingMiddleware
+	loginHandler := handler.LoginHandler(queries)
+	mux.Handle("/v1/login", loginHandler)
 
 	mux.HandleFunc("/vi/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("https://amazed-flounder-wired.ngrok-free.app/api/v1/swagger/doc.json"),
@@ -61,8 +62,21 @@ func main() {
 		port = "8080" // Default port if not specified
 	}
 
+	wrapped := use(mux, handler.LoggingMiddleware)
+
 	log.Printf("Starting server on port %s...\n", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := http.ListenAndServe(":"+port, wrapped); err != nil {
 		log.Fatalf("Could not start server: %s\n", err)
 	}
+}
+
+func use(r *http.ServeMux, middlewares ...func(next http.Handler) http.Handler) http.Handler {
+	var s http.Handler
+	s = r
+
+	for _, mw := range middlewares {
+		s = mw(s)
+	}
+
+	return s
 }
