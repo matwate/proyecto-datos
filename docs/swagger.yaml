@@ -19,21 +19,6 @@ definitions:
       ti:
         $ref: '#/definitions/pgtype.Int4'
     type: object
-  db.Tutore:
-    properties:
-      apellido:
-        type: string
-      correo:
-        type: string
-      fechaRegistro:
-        $ref: '#/definitions/pgtype.Timestamp'
-      nombre:
-        type: string
-      programaAcademico:
-        $ref: '#/definitions/pgtype.Text'
-      tutorID:
-        type: integer
-    type: object
   handler.CreateEstudianteRequest:
     properties:
       apellido:
@@ -79,7 +64,15 @@ definitions:
         example: Descriptive error message
         type: string
     type: object
-  handler.LoginRequest:
+  handler.LoginResponse:
+    properties:
+      data:
+        description: The actual user data
+      user_type:
+        description: '"estudiante", "tutor", or "admin"'
+        type: string
+    type: object
+  handler.StudentLoginRequest:
     properties:
       correo:
         description: Correo is the email of the student.
@@ -90,21 +83,19 @@ definitions:
         example: 123456789
         type: integer
     type: object
-  handler.LoginTutorRequest:
+  handler.UnifiedLoginRequest:
     properties:
       correo:
-        example: tutor.perez@urosario.edu.co
+        example: user@urosario.edu.co
+        type: string
+      password:
+        description: For admin login
+        example: securepassword123
         type: string
       ti:
-        example: 1000123456
+        description: For student/tutor login
+        example: 123456789
         type: integer
-    type: object
-  handler.LoginTutorResponse:
-    properties:
-      estudiante:
-        $ref: '#/definitions/db.Estudiante'
-      tutor:
-        $ref: '#/definitions/db.Tutore'
     type: object
   pgtype.InfinityModifier:
     enum:
@@ -120,13 +111,6 @@ definitions:
     properties:
       int32:
         type: integer
-      valid:
-        type: boolean
-    type: object
-  pgtype.Text:
-    properties:
-      string:
-        type: string
       valid:
         type: boolean
     type: object
@@ -189,7 +173,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginRequest'
+          $ref: '#/definitions/handler.StudentLoginRequest'
       produces:
       - application/json
       responses:
@@ -213,7 +197,55 @@ paths:
           description: Internal server error during login
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
-      summary: Student Login
+      summary: Student Login (Legacy)
+      tags:
+      - Authentication
+  /v1/login/{mode}:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates users (estudiantes, tutores, or admins) based on
+        the mode parameter.
+      parameters:
+      - description: Login mode
+        enum:
+        - estudiante
+        - tutor
+        - admin
+        in: path
+        name: mode
+        required: true
+        type: string
+      - description: Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UnifiedLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Invalid request body or mode
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Unified Login
       tags:
       - Authentication
   /v1/tutores:
@@ -254,39 +286,41 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticates a tutor based on their email and TI (which first
-        validates them as a student).
+      description: Authenticates a tutor using their email and TI (Tarjeta de Identidad),
+        then fetches tutor-specific data.
       parameters:
-      - description: Tutor Login Credentials
+      - description: Login Credentials for Tutor (as Student)
         in: body
         name: login
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginTutorRequest'
+          $ref: '#/definitions/handler.StudentLoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully authenticated. Returns student and tutor details.
+          description: Successfully authenticated. Returns combined student and tutor
+            details.
           schema:
-            $ref: '#/definitions/handler.LoginTutorResponse'
+            additionalProperties: true
+            type: object
         "400":
           description: Invalid request body
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
         "401":
-          description: Invalid student credentials or tutor not found for this student
+          description: Invalid credentials or tutor record not found
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Student not found with given credentials
+        "405":
+          description: Method not allowed
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
-      summary: Tutor Login
+      summary: Tutor Login (Legacy)
       tags:
       - Authentication
 schemes:

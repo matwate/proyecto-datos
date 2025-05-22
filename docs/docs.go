@@ -74,7 +74,7 @@ const docTemplate = `{
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Student Login",
+                "summary": "Student Login (Legacy)",
                 "parameters": [
                     {
                         "description": "Login Credentials",
@@ -82,7 +82,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
+                            "$ref": "#/definitions/handler.StudentLoginRequest"
                         }
                     }
                 ],
@@ -113,6 +113,76 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during login",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/login/{mode}": {
+            "post": {
+                "description": "Authenticates users (estudiantes, tutores, or admins) based on the mode parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Unified Login",
+                "parameters": [
+                    {
+                        "enum": [
+                            "estudiante",
+                            "tutor",
+                            "admin"
+                        ],
+                        "type": "string",
+                        "description": "Login mode",
+                        "name": "mode",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Login Credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UnifiedLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or mode",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -174,7 +244,7 @@ const docTemplate = `{
         },
         "/v1/tutores/login": {
             "post": {
-                "description": "Authenticates a tutor based on their email and TI (which first validates them as a student).",
+                "description": "Authenticates a tutor using their email and TI (Tarjeta de Identidad), then fetches tutor-specific data.",
                 "consumes": [
                     "application/json"
                 ],
@@ -184,23 +254,24 @@ const docTemplate = `{
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Tutor Login",
+                "summary": "Tutor Login (Legacy)",
                 "parameters": [
                     {
-                        "description": "Tutor Login Credentials",
+                        "description": "Login Credentials for Tutor (as Student)",
                         "name": "login",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginTutorRequest"
+                            "$ref": "#/definitions/handler.StudentLoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully authenticated. Returns student and tutor details.",
+                        "description": "Successfully authenticated. Returns combined student and tutor details.",
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginTutorResponse"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
@@ -210,13 +281,13 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Invalid student credentials or tutor not found for this student",
+                        "description": "Invalid credentials or tutor record not found",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "Student not found with given credentials",
+                    "405": {
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -258,29 +329,6 @@ const docTemplate = `{
                 },
                 "ti": {
                     "$ref": "#/definitions/pgtype.Int4"
-                }
-            }
-        },
-        "db.Tutore": {
-            "type": "object",
-            "properties": {
-                "apellido": {
-                    "type": "string"
-                },
-                "correo": {
-                    "type": "string"
-                },
-                "fechaRegistro": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
-                "nombre": {
-                    "type": "string"
-                },
-                "programaAcademico": {
-                    "$ref": "#/definitions/pgtype.Text"
-                },
-                "tutorID": {
-                    "type": "integer"
                 }
             }
         },
@@ -349,7 +397,19 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginRequest": {
+        "handler.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "The actual user data"
+                },
+                "user_type": {
+                    "description": "\"estudiante\", \"tutor\", or \"admin\"",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.StudentLoginRequest": {
             "type": "object",
             "properties": {
                 "correo": {
@@ -364,27 +424,22 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginTutorRequest": {
+        "handler.UnifiedLoginRequest": {
             "type": "object",
             "properties": {
                 "correo": {
                     "type": "string",
-                    "example": "tutor.perez@urosario.edu.co"
+                    "example": "user@urosario.edu.co"
+                },
+                "password": {
+                    "description": "For admin login",
+                    "type": "string",
+                    "example": "securepassword123"
                 },
                 "ti": {
+                    "description": "For student/tutor login",
                     "type": "integer",
-                    "example": 1000123456
-                }
-            }
-        },
-        "handler.LoginTutorResponse": {
-            "type": "object",
-            "properties": {
-                "estudiante": {
-                    "$ref": "#/definitions/db.Estudiante"
-                },
-                "tutor": {
-                    "$ref": "#/definitions/db.Tutore"
+                    "example": 123456789
                 }
             }
         },
@@ -406,17 +461,6 @@ const docTemplate = `{
             "properties": {
                 "int32": {
                     "type": "integer"
-                },
-                "valid": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "pgtype.Text": {
-            "type": "object",
-            "properties": {
-                "string": {
-                    "type": "string"
                 },
                 "valid": {
                     "type": "boolean"

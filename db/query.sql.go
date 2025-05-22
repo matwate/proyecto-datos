@@ -65,6 +65,27 @@ func (q *Queries) CreateTutor(ctx context.Context, arg CreateTutorParams) (int32
 	return tutor_id, err
 }
 
+const loginAdmin = `-- name: LoginAdmin :one
+SELECT admin_id, nombre, apellido, correo, password_hash, rol, activo, fecha_registro FROM ADMINS
+WHERE correo = $1
+`
+
+func (q *Queries) LoginAdmin(ctx context.Context, correo string) (Admin, error) {
+	row := q.db.QueryRow(ctx, loginAdmin, correo)
+	var i Admin
+	err := row.Scan(
+		&i.AdminID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.PasswordHash,
+		&i.Rol,
+		&i.Activo,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
 const loginEstudiante = `-- name: LoginEstudiante :one
 SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES
 WHERE correo = $1 AND ti = $2
@@ -87,6 +108,25 @@ func (q *Queries) LoginEstudiante(ctx context.Context, arg LoginEstudianteParams
 		&i.Semestre,
 		&i.FechaRegistro,
 		&i.Ti,
+	)
+	return i, err
+}
+
+const loginTutor = `-- name: LoginTutor :one
+SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES
+WHERE correo = $1
+`
+
+func (q *Queries) LoginTutor(ctx context.Context, correo string) (Tutore, error) {
+	row := q.db.QueryRow(ctx, loginTutor, correo)
+	var i Tutore
+	err := row.Scan(
+		&i.TutorID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.FechaRegistro,
 	)
 	return i, err
 }

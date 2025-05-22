@@ -5,6 +5,14 @@ select * from ESTUDIANTES where estudiante_id = $1;
 SELECT * FROM ESTUDIANTES
 WHERE correo = $1 AND ti = $2;
 
+-- name: LoginTutor :one
+SELECT * FROM TUTORES
+WHERE correo = $1;
+
+-- name: LoginAdmin :one
+SELECT admin_id, nombre, apellido, correo, password_hash, rol, activo, fecha_registro FROM ADMINS
+WHERE correo = $1;
+
 -- name: CreateEstudiante :one
 INSERT INTO ESTUDIANTES (nombre, apellido, correo, programa_academico, semestre, ti)
 VALUES ($1, $2, $3, $4, $5, $6)

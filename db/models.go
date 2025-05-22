@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Admin struct {
+	AdminID       int32
+	Nombre        string
+	Apellido      string
+	Correo        string
+	PasswordHash  string
+	Rol           string
+	Activo        pgtype.Bool
+	FechaRegistro pgtype.Timestamptz
+}
+
 type Desempenotutore struct {
 	TutorID              int32
 	Tutor                interface{}

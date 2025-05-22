@@ -48,20 +48,17 @@ func main() {
 		fmt.Fprintln(w, "OK HEALTHY")
 	})
 
-	// Authentication Handler
-	authLoginHandler := handler.LoginHandler(queries) // Student login
-	mux.Handle("/v1/login", handler.LoggingMiddleware(authLoginHandler))
+	// Unified Authentication Handler
+	unifiedLoginHandler := handler.UnifiedLoginHandler(queries)
+	mux.Handle("/v1/login/", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
 
 	// Estudiante Handlers
 	createEstudianteHandler := handler.CreateEstudianteHandler(queries)
-	mux.Handle("/v1/estudiantes", handler.LoggingMiddleware(createEstudianteHandler))
+	mux.Handle("/v1/estudiantes", createEstudianteHandler)
 
 	// Tutor Handlers
 	createTutorHandler := handler.CreateTutorHandler(queries)
-	mux.Handle("/v1/tutores", handler.LoggingMiddleware(createTutorHandler))
-
-	tutorLoginHandler := handler.LoginTutorHandler(queries)
-	mux.Handle("/v1/tutores/login", handler.LoggingMiddleware(tutorLoginHandler))
+	mux.Handle("/v1/tutores", createTutorHandler)
 
 	mux.HandleFunc("/v1/docs/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -85,7 +82,7 @@ func main() {
     </style>
   </head>
   <body>
-    <redoc spec-url='./swagger.yaml'></redoc>
+    <redoc spec-url='https://amazed-flounder-wired.ngrok-free.app/api/v1/docs/'></redoc>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
   </body>
 </html>
@@ -102,16 +99,17 @@ func main() {
 		port = "8080" // Default port if not specified
 	}
 
-	wrapped := use(mux, handler.LoggingMiddleware)
+	// Apply global middleware
+	wrappedMux := use(mux, handler.LoggingMiddleware) // Apply LoggingMiddleware globally
+
 	log.Printf("Starting server on port %s...\n", port)
-	if err := http.ListenAndServe(":"+port, wrapped); err != nil {
+	if err := http.ListenAndServe(":"+port, wrappedMux); err != nil { // Use wrappedMux
 		log.Fatalf("Could not start server: %s\n", err)
 	}
 }
 
-func use(r *http.ServeMux, middlewares ...func(next http.Handler) http.Handler) http.Handler {
-	var s http.Handler
-	s = r
+func use(r http.Handler, middlewares ...func(next http.Handler) http.Handler) http.Handler { // Changed r to http.Handler
+	s := r
 	for _, mw := range middlewares {
 		s = mw(s)
 	}
