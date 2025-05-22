@@ -11,6 +11,60 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createEstudiante = `-- name: CreateEstudiante :one
+INSERT INTO ESTUDIANTES (nombre, apellido, correo, programa_academico, semestre, ti)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING estudiante_id
+`
+
+type CreateEstudianteParams struct {
+	Nombre            string
+	Apellido          string
+	Correo            string
+	ProgramaAcademico string
+	Semestre          pgtype.Int4
+	Ti                pgtype.Int4
+}
+
+func (q *Queries) CreateEstudiante(ctx context.Context, arg CreateEstudianteParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createEstudiante,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.ProgramaAcademico,
+		arg.Semestre,
+		arg.Ti,
+	)
+	var estudiante_id int32
+	err := row.Scan(&estudiante_id)
+	return estudiante_id, err
+}
+
+const createTutor = `-- name: CreateTutor :one
+INSERT INTO TUTORES (nombre, apellido, correo, programa_academico)
+VALUES ($1, $2, $3, $4)
+RETURNING tutor_id
+`
+
+type CreateTutorParams struct {
+	Nombre            string
+	Apellido          string
+	Correo            string
+	ProgramaAcademico pgtype.Text
+}
+
+func (q *Queries) CreateTutor(ctx context.Context, arg CreateTutorParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createTutor,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.ProgramaAcademico,
+	)
+	var tutor_id int32
+	err := row.Scan(&tutor_id)
+	return tutor_id, err
+}
+
 const loginEstudiante = `-- name: LoginEstudiante :one
 SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES
 WHERE correo = $1 AND ti = $2
@@ -53,6 +107,64 @@ func (q *Queries) SelectEstudiante(ctx context.Context, estudianteID int32) (Est
 		&i.Semestre,
 		&i.FechaRegistro,
 		&i.Ti,
+	)
+	return i, err
+}
+
+const selectEstudianteByCorreo = `-- name: SelectEstudianteByCorreo :one
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE correo = $1
+`
+
+func (q *Queries) SelectEstudianteByCorreo(ctx context.Context, correo string) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, selectEstudianteByCorreo, correo)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+		&i.Ti,
+	)
+	return i, err
+}
+
+const selectEstudianteById = `-- name: SelectEstudianteById :one
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE estudiante_id = $1
+`
+
+func (q *Queries) SelectEstudianteById(ctx context.Context, estudianteID int32) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, selectEstudianteById, estudianteID)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+		&i.Ti,
+	)
+	return i, err
+}
+
+const selectTutorByCorreo = `-- name: SelectTutorByCorreo :one
+SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES WHERE correo = $1
+`
+
+func (q *Queries) SelectTutorByCorreo(ctx context.Context, correo string) (Tutore, error) {
+	row := q.db.QueryRow(ctx, selectTutorByCorreo, correo)
+	var i Tutore
+	err := row.Scan(
+		&i.TutorID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.FechaRegistro,
 	)
 	return i, err
 }

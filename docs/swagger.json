@@ -13,6 +13,52 @@
     "host": "amazed-flounder-wired.ngrok-free.app",
     "basePath": "/api/",
     "paths": {
+        "/v1/estudiantes": {
+            "post": {
+                "description": "Creates a new student record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Estudiantes"
+                ],
+                "summary": "Create Estudiante",
+                "parameters": [
+                    {
+                        "description": "Estudiante Data",
+                        "name": "estudiante",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateEstudianteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created student",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateEstudianteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create student",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/login": {
             "post": {
                 "description": "Authenticates a student using their email and TI (Tarjeta de Identidad).",
@@ -70,6 +116,116 @@
                     }
                 }
             }
+        },
+        "/v1/tutores": {
+            "post": {
+                "description": "Creates a new tutor record using data from an existing student.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Create Tutor from Estudiante",
+                "parameters": [
+                    {
+                        "description": "Estudiante ID to become Tutor",
+                        "name": "tutor",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created tutor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or Estudiante ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Estudiante not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create tutor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutores/login": {
+            "post": {
+                "description": "Authenticates a tutor based on their email and TI (which first validates them as a student).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Tutor Login",
+                "parameters": [
+                    {
+                        "description": "Tutor Login Credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginTutorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully authenticated. Returns student and tutor details.",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginTutorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid student credentials or tutor not found for this student",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Student not found with given credentials",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -102,6 +258,85 @@
                 }
             }
         },
+        "db.Tutore": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string"
+                },
+                "correo": {
+                    "type": "string"
+                },
+                "fechaRegistro": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "programaAcademico": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateEstudianteRequest": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string",
+                    "example": "Perez"
+                },
+                "correo": {
+                    "type": "string",
+                    "example": "juan.perez@urosario.edu.co"
+                },
+                "nombre": {
+                    "type": "string",
+                    "example": "Juan"
+                },
+                "programa_academico": {
+                    "type": "string",
+                    "example": "Ingeniería de Sistemas"
+                },
+                "semestre": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "ti": {
+                    "type": "integer",
+                    "example": 1000123456
+                }
+            }
+        },
+        "handler.CreateEstudianteResponse": {
+            "type": "object",
+            "properties": {
+                "estudiante_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateTutorRequest": {
+            "type": "object",
+            "properties": {
+                "estudiante_id": {
+                    "description": "Changed to int32 to match SelectEstudianteById param type",
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "handler.CreateTutorResponse": {
+            "type": "object",
+            "properties": {
+                "tutor_id": {
+                    "description": "Changed to int32 to match sqlc generated type",
+                    "type": "integer"
+                }
+            }
+        },
         "handler.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -126,6 +361,30 @@
                 }
             }
         },
+        "handler.LoginTutorRequest": {
+            "type": "object",
+            "properties": {
+                "correo": {
+                    "type": "string",
+                    "example": "tutor.perez@urosario.edu.co"
+                },
+                "ti": {
+                    "type": "integer",
+                    "example": 1000123456
+                }
+            }
+        },
+        "handler.LoginTutorResponse": {
+            "type": "object",
+            "properties": {
+                "estudiante": {
+                    "$ref": "#/definitions/db.Estudiante"
+                },
+                "tutor": {
+                    "$ref": "#/definitions/db.Tutore"
+                }
+            }
+        },
         "pgtype.InfinityModifier": {
             "type": "integer",
             "enum": [
@@ -144,6 +403,17 @@
             "properties": {
                 "int32": {
                     "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Text": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
                 },
                 "valid": {
                     "type": "boolean"

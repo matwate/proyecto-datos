@@ -45,11 +45,23 @@ func main() {
 
 	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "OK HEALthY")
+		fmt.Fprintln(w, "OK HEALTHY")
 	})
 
-	loginHandler := handler.LoginHandler(queries)
-	mux.Handle("/v1/login", handler.LoggingMiddleware(loginHandler))
+	// Authentication Handler
+	authLoginHandler := handler.LoginHandler(queries) // Student login
+	mux.Handle("/v1/login", handler.LoggingMiddleware(authLoginHandler))
+
+	// Estudiante Handlers
+	createEstudianteHandler := handler.CreateEstudianteHandler(queries)
+	mux.Handle("/v1/estudiantes", handler.LoggingMiddleware(createEstudianteHandler))
+
+	// Tutor Handlers
+	createTutorHandler := handler.CreateTutorHandler(queries)
+	mux.Handle("/v1/tutores", handler.LoggingMiddleware(createTutorHandler))
+
+	tutorLoginHandler := handler.LoginTutorHandler(queries)
+	mux.Handle("/v1/tutores/login", handler.LoggingMiddleware(tutorLoginHandler))
 
 	mux.HandleFunc("/v1/docs/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

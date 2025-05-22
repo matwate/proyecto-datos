@@ -19,6 +19,60 @@ definitions:
       ti:
         $ref: '#/definitions/pgtype.Int4'
     type: object
+  db.Tutore:
+    properties:
+      apellido:
+        type: string
+      correo:
+        type: string
+      fechaRegistro:
+        $ref: '#/definitions/pgtype.Timestamp'
+      nombre:
+        type: string
+      programaAcademico:
+        $ref: '#/definitions/pgtype.Text'
+      tutorID:
+        type: integer
+    type: object
+  handler.CreateEstudianteRequest:
+    properties:
+      apellido:
+        example: Perez
+        type: string
+      correo:
+        example: juan.perez@urosario.edu.co
+        type: string
+      nombre:
+        example: Juan
+        type: string
+      programa_academico:
+        example: Ingeniería de Sistemas
+        type: string
+      semestre:
+        example: 5
+        type: integer
+      ti:
+        example: 1000123456
+        type: integer
+    type: object
+  handler.CreateEstudianteResponse:
+    properties:
+      estudiante_id:
+        type: integer
+    type: object
+  handler.CreateTutorRequest:
+    properties:
+      estudiante_id:
+        description: Changed to int32 to match SelectEstudianteById param type
+        example: 1
+        type: integer
+    type: object
+  handler.CreateTutorResponse:
+    properties:
+      tutor_id:
+        description: Changed to int32 to match sqlc generated type
+        type: integer
+    type: object
   handler.ErrorResponse:
     properties:
       error:
@@ -36,6 +90,22 @@ definitions:
         example: 123456789
         type: integer
     type: object
+  handler.LoginTutorRequest:
+    properties:
+      correo:
+        example: tutor.perez@urosario.edu.co
+        type: string
+      ti:
+        example: 1000123456
+        type: integer
+    type: object
+  handler.LoginTutorResponse:
+    properties:
+      estudiante:
+        $ref: '#/definitions/db.Estudiante'
+      tutor:
+        $ref: '#/definitions/db.Tutore'
+    type: object
   pgtype.InfinityModifier:
     enum:
     - 1
@@ -50,6 +120,13 @@ definitions:
     properties:
       int32:
         type: integer
+      valid:
+        type: boolean
+    type: object
+  pgtype.Text:
+    properties:
+      string:
+        type: string
       valid:
         type: boolean
     type: object
@@ -71,6 +148,36 @@ info:
   title: Proyecto de Ingenieria de  Datos API
   version: "1.0"
 paths:
+  /v1/estudiantes:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new student record.
+      parameters:
+      - description: Estudiante Data
+        in: body
+        name: estudiante
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateEstudianteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created student
+          schema:
+            $ref: '#/definitions/handler.CreateEstudianteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create student
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Estudiante
+      tags:
+      - Estudiantes
   /v1/login:
     post:
       consumes:
@@ -107,6 +214,79 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: Student Login
+      tags:
+      - Authentication
+  /v1/tutores:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tutor record using data from an existing student.
+      parameters:
+      - description: Estudiante ID to become Tutor
+        in: body
+        name: tutor
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTutorRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created tutor
+          schema:
+            $ref: '#/definitions/handler.CreateTutorResponse'
+        "400":
+          description: Invalid request body or Estudiante ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Estudiante not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create tutor
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Tutor from Estudiante
+      tags:
+      - Tutores
+  /v1/tutores/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a tutor based on their email and TI (which first
+        validates them as a student).
+      parameters:
+      - description: Tutor Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginTutorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated. Returns student and tutor details.
+          schema:
+            $ref: '#/definitions/handler.LoginTutorResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Invalid student credentials or tutor not found for this student
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Student not found with given credentials
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Tutor Login
       tags:
       - Authentication
 schemes:
