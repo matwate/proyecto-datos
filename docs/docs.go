@@ -174,8 +174,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "https://amazed-flounder-wired.ngrok-free.app:8080",
-	BasePath:         "/v1",
+	Host:             "amazed-flounder-wired.ngrok-free.app",
+	BasePath:         "/api/",
 	Schemes:          []string{"http"},
 	Title:            "Proyecto de Ingenieria de  Datos API",
 	Description:      "This is the API for my project.",

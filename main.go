@@ -19,7 +19,7 @@ import (
 // @version      1.0
 // @description  This is the API for my project.
 // @termsOfService http://swagger.io/terms/
-// @host      https://amazed-flounder-wired.ngrok-free.app:8080
+// @host      amazed-flounder-wired.ngrok-free.app
 // @BasePath  /api/
 // @schemes   http
 func main() {
