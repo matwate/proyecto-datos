@@ -50,7 +50,7 @@ func main() {
 
 	// Unified Authentication Handler
 	unifiedLoginHandler := handler.UnifiedLoginHandler(queries)
-	mux.Handle("/v1/login/", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
+	mux.Handle("/v1/login/{mode}", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
 
 	// Estudiante Handlers
 	createEstudianteHandler := handler.CreateEstudianteHandler(queries)
@@ -82,7 +82,7 @@ func main() {
     </style>
   </head>
   <body>
-    <redoc spec-url='https://amazed-flounder-wired.ngrok-free.app/api/v1/docs/'></redoc>
+    <redoc spec-url='https://amazed-flounder-wired.ngrok-free.app/api/v1/docs/swagger.yaml'></redoc>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
   </body>
 </html>
@@ -108,7 +108,10 @@ func main() {
 	}
 }
 
-func use(r http.Handler, middlewares ...func(next http.Handler) http.Handler) http.Handler { // Changed r to http.Handler
+func use(
+	r http.Handler,
+	middlewares ...func(next http.Handler) http.Handler,
+) http.Handler { // Changed r to http.Handler
 	s := r
 	for _, mw := range middlewares {
 		s = mw(s)
