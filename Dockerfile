@@ -11,7 +11,7 @@ FROM debian:bookworm
 
 WORKDIR /app
 
-COPY --from=builder /usr/src/app/run-app /usr/local/bin/
+COPY --from=builder /run-app /usr/local/bin/
 COPY --from=builder /usr/src/app/docs ./docs
 
 CMD ["run-app"]
