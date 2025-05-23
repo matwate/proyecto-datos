@@ -121,6 +121,7 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Add CORS header
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write(content)
 		if err != nil {
