@@ -114,7 +114,19 @@ func main() {
 	})
 
 	mux.HandleFunc("/v1/docs/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./docs/swagger.yaml")
+		content, err := os.ReadFile("./docs/swagger.yaml")
+		if err != nil {
+			log.Printf("Error reading swagger.yaml: %v", err)
+			http.Error(w, "Could not read swagger.yaml", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write(content)
+		if err != nil {
+			log.Printf("Error writing swagger.yaml to response: %v", err)
+			// Client might have already received headers, so we can't send another http.Error
+		}
 	})
 
 	port := os.Getenv("PORT")
