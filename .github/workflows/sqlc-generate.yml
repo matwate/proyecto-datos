@@ -46,4 +46,4 @@ jobs:
           #
       - name: Call the webhook for deployment
         run: | 
-            curl -X POST -H "Content-Type: application/json" -d '{"secret":"your-secret-here"}' https://amazed-flounder-wired.ngrok-free.app/webhook/deploy
+            curl -X POST -H "Content-Type: application/json" -d '{"secret":"your-secret-here"}' https://matwa.tail013c29.ts.net/webhook/deploy

@@ -124,7 +124,7 @@ definitions:
       valid:
         type: boolean
     type: object
-host: amazed-flounder-wired.ngrok-free.app
+host: matwa.tail013c29.ts.net
 info:
   contact: {}
   description: This is the API for my project.
@@ -324,5 +324,5 @@ paths:
       tags:
       - Authentication
 schemes:
-- http
+- https
 swagger: "2.0"

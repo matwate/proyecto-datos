@@ -19,9 +19,9 @@ import (
 // @version      1.0
 // @description  This is the API for my project.
 // @termsOfService http://swagger.io/terms/
-// @host      amazed-flounder-wired.ngrok-free.app
+// @host      matwa.tail013c29.ts.net
 // @BasePath  /api/
-// @schemes   http
+// @schemes   https
 func main() {
 	// Load environment variables from .env file
 	err := godotenv.Load()
@@ -82,7 +82,7 @@ func main() {
     </style>
   </head>
   <body>
-    <redoc spec-url='https://amazed-flounder-wired.ngrok-free.app/api/v1/docs/swagger.yaml'></redoc>
+    <redoc spec-url='https://matwa.tail013c29.ts.net/api/v1/docs/swagger.yaml'></redoc>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
   </body>
 </html>

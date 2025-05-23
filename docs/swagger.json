@@ -1,6 +1,6 @@
 {
     "schemes": [
-        "http"
+        "https"
     ],
     "swagger": "2.0",
     "info": {
@@ -10,7 +10,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "amazed-flounder-wired.ngrok-free.app",
+    "host": "matwa.tail013c29.ts.net",
     "basePath": "/api/",
     "paths": {
         "/v1/estudiantes": {
