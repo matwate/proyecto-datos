@@ -53,12 +53,35 @@ func main() {
 	mux.Handle("/v1/login/{mode}", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
 
 	// Estudiante Handlers
-	createEstudianteHandler := handler.CreateEstudianteHandler(queries)
-	mux.Handle("/v1/estudiantes", createEstudianteHandler)
+	estudianteHandlers := handler.EstudianteHandlers(queries)
+	mux.Handle("/v1/estudiantes", estudianteHandlers)
+	mux.Handle("/v1/estudiantes/", estudianteHandlers)
 
 	// Tutor Handlers
-	createTutorHandler := handler.CreateTutorHandler(queries)
-	mux.Handle("/v1/tutores", createTutorHandler)
+	tutorHandlers := handler.TutorHandlers(queries)
+	mux.Handle("/v1/tutores", tutorHandlers)
+	mux.Handle("/v1/tutores/", tutorHandlers)
+
+	// New comprehensive CRUD handlers using Go 1.24 routing patterns
+	materiaHandlers := handler.MateriaHandlers(queries)
+	mux.Handle("/v1/materias", materiaHandlers)
+	mux.Handle("/v1/materias/", materiaHandlers)
+
+	disponibilidadHandlers := handler.DisponibilidadHandlers(queries)
+	mux.Handle("/v1/disponibilidad", disponibilidadHandlers)
+	mux.Handle("/v1/disponibilidad/", disponibilidadHandlers)
+
+	tutoriaHandlers := handler.TutoriaHandlers(queries)
+	mux.Handle("/v1/tutorias", tutoriaHandlers)
+	mux.Handle("/v1/tutorias/", tutoriaHandlers)
+
+	reporteHandlers := handler.ReporteHandlers(queries)
+	mux.Handle("/v1/reportes", reporteHandlers)
+	mux.Handle("/v1/reportes/", reporteHandlers)
+
+	tutorMateriaHandlers := handler.TutorMateriaHandlers(queries)
+	mux.Handle("/v1/tutor-materias", tutorMateriaHandlers)
+	mux.Handle("/v1/tutor-materias/", tutorMateriaHandlers)
 
 	mux.HandleFunc("/v1/docs/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

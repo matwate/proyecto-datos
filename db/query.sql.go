@@ -11,10 +11,97 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createAdmin = `-- name: CreateAdmin :one
+
+INSERT INTO ADMINS (nombre, apellido, correo, password_hash, rol, activo)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING admin_id, nombre, apellido, correo, rol, activo, fecha_registro
+`
+
+type CreateAdminParams struct {
+	Nombre       string
+	Apellido     string
+	Correo       string
+	PasswordHash string
+	Rol          string
+	Activo       pgtype.Bool
+}
+
+type CreateAdminRow struct {
+	AdminID       int32
+	Nombre        string
+	Apellido      string
+	Correo        string
+	Rol           string
+	Activo        pgtype.Bool
+	FechaRegistro pgtype.Timestamptz
+}
+
+// ========================================
+// ADMINS QUERIES
+// ========================================
+func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (CreateAdminRow, error) {
+	row := q.db.QueryRow(ctx, createAdmin,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.PasswordHash,
+		arg.Rol,
+		arg.Activo,
+	)
+	var i CreateAdminRow
+	err := row.Scan(
+		&i.AdminID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.Rol,
+		&i.Activo,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const createDisponibilidad = `-- name: CreateDisponibilidad :one
+
+INSERT INTO DISPONIBILIDAD (tutor_id, dia_semana, hora_inicio, hora_fin)
+VALUES ($1, $2, $3, $4)
+RETURNING disponibilidad_id, tutor_id, dia_semana, hora_inicio, hora_fin
+`
+
+type CreateDisponibilidadParams struct {
+	TutorID    int32
+	DiaSemana  int32
+	HoraInicio pgtype.Time
+	HoraFin    pgtype.Time
+}
+
+// ========================================
+// DISPONIBILIDAD QUERIES
+// ========================================
+func (q *Queries) CreateDisponibilidad(ctx context.Context, arg CreateDisponibilidadParams) (Disponibilidad, error) {
+	row := q.db.QueryRow(ctx, createDisponibilidad,
+		arg.TutorID,
+		arg.DiaSemana,
+		arg.HoraInicio,
+		arg.HoraFin,
+	)
+	var i Disponibilidad
+	err := row.Scan(
+		&i.DisponibilidadID,
+		&i.TutorID,
+		&i.DiaSemana,
+		&i.HoraInicio,
+		&i.HoraFin,
+	)
+	return i, err
+}
+
 const createEstudiante = `-- name: CreateEstudiante :one
+
 INSERT INTO ESTUDIANTES (nombre, apellido, correo, programa_academico, semestre, ti)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING estudiante_id
+RETURNING estudiante_id, nombre, apellido, correo, programa_academico, semestre, ti, fecha_registro
 `
 
 type CreateEstudianteParams struct {
@@ -26,7 +113,21 @@ type CreateEstudianteParams struct {
 	Ti                pgtype.Int4
 }
 
-func (q *Queries) CreateEstudiante(ctx context.Context, arg CreateEstudianteParams) (int32, error) {
+type CreateEstudianteRow struct {
+	EstudianteID      int32
+	Nombre            string
+	Apellido          string
+	Correo            string
+	ProgramaAcademico string
+	Semestre          pgtype.Int4
+	Ti                pgtype.Int4
+	FechaRegistro     pgtype.Timestamp
+}
+
+// ========================================
+// ESTUDIANTES QUERIES
+// ========================================
+func (q *Queries) CreateEstudiante(ctx context.Context, arg CreateEstudianteParams) (CreateEstudianteRow, error) {
 	row := q.db.QueryRow(ctx, createEstudiante,
 		arg.Nombre,
 		arg.Apellido,
@@ -35,15 +136,104 @@ func (q *Queries) CreateEstudiante(ctx context.Context, arg CreateEstudiantePara
 		arg.Semestre,
 		arg.Ti,
 	)
-	var estudiante_id int32
-	err := row.Scan(&estudiante_id)
-	return estudiante_id, err
+	var i CreateEstudianteRow
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.Ti,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const createMateria = `-- name: CreateMateria :one
+
+INSERT INTO MATERIAS (nombre, codigo, facultad, descripcion, creditos)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING materia_id, nombre, codigo, facultad, descripcion, creditos
+`
+
+type CreateMateriaParams struct {
+	Nombre      string
+	Codigo      string
+	Facultad    string
+	Descripcion pgtype.Text
+	Creditos    int32
+}
+
+// ========================================
+// MATERIAS QUERIES
+// ========================================
+func (q *Queries) CreateMateria(ctx context.Context, arg CreateMateriaParams) (Materia, error) {
+	row := q.db.QueryRow(ctx, createMateria,
+		arg.Nombre,
+		arg.Codigo,
+		arg.Facultad,
+		arg.Descripcion,
+		arg.Creditos,
+	)
+	var i Materia
+	err := row.Scan(
+		&i.MateriaID,
+		&i.Nombre,
+		&i.Codigo,
+		&i.Facultad,
+		&i.Descripcion,
+		&i.Creditos,
+	)
+	return i, err
+}
+
+const createReporte = `-- name: CreateReporte :one
+
+INSERT INTO REPORTES (tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos
+`
+
+type CreateReporteParams struct {
+	TipoReporte     string
+	FechaGeneracion pgtype.Timestamp
+	PeriodoInicio   pgtype.Date
+	PeriodoFin      pgtype.Date
+	GeneradoPor     int32
+	Datos           []byte
+}
+
+// ========================================
+// REPORTES QUERIES
+// ========================================
+func (q *Queries) CreateReporte(ctx context.Context, arg CreateReporteParams) (Reporte, error) {
+	row := q.db.QueryRow(ctx, createReporte,
+		arg.TipoReporte,
+		arg.FechaGeneracion,
+		arg.PeriodoInicio,
+		arg.PeriodoFin,
+		arg.GeneradoPor,
+		arg.Datos,
+	)
+	var i Reporte
+	err := row.Scan(
+		&i.ReporteID,
+		&i.TipoReporte,
+		&i.FechaGeneracion,
+		&i.PeriodoInicio,
+		&i.PeriodoFin,
+		&i.GeneradoPor,
+		&i.Datos,
+	)
+	return i, err
 }
 
 const createTutor = `-- name: CreateTutor :one
+
 INSERT INTO TUTORES (nombre, apellido, correo, programa_academico)
 VALUES ($1, $2, $3, $4)
-RETURNING tutor_id
+RETURNING tutor_id, nombre, apellido, correo, programa_academico, fecha_registro
 `
 
 type CreateTutorParams struct {
@@ -53,16 +243,897 @@ type CreateTutorParams struct {
 	ProgramaAcademico pgtype.Text
 }
 
-func (q *Queries) CreateTutor(ctx context.Context, arg CreateTutorParams) (int32, error) {
+// ========================================
+// TUTORES QUERIES
+// ========================================
+func (q *Queries) CreateTutor(ctx context.Context, arg CreateTutorParams) (Tutore, error) {
 	row := q.db.QueryRow(ctx, createTutor,
 		arg.Nombre,
 		arg.Apellido,
 		arg.Correo,
 		arg.ProgramaAcademico,
 	)
-	var tutor_id int32
-	err := row.Scan(&tutor_id)
-	return tutor_id, err
+	var i Tutore
+	err := row.Scan(
+		&i.TutorID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const createTutorMateria = `-- name: CreateTutorMateria :one
+
+INSERT INTO TUTOR_MATERIAS (tutor_id, materia_id, fecha_asignacion, activo)
+VALUES ($1, $2, $3, $4)
+RETURNING asignacion_id, tutor_id, materia_id, fecha_asignacion, activo
+`
+
+type CreateTutorMateriaParams struct {
+	TutorID         int32
+	MateriaID       int32
+	FechaAsignacion pgtype.Date
+	Activo          bool
+}
+
+// ========================================
+// TUTOR_MATERIAS QUERIES
+// ========================================
+func (q *Queries) CreateTutorMateria(ctx context.Context, arg CreateTutorMateriaParams) (TutorMateria, error) {
+	row := q.db.QueryRow(ctx, createTutorMateria,
+		arg.TutorID,
+		arg.MateriaID,
+		arg.FechaAsignacion,
+		arg.Activo,
+	)
+	var i TutorMateria
+	err := row.Scan(
+		&i.AsignacionID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.FechaAsignacion,
+		&i.Activo,
+	)
+	return i, err
+}
+
+const createTutoria = `-- name: CreateTutoria :one
+
+INSERT INTO TUTORIAS (estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+`
+
+type CreateTutoriaParams struct {
+	EstudianteID   int32
+	TutorID        int32
+	MateriaID      int32
+	Fecha          pgtype.Date
+	HoraInicio     pgtype.Time
+	HoraFin        pgtype.Time
+	Estado         string
+	FechaSolicitud pgtype.Timestamp
+	Lugar          string
+}
+
+// ========================================
+// TUTORIAS QUERIES
+// ========================================
+func (q *Queries) CreateTutoria(ctx context.Context, arg CreateTutoriaParams) (Tutoria, error) {
+	row := q.db.QueryRow(ctx, createTutoria,
+		arg.EstudianteID,
+		arg.TutorID,
+		arg.MateriaID,
+		arg.Fecha,
+		arg.HoraInicio,
+		arg.HoraFin,
+		arg.Estado,
+		arg.FechaSolicitud,
+		arg.Lugar,
+	)
+	var i Tutoria
+	err := row.Scan(
+		&i.TutoriaID,
+		&i.EstudianteID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.Fecha,
+		&i.HoraInicio,
+		&i.HoraFin,
+		&i.Estado,
+		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
+		&i.TemasTratados,
+		&i.AsistenciaConfirmada,
+		&i.Lugar,
+	)
+	return i, err
+}
+
+const deleteAdmin = `-- name: DeleteAdmin :exec
+DELETE FROM ADMINS WHERE admin_id = $1
+`
+
+func (q *Queries) DeleteAdmin(ctx context.Context, adminID int32) error {
+	_, err := q.db.Exec(ctx, deleteAdmin, adminID)
+	return err
+}
+
+const deleteDisponibilidad = `-- name: DeleteDisponibilidad :exec
+DELETE FROM DISPONIBILIDAD WHERE disponibilidad_id = $1
+`
+
+func (q *Queries) DeleteDisponibilidad(ctx context.Context, disponibilidadID int32) error {
+	_, err := q.db.Exec(ctx, deleteDisponibilidad, disponibilidadID)
+	return err
+}
+
+const deleteEstudiante = `-- name: DeleteEstudiante :exec
+DELETE FROM ESTUDIANTES WHERE estudiante_id = $1
+`
+
+func (q *Queries) DeleteEstudiante(ctx context.Context, estudianteID int32) error {
+	_, err := q.db.Exec(ctx, deleteEstudiante, estudianteID)
+	return err
+}
+
+const deleteMateria = `-- name: DeleteMateria :exec
+DELETE FROM MATERIAS WHERE materia_id = $1
+`
+
+func (q *Queries) DeleteMateria(ctx context.Context, materiaID int32) error {
+	_, err := q.db.Exec(ctx, deleteMateria, materiaID)
+	return err
+}
+
+const deleteReporte = `-- name: DeleteReporte :exec
+DELETE FROM REPORTES WHERE reporte_id = $1
+`
+
+func (q *Queries) DeleteReporte(ctx context.Context, reporteID int32) error {
+	_, err := q.db.Exec(ctx, deleteReporte, reporteID)
+	return err
+}
+
+const deleteTutor = `-- name: DeleteTutor :exec
+DELETE FROM TUTORES WHERE tutor_id = $1
+`
+
+func (q *Queries) DeleteTutor(ctx context.Context, tutorID int32) error {
+	_, err := q.db.Exec(ctx, deleteTutor, tutorID)
+	return err
+}
+
+const deleteTutorMateria = `-- name: DeleteTutorMateria :exec
+DELETE FROM TUTOR_MATERIAS WHERE asignacion_id = $1
+`
+
+func (q *Queries) DeleteTutorMateria(ctx context.Context, asignacionID int32) error {
+	_, err := q.db.Exec(ctx, deleteTutorMateria, asignacionID)
+	return err
+}
+
+const deleteTutoria = `-- name: DeleteTutoria :exec
+DELETE FROM TUTORIAS WHERE tutoria_id = $1
+`
+
+func (q *Queries) DeleteTutoria(ctx context.Context, tutoriaID int32) error {
+	_, err := q.db.Exec(ctx, deleteTutoria, tutoriaID)
+	return err
+}
+
+const listAdmins = `-- name: ListAdmins :many
+SELECT admin_id, nombre, apellido, correo, rol, activo, fecha_registro FROM ADMINS ORDER BY apellido, nombre
+`
+
+type ListAdminsRow struct {
+	AdminID       int32
+	Nombre        string
+	Apellido      string
+	Correo        string
+	Rol           string
+	Activo        pgtype.Bool
+	FechaRegistro pgtype.Timestamptz
+}
+
+func (q *Queries) ListAdmins(ctx context.Context) ([]ListAdminsRow, error) {
+	rows, err := q.db.Query(ctx, listAdmins)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAdminsRow
+	for rows.Next() {
+		var i ListAdminsRow
+		if err := rows.Scan(
+			&i.AdminID,
+			&i.Nombre,
+			&i.Apellido,
+			&i.Correo,
+			&i.Rol,
+			&i.Activo,
+			&i.FechaRegistro,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDisponibilidadByDia = `-- name: ListDisponibilidadByDia :many
+SELECT d.disponibilidad_id, d.tutor_id, d.dia_semana, d.hora_inicio, d.hora_fin, t.nombre as tutor_nombre, t.apellido as tutor_apellido
+FROM DISPONIBILIDAD d
+JOIN TUTORES t ON d.tutor_id = t.tutor_id
+WHERE d.dia_semana = $1
+ORDER BY d.hora_inicio
+`
+
+type ListDisponibilidadByDiaRow struct {
+	DisponibilidadID int32
+	TutorID          int32
+	DiaSemana        int32
+	HoraInicio       pgtype.Time
+	HoraFin          pgtype.Time
+	TutorNombre      string
+	TutorApellido    string
+}
+
+func (q *Queries) ListDisponibilidadByDia(ctx context.Context, diaSemana int32) ([]ListDisponibilidadByDiaRow, error) {
+	rows, err := q.db.Query(ctx, listDisponibilidadByDia, diaSemana)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDisponibilidadByDiaRow
+	for rows.Next() {
+		var i ListDisponibilidadByDiaRow
+		if err := rows.Scan(
+			&i.DisponibilidadID,
+			&i.TutorID,
+			&i.DiaSemana,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.TutorNombre,
+			&i.TutorApellido,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDisponibilidadByTutor = `-- name: ListDisponibilidadByTutor :many
+SELECT disponibilidad_id, tutor_id, dia_semana, hora_inicio, hora_fin FROM DISPONIBILIDAD 
+WHERE tutor_id = $1 
+ORDER BY dia_semana, hora_inicio
+`
+
+func (q *Queries) ListDisponibilidadByTutor(ctx context.Context, tutorID int32) ([]Disponibilidad, error) {
+	rows, err := q.db.Query(ctx, listDisponibilidadByTutor, tutorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Disponibilidad
+	for rows.Next() {
+		var i Disponibilidad
+		if err := rows.Scan(
+			&i.DisponibilidadID,
+			&i.TutorID,
+			&i.DiaSemana,
+			&i.HoraInicio,
+			&i.HoraFin,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEstudiantes = `-- name: ListEstudiantes :many
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES ORDER BY apellido, nombre
+`
+
+func (q *Queries) ListEstudiantes(ctx context.Context) ([]Estudiante, error) {
+	rows, err := q.db.Query(ctx, listEstudiantes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Estudiante
+	for rows.Next() {
+		var i Estudiante
+		if err := rows.Scan(
+			&i.EstudianteID,
+			&i.Nombre,
+			&i.Apellido,
+			&i.Correo,
+			&i.ProgramaAcademico,
+			&i.Semestre,
+			&i.FechaRegistro,
+			&i.Ti,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEstudiantesByPrograma = `-- name: ListEstudiantesByPrograma :many
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE programa_academico = $1 ORDER BY apellido, nombre
+`
+
+func (q *Queries) ListEstudiantesByPrograma(ctx context.Context, programaAcademico string) ([]Estudiante, error) {
+	rows, err := q.db.Query(ctx, listEstudiantesByPrograma, programaAcademico)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Estudiante
+	for rows.Next() {
+		var i Estudiante
+		if err := rows.Scan(
+			&i.EstudianteID,
+			&i.Nombre,
+			&i.Apellido,
+			&i.Correo,
+			&i.ProgramaAcademico,
+			&i.Semestre,
+			&i.FechaRegistro,
+			&i.Ti,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMaterias = `-- name: ListMaterias :many
+SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS ORDER BY codigo
+`
+
+func (q *Queries) ListMaterias(ctx context.Context) ([]Materia, error) {
+	rows, err := q.db.Query(ctx, listMaterias)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Materia
+	for rows.Next() {
+		var i Materia
+		if err := rows.Scan(
+			&i.MateriaID,
+			&i.Nombre,
+			&i.Codigo,
+			&i.Facultad,
+			&i.Descripcion,
+			&i.Creditos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMateriasByFacultad = `-- name: ListMateriasByFacultad :many
+SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS WHERE facultad = $1 ORDER BY codigo
+`
+
+func (q *Queries) ListMateriasByFacultad(ctx context.Context, facultad string) ([]Materia, error) {
+	rows, err := q.db.Query(ctx, listMateriasByFacultad, facultad)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Materia
+	for rows.Next() {
+		var i Materia
+		if err := rows.Scan(
+			&i.MateriaID,
+			&i.Nombre,
+			&i.Codigo,
+			&i.Facultad,
+			&i.Descripcion,
+			&i.Creditos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMateriasByTutor = `-- name: ListMateriasByTutor :many
+SELECT tm.asignacion_id, tm.tutor_id, tm.materia_id, tm.fecha_asignacion, tm.activo, m.nombre as materia_nombre, m.codigo as materia_codigo
+FROM TUTOR_MATERIAS tm
+JOIN MATERIAS m ON tm.materia_id = m.materia_id
+WHERE tm.tutor_id = $1 AND tm.activo = true
+ORDER BY m.codigo
+`
+
+type ListMateriasByTutorRow struct {
+	AsignacionID    int32
+	TutorID         int32
+	MateriaID       int32
+	FechaAsignacion pgtype.Date
+	Activo          bool
+	MateriaNombre   string
+	MateriaCodigo   string
+}
+
+func (q *Queries) ListMateriasByTutor(ctx context.Context, tutorID int32) ([]ListMateriasByTutorRow, error) {
+	rows, err := q.db.Query(ctx, listMateriasByTutor, tutorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMateriasByTutorRow
+	for rows.Next() {
+		var i ListMateriasByTutorRow
+		if err := rows.Scan(
+			&i.AsignacionID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.FechaAsignacion,
+			&i.Activo,
+			&i.MateriaNombre,
+			&i.MateriaCodigo,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReportes = `-- name: ListReportes :many
+SELECT reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos FROM REPORTES ORDER BY fecha_generacion DESC
+`
+
+func (q *Queries) ListReportes(ctx context.Context) ([]Reporte, error) {
+	rows, err := q.db.Query(ctx, listReportes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reporte
+	for rows.Next() {
+		var i Reporte
+		if err := rows.Scan(
+			&i.ReporteID,
+			&i.TipoReporte,
+			&i.FechaGeneracion,
+			&i.PeriodoInicio,
+			&i.PeriodoFin,
+			&i.GeneradoPor,
+			&i.Datos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReportesByPeriodo = `-- name: ListReportesByPeriodo :many
+SELECT reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos FROM REPORTES 
+WHERE periodo_inicio >= $1 AND periodo_fin <= $2 
+ORDER BY fecha_generacion DESC
+`
+
+type ListReportesByPeriodoParams struct {
+	PeriodoInicio pgtype.Date
+	PeriodoFin    pgtype.Date
+}
+
+func (q *Queries) ListReportesByPeriodo(ctx context.Context, arg ListReportesByPeriodoParams) ([]Reporte, error) {
+	rows, err := q.db.Query(ctx, listReportesByPeriodo, arg.PeriodoInicio, arg.PeriodoFin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reporte
+	for rows.Next() {
+		var i Reporte
+		if err := rows.Scan(
+			&i.ReporteID,
+			&i.TipoReporte,
+			&i.FechaGeneracion,
+			&i.PeriodoInicio,
+			&i.PeriodoFin,
+			&i.GeneradoPor,
+			&i.Datos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReportesByTipo = `-- name: ListReportesByTipo :many
+SELECT reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos FROM REPORTES WHERE tipo_reporte = $1 ORDER BY fecha_generacion DESC
+`
+
+func (q *Queries) ListReportesByTipo(ctx context.Context, tipoReporte string) ([]Reporte, error) {
+	rows, err := q.db.Query(ctx, listReportesByTipo, tipoReporte)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reporte
+	for rows.Next() {
+		var i Reporte
+		if err := rows.Scan(
+			&i.ReporteID,
+			&i.TipoReporte,
+			&i.FechaGeneracion,
+			&i.PeriodoInicio,
+			&i.PeriodoFin,
+			&i.GeneradoPor,
+			&i.Datos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutores = `-- name: ListTutores :many
+SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES ORDER BY apellido, nombre
+`
+
+func (q *Queries) ListTutores(ctx context.Context) ([]Tutore, error) {
+	rows, err := q.db.Query(ctx, listTutores)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tutore
+	for rows.Next() {
+		var i Tutore
+		if err := rows.Scan(
+			&i.TutorID,
+			&i.Nombre,
+			&i.Apellido,
+			&i.Correo,
+			&i.ProgramaAcademico,
+			&i.FechaRegistro,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutoresByMateria = `-- name: ListTutoresByMateria :many
+SELECT tm.asignacion_id, tm.tutor_id, tm.materia_id, tm.fecha_asignacion, tm.activo, t.nombre as tutor_nombre, t.apellido as tutor_apellido
+FROM TUTOR_MATERIAS tm
+JOIN TUTORES t ON tm.tutor_id = t.tutor_id
+WHERE tm.materia_id = $1 AND tm.activo = true
+ORDER BY t.apellido, t.nombre
+`
+
+type ListTutoresByMateriaRow struct {
+	AsignacionID    int32
+	TutorID         int32
+	MateriaID       int32
+	FechaAsignacion pgtype.Date
+	Activo          bool
+	TutorNombre     string
+	TutorApellido   string
+}
+
+func (q *Queries) ListTutoresByMateria(ctx context.Context, materiaID int32) ([]ListTutoresByMateriaRow, error) {
+	rows, err := q.db.Query(ctx, listTutoresByMateria, materiaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTutoresByMateriaRow
+	for rows.Next() {
+		var i ListTutoresByMateriaRow
+		if err := rows.Scan(
+			&i.AsignacionID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.FechaAsignacion,
+			&i.Activo,
+			&i.TutorNombre,
+			&i.TutorApellido,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutoriasActivas = `-- name: ListTutoriasActivas :many
+SELECT tutoria_id, nombre_estudiante, apellido_estudiante, nombre_tutor, apellido_tutor, materia, fecha, hora_inicio, hora_fin, lugar, estado FROM tutoriasActivas ORDER BY fecha, hora_inicio
+`
+
+func (q *Queries) ListTutoriasActivas(ctx context.Context) ([]Tutoriasactiva, error) {
+	rows, err := q.db.Query(ctx, listTutoriasActivas)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tutoriasactiva
+	for rows.Next() {
+		var i Tutoriasactiva
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.NombreEstudiante,
+			&i.ApellidoEstudiante,
+			&i.NombreTutor,
+			&i.ApellidoTutor,
+			&i.Materia,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Lugar,
+			&i.Estado,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutoriasByEstado = `-- name: ListTutoriasByEstado :many
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.temas_tratados, t.asistencia_confirmada, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, 
+       tu.nombre as tutor_nombre, tu.apellido as tutor_apellido, m.nombre as materia_nombre
+FROM TUTORIAS t
+JOIN ESTUDIANTES e ON t.estudiante_id = e.estudiante_id
+JOIN TUTORES tu ON t.tutor_id = tu.tutor_id
+JOIN MATERIAS m ON t.materia_id = m.materia_id
+WHERE t.estado = $1
+ORDER BY t.fecha DESC, t.hora_inicio DESC
+`
+
+type ListTutoriasByEstadoRow struct {
+	TutoriaID            int32
+	EstudianteID         int32
+	TutorID              int32
+	MateriaID            int32
+	Fecha                pgtype.Date
+	HoraInicio           pgtype.Time
+	HoraFin              pgtype.Time
+	Estado               string
+	FechaSolicitud       pgtype.Timestamp
+	FechaConfirmacion    pgtype.Timestamp
+	TemasTratados        pgtype.Text
+	AsistenciaConfirmada pgtype.Bool
+	Lugar                string
+	EstudianteNombre     string
+	EstudianteApellido   string
+	TutorNombre          string
+	TutorApellido        string
+	MateriaNombre        string
+}
+
+func (q *Queries) ListTutoriasByEstado(ctx context.Context, estado string) ([]ListTutoriasByEstadoRow, error) {
+	rows, err := q.db.Query(ctx, listTutoriasByEstado, estado)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTutoriasByEstadoRow
+	for rows.Next() {
+		var i ListTutoriasByEstadoRow
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+			&i.EstudianteNombre,
+			&i.EstudianteApellido,
+			&i.TutorNombre,
+			&i.TutorApellido,
+			&i.MateriaNombre,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutoriasByEstudiante = `-- name: ListTutoriasByEstudiante :many
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.temas_tratados, t.asistencia_confirmada, t.lugar, tu.nombre as tutor_nombre, tu.apellido as tutor_apellido, m.nombre as materia_nombre
+FROM TUTORIAS t
+JOIN TUTORES tu ON t.tutor_id = tu.tutor_id
+JOIN MATERIAS m ON t.materia_id = m.materia_id
+WHERE t.estudiante_id = $1
+ORDER BY t.fecha DESC, t.hora_inicio DESC
+`
+
+type ListTutoriasByEstudianteRow struct {
+	TutoriaID            int32
+	EstudianteID         int32
+	TutorID              int32
+	MateriaID            int32
+	Fecha                pgtype.Date
+	HoraInicio           pgtype.Time
+	HoraFin              pgtype.Time
+	Estado               string
+	FechaSolicitud       pgtype.Timestamp
+	FechaConfirmacion    pgtype.Timestamp
+	TemasTratados        pgtype.Text
+	AsistenciaConfirmada pgtype.Bool
+	Lugar                string
+	TutorNombre          string
+	TutorApellido        string
+	MateriaNombre        string
+}
+
+func (q *Queries) ListTutoriasByEstudiante(ctx context.Context, estudianteID int32) ([]ListTutoriasByEstudianteRow, error) {
+	rows, err := q.db.Query(ctx, listTutoriasByEstudiante, estudianteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTutoriasByEstudianteRow
+	for rows.Next() {
+		var i ListTutoriasByEstudianteRow
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+			&i.TutorNombre,
+			&i.TutorApellido,
+			&i.MateriaNombre,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTutoriasByTutor = `-- name: ListTutoriasByTutor :many
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.temas_tratados, t.asistencia_confirmada, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, m.nombre as materia_nombre
+FROM TUTORIAS t
+JOIN ESTUDIANTES e ON t.estudiante_id = e.estudiante_id
+JOIN MATERIAS m ON t.materia_id = m.materia_id
+WHERE t.tutor_id = $1
+ORDER BY t.fecha DESC, t.hora_inicio DESC
+`
+
+type ListTutoriasByTutorRow struct {
+	TutoriaID            int32
+	EstudianteID         int32
+	TutorID              int32
+	MateriaID            int32
+	Fecha                pgtype.Date
+	HoraInicio           pgtype.Time
+	HoraFin              pgtype.Time
+	Estado               string
+	FechaSolicitud       pgtype.Timestamp
+	FechaConfirmacion    pgtype.Timestamp
+	TemasTratados        pgtype.Text
+	AsistenciaConfirmada pgtype.Bool
+	Lugar                string
+	EstudianteNombre     string
+	EstudianteApellido   string
+	MateriaNombre        string
+}
+
+func (q *Queries) ListTutoriasByTutor(ctx context.Context, tutorID int32) ([]ListTutoriasByTutorRow, error) {
+	rows, err := q.db.Query(ctx, listTutoriasByTutor, tutorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTutoriasByTutorRow
+	for rows.Next() {
+		var i ListTutoriasByTutorRow
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+			&i.EstudianteNombre,
+			&i.EstudianteApellido,
+			&i.MateriaNombre,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const loginAdmin = `-- name: LoginAdmin :one
@@ -87,8 +1158,7 @@ func (q *Queries) LoginAdmin(ctx context.Context, correo string) (Admin, error) 
 }
 
 const loginEstudiante = `-- name: LoginEstudiante :one
-SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES
-WHERE correo = $1 AND ti = $2
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE correo = $1 AND ti = $2
 `
 
 type LoginEstudianteParams struct {
@@ -113,8 +1183,7 @@ func (q *Queries) LoginEstudiante(ctx context.Context, arg LoginEstudianteParams
 }
 
 const loginTutor = `-- name: LoginTutor :one
-SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES
-WHERE correo = $1
+SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES WHERE correo = $1
 `
 
 func (q *Queries) LoginTutor(ctx context.Context, correo string) (Tutore, error) {
@@ -131,22 +1200,59 @@ func (q *Queries) LoginTutor(ctx context.Context, correo string) (Tutore, error)
 	return i, err
 }
 
-const selectEstudiante = `-- name: SelectEstudiante :one
-select estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti from ESTUDIANTES where estudiante_id = $1
+const selectAdminByCorreo = `-- name: SelectAdminByCorreo :one
+SELECT admin_id, nombre, apellido, correo, password_hash, rol, activo, fecha_registro FROM ADMINS WHERE correo = $1
 `
 
-func (q *Queries) SelectEstudiante(ctx context.Context, estudianteID int32) (Estudiante, error) {
-	row := q.db.QueryRow(ctx, selectEstudiante, estudianteID)
-	var i Estudiante
+func (q *Queries) SelectAdminByCorreo(ctx context.Context, correo string) (Admin, error) {
+	row := q.db.QueryRow(ctx, selectAdminByCorreo, correo)
+	var i Admin
 	err := row.Scan(
-		&i.EstudianteID,
+		&i.AdminID,
 		&i.Nombre,
 		&i.Apellido,
 		&i.Correo,
-		&i.ProgramaAcademico,
-		&i.Semestre,
+		&i.PasswordHash,
+		&i.Rol,
+		&i.Activo,
 		&i.FechaRegistro,
-		&i.Ti,
+	)
+	return i, err
+}
+
+const selectAdminById = `-- name: SelectAdminById :one
+SELECT admin_id, nombre, apellido, correo, password_hash, rol, activo, fecha_registro FROM ADMINS WHERE admin_id = $1
+`
+
+func (q *Queries) SelectAdminById(ctx context.Context, adminID int32) (Admin, error) {
+	row := q.db.QueryRow(ctx, selectAdminById, adminID)
+	var i Admin
+	err := row.Scan(
+		&i.AdminID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.PasswordHash,
+		&i.Rol,
+		&i.Activo,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const selectDisponibilidadById = `-- name: SelectDisponibilidadById :one
+SELECT disponibilidad_id, tutor_id, dia_semana, hora_inicio, hora_fin FROM DISPONIBILIDAD WHERE disponibilidad_id = $1
+`
+
+func (q *Queries) SelectDisponibilidadById(ctx context.Context, disponibilidadID int32) (Disponibilidad, error) {
+	row := q.db.QueryRow(ctx, selectDisponibilidadById, disponibilidadID)
+	var i Disponibilidad
+	err := row.Scan(
+		&i.DisponibilidadID,
+		&i.TutorID,
+		&i.DiaSemana,
+		&i.HoraInicio,
+		&i.HoraFin,
 	)
 	return i, err
 }
@@ -191,6 +1297,81 @@ func (q *Queries) SelectEstudianteById(ctx context.Context, estudianteID int32) 
 	return i, err
 }
 
+const selectEstudianteByTI = `-- name: SelectEstudianteByTI :one
+SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE ti = $1
+`
+
+func (q *Queries) SelectEstudianteByTI(ctx context.Context, ti pgtype.Int4) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, selectEstudianteByTI, ti)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+		&i.Ti,
+	)
+	return i, err
+}
+
+const selectMateriaByCodigo = `-- name: SelectMateriaByCodigo :one
+SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS WHERE codigo = $1
+`
+
+func (q *Queries) SelectMateriaByCodigo(ctx context.Context, codigo string) (Materia, error) {
+	row := q.db.QueryRow(ctx, selectMateriaByCodigo, codigo)
+	var i Materia
+	err := row.Scan(
+		&i.MateriaID,
+		&i.Nombre,
+		&i.Codigo,
+		&i.Facultad,
+		&i.Descripcion,
+		&i.Creditos,
+	)
+	return i, err
+}
+
+const selectMateriaById = `-- name: SelectMateriaById :one
+SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS WHERE materia_id = $1
+`
+
+func (q *Queries) SelectMateriaById(ctx context.Context, materiaID int32) (Materia, error) {
+	row := q.db.QueryRow(ctx, selectMateriaById, materiaID)
+	var i Materia
+	err := row.Scan(
+		&i.MateriaID,
+		&i.Nombre,
+		&i.Codigo,
+		&i.Facultad,
+		&i.Descripcion,
+		&i.Creditos,
+	)
+	return i, err
+}
+
+const selectReporteById = `-- name: SelectReporteById :one
+SELECT reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos FROM REPORTES WHERE reporte_id = $1
+`
+
+func (q *Queries) SelectReporteById(ctx context.Context, reporteID int32) (Reporte, error) {
+	row := q.db.QueryRow(ctx, selectReporteById, reporteID)
+	var i Reporte
+	err := row.Scan(
+		&i.ReporteID,
+		&i.TipoReporte,
+		&i.FechaGeneracion,
+		&i.PeriodoInicio,
+		&i.PeriodoFin,
+		&i.GeneradoPor,
+		&i.Datos,
+	)
+	return i, err
+}
+
 const selectTutorByCorreo = `-- name: SelectTutorByCorreo :one
 SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES WHERE correo = $1
 `
@@ -205,6 +1386,407 @@ func (q *Queries) SelectTutorByCorreo(ctx context.Context, correo string) (Tutor
 		&i.Correo,
 		&i.ProgramaAcademico,
 		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const selectTutorById = `-- name: SelectTutorById :one
+SELECT tutor_id, nombre, apellido, correo, programa_academico, fecha_registro FROM TUTORES WHERE tutor_id = $1
+`
+
+func (q *Queries) SelectTutorById(ctx context.Context, tutorID int32) (Tutore, error) {
+	row := q.db.QueryRow(ctx, selectTutorById, tutorID)
+	var i Tutore
+	err := row.Scan(
+		&i.TutorID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const selectTutorMateriaById = `-- name: SelectTutorMateriaById :one
+SELECT asignacion_id, tutor_id, materia_id, fecha_asignacion, activo FROM TUTOR_MATERIAS WHERE asignacion_id = $1
+`
+
+func (q *Queries) SelectTutorMateriaById(ctx context.Context, asignacionID int32) (TutorMateria, error) {
+	row := q.db.QueryRow(ctx, selectTutorMateriaById, asignacionID)
+	var i TutorMateria
+	err := row.Scan(
+		&i.AsignacionID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.FechaAsignacion,
+		&i.Activo,
+	)
+	return i, err
+}
+
+const selectTutoriaById = `-- name: SelectTutoriaById :one
+SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar FROM TUTORIAS WHERE tutoria_id = $1
+`
+
+func (q *Queries) SelectTutoriaById(ctx context.Context, tutoriaID int32) (Tutoria, error) {
+	row := q.db.QueryRow(ctx, selectTutoriaById, tutoriaID)
+	var i Tutoria
+	err := row.Scan(
+		&i.TutoriaID,
+		&i.EstudianteID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.Fecha,
+		&i.HoraInicio,
+		&i.HoraFin,
+		&i.Estado,
+		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
+		&i.TemasTratados,
+		&i.AsistenciaConfirmada,
+		&i.Lugar,
+	)
+	return i, err
+}
+
+const updateAdmin = `-- name: UpdateAdmin :one
+UPDATE ADMINS 
+SET nombre = $2, apellido = $3, correo = $4, password_hash = $5, rol = $6, activo = $7
+WHERE admin_id = $1
+RETURNING admin_id, nombre, apellido, correo, password_hash, rol, activo, fecha_registro
+`
+
+type UpdateAdminParams struct {
+	AdminID      int32
+	Nombre       string
+	Apellido     string
+	Correo       string
+	PasswordHash string
+	Rol          string
+	Activo       pgtype.Bool
+}
+
+func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (Admin, error) {
+	row := q.db.QueryRow(ctx, updateAdmin,
+		arg.AdminID,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.PasswordHash,
+		arg.Rol,
+		arg.Activo,
+	)
+	var i Admin
+	err := row.Scan(
+		&i.AdminID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.PasswordHash,
+		&i.Rol,
+		&i.Activo,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const updateAdminPassword = `-- name: UpdateAdminPassword :one
+UPDATE ADMINS 
+SET password_hash = $2
+WHERE admin_id = $1
+RETURNING admin_id, correo
+`
+
+type UpdateAdminPasswordParams struct {
+	AdminID      int32
+	PasswordHash string
+}
+
+type UpdateAdminPasswordRow struct {
+	AdminID int32
+	Correo  string
+}
+
+func (q *Queries) UpdateAdminPassword(ctx context.Context, arg UpdateAdminPasswordParams) (UpdateAdminPasswordRow, error) {
+	row := q.db.QueryRow(ctx, updateAdminPassword, arg.AdminID, arg.PasswordHash)
+	var i UpdateAdminPasswordRow
+	err := row.Scan(&i.AdminID, &i.Correo)
+	return i, err
+}
+
+const updateDisponibilidad = `-- name: UpdateDisponibilidad :one
+UPDATE DISPONIBILIDAD 
+SET dia_semana = $2, hora_inicio = $3, hora_fin = $4
+WHERE disponibilidad_id = $1
+RETURNING disponibilidad_id, tutor_id, dia_semana, hora_inicio, hora_fin
+`
+
+type UpdateDisponibilidadParams struct {
+	DisponibilidadID int32
+	DiaSemana        int32
+	HoraInicio       pgtype.Time
+	HoraFin          pgtype.Time
+}
+
+func (q *Queries) UpdateDisponibilidad(ctx context.Context, arg UpdateDisponibilidadParams) (Disponibilidad, error) {
+	row := q.db.QueryRow(ctx, updateDisponibilidad,
+		arg.DisponibilidadID,
+		arg.DiaSemana,
+		arg.HoraInicio,
+		arg.HoraFin,
+	)
+	var i Disponibilidad
+	err := row.Scan(
+		&i.DisponibilidadID,
+		&i.TutorID,
+		&i.DiaSemana,
+		&i.HoraInicio,
+		&i.HoraFin,
+	)
+	return i, err
+}
+
+const updateEstudiante = `-- name: UpdateEstudiante :one
+UPDATE ESTUDIANTES 
+SET nombre = $2, apellido = $3, correo = $4, programa_academico = $5, semestre = $6, ti = $7
+WHERE estudiante_id = $1
+RETURNING estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti
+`
+
+type UpdateEstudianteParams struct {
+	EstudianteID      int32
+	Nombre            string
+	Apellido          string
+	Correo            string
+	ProgramaAcademico string
+	Semestre          pgtype.Int4
+	Ti                pgtype.Int4
+}
+
+func (q *Queries) UpdateEstudiante(ctx context.Context, arg UpdateEstudianteParams) (Estudiante, error) {
+	row := q.db.QueryRow(ctx, updateEstudiante,
+		arg.EstudianteID,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.ProgramaAcademico,
+		arg.Semestre,
+		arg.Ti,
+	)
+	var i Estudiante
+	err := row.Scan(
+		&i.EstudianteID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.Semestre,
+		&i.FechaRegistro,
+		&i.Ti,
+	)
+	return i, err
+}
+
+const updateMateria = `-- name: UpdateMateria :one
+UPDATE MATERIAS 
+SET nombre = $2, codigo = $3, facultad = $4, descripcion = $5, creditos = $6
+WHERE materia_id = $1
+RETURNING materia_id, nombre, codigo, facultad, descripcion, creditos
+`
+
+type UpdateMateriaParams struct {
+	MateriaID   int32
+	Nombre      string
+	Codigo      string
+	Facultad    string
+	Descripcion pgtype.Text
+	Creditos    int32
+}
+
+func (q *Queries) UpdateMateria(ctx context.Context, arg UpdateMateriaParams) (Materia, error) {
+	row := q.db.QueryRow(ctx, updateMateria,
+		arg.MateriaID,
+		arg.Nombre,
+		arg.Codigo,
+		arg.Facultad,
+		arg.Descripcion,
+		arg.Creditos,
+	)
+	var i Materia
+	err := row.Scan(
+		&i.MateriaID,
+		&i.Nombre,
+		&i.Codigo,
+		&i.Facultad,
+		&i.Descripcion,
+		&i.Creditos,
+	)
+	return i, err
+}
+
+const updateReporte = `-- name: UpdateReporte :one
+UPDATE REPORTES 
+SET datos = $2
+WHERE reporte_id = $1
+RETURNING reporte_id, tipo_reporte, fecha_generacion, periodo_inicio, periodo_fin, generado_por, datos
+`
+
+type UpdateReporteParams struct {
+	ReporteID int32
+	Datos     []byte
+}
+
+func (q *Queries) UpdateReporte(ctx context.Context, arg UpdateReporteParams) (Reporte, error) {
+	row := q.db.QueryRow(ctx, updateReporte, arg.ReporteID, arg.Datos)
+	var i Reporte
+	err := row.Scan(
+		&i.ReporteID,
+		&i.TipoReporte,
+		&i.FechaGeneracion,
+		&i.PeriodoInicio,
+		&i.PeriodoFin,
+		&i.GeneradoPor,
+		&i.Datos,
+	)
+	return i, err
+}
+
+const updateTutor = `-- name: UpdateTutor :one
+UPDATE TUTORES 
+SET nombre = $2, apellido = $3, correo = $4, programa_academico = $5
+WHERE tutor_id = $1
+RETURNING tutor_id, nombre, apellido, correo, programa_academico, fecha_registro
+`
+
+type UpdateTutorParams struct {
+	TutorID           int32
+	Nombre            string
+	Apellido          string
+	Correo            string
+	ProgramaAcademico pgtype.Text
+}
+
+func (q *Queries) UpdateTutor(ctx context.Context, arg UpdateTutorParams) (Tutore, error) {
+	row := q.db.QueryRow(ctx, updateTutor,
+		arg.TutorID,
+		arg.Nombre,
+		arg.Apellido,
+		arg.Correo,
+		arg.ProgramaAcademico,
+	)
+	var i Tutore
+	err := row.Scan(
+		&i.TutorID,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Correo,
+		&i.ProgramaAcademico,
+		&i.FechaRegistro,
+	)
+	return i, err
+}
+
+const updateTutorMateria = `-- name: UpdateTutorMateria :one
+UPDATE TUTOR_MATERIAS 
+SET activo = $2
+WHERE asignacion_id = $1
+RETURNING asignacion_id, tutor_id, materia_id, fecha_asignacion, activo
+`
+
+type UpdateTutorMateriaParams struct {
+	AsignacionID int32
+	Activo       bool
+}
+
+func (q *Queries) UpdateTutorMateria(ctx context.Context, arg UpdateTutorMateriaParams) (TutorMateria, error) {
+	row := q.db.QueryRow(ctx, updateTutorMateria, arg.AsignacionID, arg.Activo)
+	var i TutorMateria
+	err := row.Scan(
+		&i.AsignacionID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.FechaAsignacion,
+		&i.Activo,
+	)
+	return i, err
+}
+
+const updateTutoria = `-- name: UpdateTutoria :one
+UPDATE TUTORIAS 
+SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, temas_tratados = $6, asistencia_confirmada = $7
+WHERE tutoria_id = $1
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+`
+
+type UpdateTutoriaParams struct {
+	TutoriaID            int32
+	Fecha                pgtype.Date
+	HoraInicio           pgtype.Time
+	HoraFin              pgtype.Time
+	Lugar                string
+	TemasTratados        pgtype.Text
+	AsistenciaConfirmada pgtype.Bool
+}
+
+func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (Tutoria, error) {
+	row := q.db.QueryRow(ctx, updateTutoria,
+		arg.TutoriaID,
+		arg.Fecha,
+		arg.HoraInicio,
+		arg.HoraFin,
+		arg.Lugar,
+		arg.TemasTratados,
+		arg.AsistenciaConfirmada,
+	)
+	var i Tutoria
+	err := row.Scan(
+		&i.TutoriaID,
+		&i.EstudianteID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.Fecha,
+		&i.HoraInicio,
+		&i.HoraFin,
+		&i.Estado,
+		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
+		&i.TemasTratados,
+		&i.AsistenciaConfirmada,
+		&i.Lugar,
+	)
+	return i, err
+}
+
+const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :one
+UPDATE TUTORIAS 
+SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+WHERE tutoria_id = $1
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+`
+
+type UpdateTutoriaEstadoParams struct {
+	TutoriaID int32
+	Estado    string
+}
+
+func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEstadoParams) (Tutoria, error) {
+	row := q.db.QueryRow(ctx, updateTutoriaEstado, arg.TutoriaID, arg.Estado)
+	var i Tutoria
+	err := row.Scan(
+		&i.TutoriaID,
+		&i.EstudianteID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.Fecha,
+		&i.HoraInicio,
+		&i.HoraFin,
+		&i.Estado,
+		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
+		&i.TemasTratados,
+		&i.AsistenciaConfirmada,
+		&i.Lugar,
 	)
 	return i, err
 }

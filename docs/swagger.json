@@ -13,7 +13,268 @@
     "host": "matwa.tail013c29.ts.net",
     "basePath": "/api/",
     "paths": {
+        "/v1/disponibilidad": {
+            "get": {
+                "description": "Retrieves disponibilidad slots for a specific day of the week.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Disponibilidad"
+                ],
+                "summary": "List Disponibilidad by Day",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Day of week (1=Monday, 7=Sunday)",
+                        "name": "dia_semana",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved disponibilidad",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.ListDisponibilidadByDiaRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid day",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new tutor availability slot.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Disponibilidad"
+                ],
+                "summary": "Create Disponibilidad",
+                "parameters": [
+                    {
+                        "description": "Disponibilidad Data",
+                        "name": "disponibilidad",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateDisponibilidadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateDisponibilidadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/disponibilidad/{id}": {
+            "get": {
+                "description": "Retrieves a specific disponibilidad by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Disponibilidad"
+                ],
+                "summary": "Get Disponibilidad by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Disponibilidad ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/db.Disponibilidad"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid disponibilidad ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Disponibilidad not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing disponibilidad slot.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Disponibilidad"
+                ],
+                "summary": "Update Disponibilidad",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Disponibilidad ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Disponibilidad Data",
+                        "name": "disponibilidad",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateDisponibilidadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/db.Disponibilidad"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or disponibilidad ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Disponibilidad not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a disponibilidad slot by its ID.",
+                "tags": [
+                    "Disponibilidad"
+                ],
+                "summary": "Delete Disponibilidad",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Disponibilidad ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted disponibilidad"
+                    },
+                    "400": {
+                        "description": "Invalid disponibilidad ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete disponibilidad",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/estudiantes": {
+            "get": {
+                "description": "Retrieves students filtered by academic program.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Estudiantes"
+                ],
+                "summary": "List Estudiantes by Program",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Academic program",
+                        "name": "programa",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved estudiantes",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Estudiante"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve estudiantes",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Creates a new student record.",
                 "consumes": [
@@ -52,6 +313,143 @@
                     },
                     "500": {
                         "description": "Failed to create student",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/estudiantes/{id}": {
+            "get": {
+                "description": "Retrieves a specific student by their ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Estudiantes"
+                ],
+                "summary": "Get Estudiante by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved estudiante",
+                        "schema": {
+                            "$ref": "#/definitions/db.Estudiante"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid estudiante ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Estudiante not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve estudiante",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing student.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Estudiantes"
+                ],
+                "summary": "Update Estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Estudiante Data",
+                        "name": "estudiante",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateEstudianteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated estudiante",
+                        "schema": {
+                            "$ref": "#/definitions/db.Estudiante"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or estudiante ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Estudiante not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update estudiante",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a student by their ID.",
+                "tags": [
+                    "Estudiantes"
+                ],
+                "summary": "Delete Estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted estudiante"
+                    },
+                    "400": {
+                        "description": "Invalid estudiante ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete estudiante",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -187,7 +585,751 @@
                 }
             }
         },
+        "/v1/materias": {
+            "get": {
+                "description": "Retrieves materias filtered by faculty.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "List Materias by Faculty",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Faculty name",
+                        "name": "facultad",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved materias",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Materia"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve materias",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new materia (subject).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "Create Materia",
+                "parameters": [
+                    {
+                        "description": "Materia Data",
+                        "name": "materia",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateMateriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateMateriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/materias/codigo/{codigo}": {
+            "get": {
+                "description": "Retrieves a specific materia by its code.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "Get Materia by Code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Materia Code",
+                        "name": "codigo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved materia",
+                        "schema": {
+                            "$ref": "#/definitions/db.Materia"
+                        }
+                    },
+                    "404": {
+                        "description": "Materia not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/materias/{id}": {
+            "get": {
+                "description": "Retrieves a specific materia by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "Get Materia by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Materia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved materia",
+                        "schema": {
+                            "$ref": "#/definitions/db.Materia"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid materia ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Materia not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing materia.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "Update Materia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Materia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Materia Data",
+                        "name": "materia",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateMateriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated materia",
+                        "schema": {
+                            "$ref": "#/definitions/db.Materia"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or materia ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Materia not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a materia by its ID.",
+                "tags": [
+                    "Materias"
+                ],
+                "summary": "Delete Materia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Materia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted materia"
+                    },
+                    "400": {
+                        "description": "Invalid materia ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete materia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/reportes": {
+            "get": {
+                "description": "Retrieves reports filtered by date period.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "List Reportes by Period",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "periodo_inicio",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "periodo_fin",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved reportes",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Reporte"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid date format",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve reportes",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new report.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Create Reporte",
+                "parameters": [
+                    {
+                        "description": "Reporte Data",
+                        "name": "reporte",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateReporteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created reporte",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateReporteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create reporte",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/reportes/{id}": {
+            "get": {
+                "description": "Retrieves a specific report by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Get Reporte by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Reporte ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved reporte",
+                        "schema": {
+                            "$ref": "#/definitions/db.Reporte"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid reporte ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Reporte not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve reporte",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the data of an existing report.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Update Reporte",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Reporte ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Reporte Data",
+                        "name": "reporte",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateReporteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated reporte",
+                        "schema": {
+                            "$ref": "#/definitions/db.Reporte"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or reporte ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Reporte not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update reporte",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a report by its ID.",
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Delete Reporte",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Reporte ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted reporte"
+                    },
+                    "400": {
+                        "description": "Invalid reporte ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete reporte",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutor-materias": {
+            "get": {
+                "description": "Retrieves tutores assigned to a specific materia.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TutorMaterias"
+                ],
+                "summary": "List Tutores by Materia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Materia ID",
+                        "name": "materia_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tutores",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.ListTutoresByMateriaRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid materia ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutores",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new tutor-materia assignment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TutorMaterias"
+                ],
+                "summary": "Create TutorMateria Assignment",
+                "parameters": [
+                    {
+                        "description": "TutorMateria Assignment Data",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutorMateriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created assignment",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutorMateriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create assignment",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutor-materias/{id}": {
+            "get": {
+                "description": "Retrieves a specific tutor-materia assignment by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TutorMaterias"
+                ],
+                "summary": "Get TutorMateria by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved assignment",
+                        "schema": {
+                            "$ref": "#/definitions/db.TutorMateria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid assignment ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve assignment",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing tutor-materia assignment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TutorMaterias"
+                ],
+                "summary": "Update TutorMateria Assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Assignment Data",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutorMateriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated assignment",
+                        "schema": {
+                            "$ref": "#/definitions/db.TutorMateria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or assignment ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update assignment",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a tutor-materia assignment by its ID.",
+                "tags": [
+                    "TutorMaterias"
+                ],
+                "summary": "Delete TutorMateria Assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted assignment"
+                    },
+                    "400": {
+                        "description": "Invalid assignment ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete assignment",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tutores": {
+            "get": {
+                "description": "Retrieves a list of all tutors.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "List All Tutores",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tutores",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Tutore"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutores",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Creates a new tutor record using data from an existing student.",
                 "consumes": [
@@ -297,9 +1439,435 @@
                     }
                 }
             }
+        },
+        "/v1/tutores/{id}": {
+            "get": {
+                "description": "Retrieves a specific tutor by their ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Get Tutor by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tutor",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutore"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid tutor ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutor not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing tutor.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Update Tutor",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Tutor Data",
+                        "name": "tutor",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated tutor",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutore"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or tutor ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutor not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update tutor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a tutor by their ID.",
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Delete Tutor",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted tutor"
+                    },
+                    "400": {
+                        "description": "Invalid tutor ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete tutor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutorias": {
+            "get": {
+                "description": "Retrieves all active tutorias.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "List Active Tutorias",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved active tutorias",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Tutoriasactiva"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutorias",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new tutoring session.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Create Tutoria",
+                "parameters": [
+                    {
+                        "description": "Tutoria Data",
+                        "name": "tutoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutoriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTutoriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutorias/{id}": {
+            "get": {
+                "description": "Retrieves a specific tutoria by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Get Tutoria by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing tutoria.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Update Tutoria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Tutoria Data",
+                        "name": "tutoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutoriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a tutoria by its ID.",
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Delete Tutoria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted tutoria"
+                    },
+                    "400": {
+                        "description": "Invalid tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete tutoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tutorias/{id}/estado": {
+            "put": {
+                "description": "Updates the status of an existing tutoria.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Update Tutoria Status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New Status",
+                        "name": "estado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutoriaEstadoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated tutoria status",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update tutoria status",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "db.Disponibilidad": {
+            "type": "object",
+            "properties": {
+                "diaSemana": {
+                    "type": "integer"
+                },
+                "disponibilidadID": {
+                    "type": "integer"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                }
+            }
+        },
         "db.Estudiante": {
             "type": "object",
             "properties": {
@@ -326,6 +1894,456 @@
                 },
                 "ti": {
                     "$ref": "#/definitions/pgtype.Int4"
+                }
+            }
+        },
+        "db.ListDisponibilidadByDiaRow": {
+            "type": "object",
+            "properties": {
+                "diaSemana": {
+                    "type": "integer"
+                },
+                "disponibilidadID": {
+                    "type": "integer"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "tutorApellido": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutorNombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ListMateriasByTutorRow": {
+            "type": "object",
+            "properties": {
+                "activo": {
+                    "type": "boolean"
+                },
+                "asignacionID": {
+                    "type": "integer"
+                },
+                "fechaAsignacion": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "materiaCodigo": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "materiaNombre": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.ListTutoresByMateriaRow": {
+            "type": "object",
+            "properties": {
+                "activo": {
+                    "type": "boolean"
+                },
+                "asignacionID": {
+                    "type": "integer"
+                },
+                "fechaAsignacion": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "tutorApellido": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutorNombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ListTutoriasByEstadoRow": {
+            "type": "object",
+            "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "estudianteApellido": {
+                    "type": "string"
+                },
+                "estudianteID": {
+                    "type": "integer"
+                },
+                "estudianteNombre": {
+                    "type": "string"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "fechaSolicitud": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "materiaNombre": {
+                    "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorApellido": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutorNombre": {
+                    "type": "string"
+                },
+                "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.ListTutoriasByEstudianteRow": {
+            "type": "object",
+            "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "estudianteID": {
+                    "type": "integer"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "fechaSolicitud": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "materiaNombre": {
+                    "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorApellido": {
+                    "type": "string"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutorNombre": {
+                    "type": "string"
+                },
+                "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.ListTutoriasByTutorRow": {
+            "type": "object",
+            "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "estudianteApellido": {
+                    "type": "string"
+                },
+                "estudianteID": {
+                    "type": "integer"
+                },
+                "estudianteNombre": {
+                    "type": "string"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "fechaSolicitud": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "materiaNombre": {
+                    "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.Materia": {
+            "type": "object",
+            "properties": {
+                "codigo": {
+                    "type": "string"
+                },
+                "creditos": {
+                    "type": "integer"
+                },
+                "descripcion": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "facultad": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.Reporte": {
+            "type": "object",
+            "properties": {
+                "datos": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "fechaGeneracion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "generadoPor": {
+                    "type": "integer"
+                },
+                "periodoFin": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "periodoInicio": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "reporteID": {
+                    "type": "integer"
+                },
+                "tipoReporte": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.TutorMateria": {
+            "type": "object",
+            "properties": {
+                "activo": {
+                    "type": "boolean"
+                },
+                "asignacionID": {
+                    "type": "integer"
+                },
+                "fechaAsignacion": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "tutorID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.Tutore": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string"
+                },
+                "correo": {
+                    "type": "string"
+                },
+                "fechaRegistro": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "programaAcademico": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.Tutoria": {
+            "type": "object",
+            "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "estudianteID": {
+                    "type": "integer"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "fechaSolicitud": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "materiaID": {
+                    "type": "integer"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "tutorID": {
+                    "type": "integer"
+                },
+                "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.Tutoriasactiva": {
+            "type": "object",
+            "properties": {
+                "apellidoEstudiante": {
+                    "type": "string"
+                },
+                "apellidoTutor": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "materia": {
+                    "type": "string"
+                },
+                "nombreEstudiante": {
+                    "type": "string"
+                },
+                "nombreTutor": {
+                    "type": "string"
+                },
+                "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateDisponibilidadRequest": {
+            "type": "object",
+            "properties": {
+                "dia_semana": {
+                    "description": "1 = Monday, 7 = Sunday",
+                    "type": "integer",
+                    "example": 1
+                },
+                "hora_fin": {
+                    "type": "string",
+                    "example": "11:00"
+                },
+                "hora_inicio": {
+                    "type": "string",
+                    "example": "09:00"
+                },
+                "tutor_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "handler.CreateDisponibilidadResponse": {
+            "type": "object",
+            "properties": {
+                "disponibilidad_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -366,6 +2384,79 @@
                 }
             }
         },
+        "handler.CreateMateriaRequest": {
+            "type": "object",
+            "properties": {
+                "codigo": {
+                    "type": "string",
+                    "example": "MATH101"
+                },
+                "creditos": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "descripcion": {
+                    "type": "string",
+                    "example": "Introducción al cálculo diferencial e integral"
+                },
+                "facultad": {
+                    "type": "string",
+                    "example": "Ingeniería"
+                },
+                "nombre": {
+                    "type": "string",
+                    "example": "Cálculo I"
+                }
+            }
+        },
+        "handler.CreateMateriaResponse": {
+            "type": "object",
+            "properties": {
+                "materia_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateReporteRequest": {
+            "type": "object"
+        },
+        "handler.CreateReporteResponse": {
+            "type": "object",
+            "properties": {
+                "reporte_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateTutorMateriaRequest": {
+            "type": "object",
+            "properties": {
+                "activo": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "fecha_asignacion": {
+                    "type": "string",
+                    "example": "2024-12-15"
+                },
+                "materia_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "tutor_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "handler.CreateTutorMateriaResponse": {
+            "type": "object",
+            "properties": {
+                "asignacion_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.CreateTutorRequest": {
             "type": "object",
             "properties": {
@@ -381,6 +2472,51 @@
             "properties": {
                 "tutor_id": {
                     "description": "Changed to int32 to match sqlc generated type",
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateTutoriaRequest": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "string",
+                    "example": "solicitada"
+                },
+                "estudiante_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "fecha": {
+                    "type": "string",
+                    "example": "2024-12-15"
+                },
+                "hora_fin": {
+                    "type": "string",
+                    "example": "11:00"
+                },
+                "hora_inicio": {
+                    "type": "string",
+                    "example": "10:00"
+                },
+                "lugar": {
+                    "type": "string",
+                    "example": "Biblioteca Central"
+                },
+                "materia_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "tutor_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "handler.CreateTutoriaResponse": {
+            "type": "object",
+            "properties": {
+                "tutoria_id": {
                     "type": "integer"
                 }
             }
@@ -440,6 +2576,173 @@
                 }
             }
         },
+        "handler.UpdateDisponibilidadRequest": {
+            "type": "object",
+            "properties": {
+                "dia_semana": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "hora_fin": {
+                    "type": "string",
+                    "example": "11:00"
+                },
+                "hora_inicio": {
+                    "type": "string",
+                    "example": "09:00"
+                }
+            }
+        },
+        "handler.UpdateEstudianteRequest": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string",
+                    "example": "Perez"
+                },
+                "correo": {
+                    "type": "string",
+                    "example": "juan.perez@urosario.edu.co"
+                },
+                "nombre": {
+                    "type": "string",
+                    "example": "Juan Carlos"
+                },
+                "programa_academico": {
+                    "type": "string",
+                    "example": "Ingeniería de Sistemas"
+                },
+                "semestre": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "ti": {
+                    "type": "integer",
+                    "example": 1000123456
+                }
+            }
+        },
+        "handler.UpdateMateriaRequest": {
+            "type": "object",
+            "properties": {
+                "codigo": {
+                    "type": "string",
+                    "example": "MATH101"
+                },
+                "creditos": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "descripcion": {
+                    "type": "string",
+                    "example": "Introducción al cálculo diferencial e integral"
+                },
+                "facultad": {
+                    "type": "string",
+                    "example": "Ingeniería"
+                },
+                "nombre": {
+                    "type": "string",
+                    "example": "Cálculo I"
+                }
+            }
+        },
+        "handler.UpdateReporteRequest": {
+            "type": "object"
+        },
+        "handler.UpdateTutorMateriaRequest": {
+            "type": "object",
+            "properties": {
+                "activo": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "handler.UpdateTutorRequest": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string",
+                    "example": "Perez"
+                },
+                "correo": {
+                    "type": "string",
+                    "example": "juan.perez@urosario.edu.co"
+                },
+                "nombre": {
+                    "type": "string",
+                    "example": "Juan Carlos"
+                },
+                "programa_academico": {
+                    "type": "string",
+                    "example": "Ingeniería de Sistemas"
+                }
+            }
+        },
+        "handler.UpdateTutoriaEstadoRequest": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "string",
+                    "example": "confirmada"
+                }
+            }
+        },
+        "handler.UpdateTutoriaRequest": {
+            "type": "object",
+            "properties": {
+                "asistencia_confirmada": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "fecha": {
+                    "type": "string",
+                    "example": "2024-12-15"
+                },
+                "hora_fin": {
+                    "type": "string",
+                    "example": "11:00"
+                },
+                "hora_inicio": {
+                    "type": "string",
+                    "example": "10:00"
+                },
+                "lugar": {
+                    "type": "string",
+                    "example": "Biblioteca Central"
+                },
+                "temas_tratados": {
+                    "type": "string",
+                    "example": "Derivadas y límites"
+                }
+            }
+        },
+        "pgtype.Bool": {
+            "type": "object",
+            "properties": {
+                "bool": {
+                    "type": "boolean"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Date": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pgtype.InfinityModifier": {
             "type": "integer",
             "enum": [
@@ -458,6 +2761,17 @@
             "properties": {
                 "int32": {
                     "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Text": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
                 },
                 "valid": {
                     "type": "boolean"

@@ -1,5 +1,18 @@
 basePath: /api/
 definitions:
+  db.Disponibilidad:
+    properties:
+      diaSemana:
+        type: integer
+      disponibilidadID:
+        type: integer
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      tutorID:
+        type: integer
+    type: object
   db.Estudiante:
     properties:
       apellido:
@@ -18,6 +31,303 @@ definitions:
         $ref: '#/definitions/pgtype.Int4'
       ti:
         $ref: '#/definitions/pgtype.Int4'
+    type: object
+  db.ListDisponibilidadByDiaRow:
+    properties:
+      diaSemana:
+        type: integer
+      disponibilidadID:
+        type: integer
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      tutorApellido:
+        type: string
+      tutorID:
+        type: integer
+      tutorNombre:
+        type: string
+    type: object
+  db.ListMateriasByTutorRow:
+    properties:
+      activo:
+        type: boolean
+      asignacionID:
+        type: integer
+      fechaAsignacion:
+        $ref: '#/definitions/pgtype.Date'
+      materiaCodigo:
+        type: string
+      materiaID:
+        type: integer
+      materiaNombre:
+        type: string
+      tutorID:
+        type: integer
+    type: object
+  db.ListTutoresByMateriaRow:
+    properties:
+      activo:
+        type: boolean
+      asignacionID:
+        type: integer
+      fechaAsignacion:
+        $ref: '#/definitions/pgtype.Date'
+      materiaID:
+        type: integer
+      tutorApellido:
+        type: string
+      tutorID:
+        type: integer
+      tutorNombre:
+        type: string
+    type: object
+  db.ListTutoriasByEstadoRow:
+    properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
+      estado:
+        type: string
+      estudianteApellido:
+        type: string
+      estudianteID:
+        type: integer
+      estudianteNombre:
+        type: string
+      fecha:
+        $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
+      fechaSolicitud:
+        $ref: '#/definitions/pgtype.Timestamp'
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      lugar:
+        type: string
+      materiaID:
+        type: integer
+      materiaNombre:
+        type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
+      tutorApellido:
+        type: string
+      tutorID:
+        type: integer
+      tutorNombre:
+        type: string
+      tutoriaID:
+        type: integer
+    type: object
+  db.ListTutoriasByEstudianteRow:
+    properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
+      estado:
+        type: string
+      estudianteID:
+        type: integer
+      fecha:
+        $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
+      fechaSolicitud:
+        $ref: '#/definitions/pgtype.Timestamp'
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      lugar:
+        type: string
+      materiaID:
+        type: integer
+      materiaNombre:
+        type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
+      tutorApellido:
+        type: string
+      tutorID:
+        type: integer
+      tutorNombre:
+        type: string
+      tutoriaID:
+        type: integer
+    type: object
+  db.ListTutoriasByTutorRow:
+    properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
+      estado:
+        type: string
+      estudianteApellido:
+        type: string
+      estudianteID:
+        type: integer
+      estudianteNombre:
+        type: string
+      fecha:
+        $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
+      fechaSolicitud:
+        $ref: '#/definitions/pgtype.Timestamp'
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      lugar:
+        type: string
+      materiaID:
+        type: integer
+      materiaNombre:
+        type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
+      tutorID:
+        type: integer
+      tutoriaID:
+        type: integer
+    type: object
+  db.Materia:
+    properties:
+      codigo:
+        type: string
+      creditos:
+        type: integer
+      descripcion:
+        $ref: '#/definitions/pgtype.Text'
+      facultad:
+        type: string
+      materiaID:
+        type: integer
+      nombre:
+        type: string
+    type: object
+  db.Reporte:
+    properties:
+      datos:
+        items:
+          type: integer
+        type: array
+      fechaGeneracion:
+        $ref: '#/definitions/pgtype.Timestamp'
+      generadoPor:
+        type: integer
+      periodoFin:
+        $ref: '#/definitions/pgtype.Date'
+      periodoInicio:
+        $ref: '#/definitions/pgtype.Date'
+      reporteID:
+        type: integer
+      tipoReporte:
+        type: string
+    type: object
+  db.TutorMateria:
+    properties:
+      activo:
+        type: boolean
+      asignacionID:
+        type: integer
+      fechaAsignacion:
+        $ref: '#/definitions/pgtype.Date'
+      materiaID:
+        type: integer
+      tutorID:
+        type: integer
+    type: object
+  db.Tutore:
+    properties:
+      apellido:
+        type: string
+      correo:
+        type: string
+      fechaRegistro:
+        $ref: '#/definitions/pgtype.Timestamp'
+      nombre:
+        type: string
+      programaAcademico:
+        $ref: '#/definitions/pgtype.Text'
+      tutorID:
+        type: integer
+    type: object
+  db.Tutoria:
+    properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
+      estado:
+        type: string
+      estudianteID:
+        type: integer
+      fecha:
+        $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
+      fechaSolicitud:
+        $ref: '#/definitions/pgtype.Timestamp'
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      lugar:
+        type: string
+      materiaID:
+        type: integer
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
+      tutorID:
+        type: integer
+      tutoriaID:
+        type: integer
+    type: object
+  db.Tutoriasactiva:
+    properties:
+      apellidoEstudiante:
+        type: string
+      apellidoTutor:
+        type: string
+      estado:
+        type: string
+      fecha:
+        $ref: '#/definitions/pgtype.Date'
+      horaFin:
+        type: string
+      horaInicio:
+        type: string
+      lugar:
+        type: string
+      materia:
+        type: string
+      nombreEstudiante:
+        type: string
+      nombreTutor:
+        type: string
+      tutoriaID:
+        type: integer
+    type: object
+  handler.CreateDisponibilidadRequest:
+    properties:
+      dia_semana:
+        description: 1 = Monday, 7 = Sunday
+        example: 1
+        type: integer
+      hora_fin:
+        example: "11:00"
+        type: string
+      hora_inicio:
+        example: "09:00"
+        type: string
+      tutor_id:
+        example: 1
+        type: integer
+    type: object
+  handler.CreateDisponibilidadResponse:
+    properties:
+      disponibilidad_id:
+        type: integer
     type: object
   handler.CreateEstudianteRequest:
     properties:
@@ -45,6 +355,56 @@ definitions:
       estudiante_id:
         type: integer
     type: object
+  handler.CreateMateriaRequest:
+    properties:
+      codigo:
+        example: MATH101
+        type: string
+      creditos:
+        example: 4
+        type: integer
+      descripcion:
+        example: Introducción al cálculo diferencial e integral
+        type: string
+      facultad:
+        example: Ingeniería
+        type: string
+      nombre:
+        example: Cálculo I
+        type: string
+    type: object
+  handler.CreateMateriaResponse:
+    properties:
+      materia_id:
+        type: integer
+    type: object
+  handler.CreateReporteRequest:
+    type: object
+  handler.CreateReporteResponse:
+    properties:
+      reporte_id:
+        type: integer
+    type: object
+  handler.CreateTutorMateriaRequest:
+    properties:
+      activo:
+        example: true
+        type: boolean
+      fecha_asignacion:
+        example: "2024-12-15"
+        type: string
+      materia_id:
+        example: 1
+        type: integer
+      tutor_id:
+        example: 1
+        type: integer
+    type: object
+  handler.CreateTutorMateriaResponse:
+    properties:
+      asignacion_id:
+        type: integer
+    type: object
   handler.CreateTutorRequest:
     properties:
       estudiante_id:
@@ -56,6 +416,38 @@ definitions:
     properties:
       tutor_id:
         description: Changed to int32 to match sqlc generated type
+        type: integer
+    type: object
+  handler.CreateTutoriaRequest:
+    properties:
+      estado:
+        example: solicitada
+        type: string
+      estudiante_id:
+        example: 1
+        type: integer
+      fecha:
+        example: "2024-12-15"
+        type: string
+      hora_fin:
+        example: "11:00"
+        type: string
+      hora_inicio:
+        example: "10:00"
+        type: string
+      lugar:
+        example: Biblioteca Central
+        type: string
+      materia_id:
+        example: 1
+        type: integer
+      tutor_id:
+        example: 1
+        type: integer
+    type: object
+  handler.CreateTutoriaResponse:
+    properties:
+      tutoria_id:
         type: integer
     type: object
   handler.ErrorResponse:
@@ -97,6 +489,123 @@ definitions:
         example: 123456789
         type: integer
     type: object
+  handler.UpdateDisponibilidadRequest:
+    properties:
+      dia_semana:
+        example: 1
+        type: integer
+      hora_fin:
+        example: "11:00"
+        type: string
+      hora_inicio:
+        example: "09:00"
+        type: string
+    type: object
+  handler.UpdateEstudianteRequest:
+    properties:
+      apellido:
+        example: Perez
+        type: string
+      correo:
+        example: juan.perez@urosario.edu.co
+        type: string
+      nombre:
+        example: Juan Carlos
+        type: string
+      programa_academico:
+        example: Ingeniería de Sistemas
+        type: string
+      semestre:
+        example: 6
+        type: integer
+      ti:
+        example: 1000123456
+        type: integer
+    type: object
+  handler.UpdateMateriaRequest:
+    properties:
+      codigo:
+        example: MATH101
+        type: string
+      creditos:
+        example: 4
+        type: integer
+      descripcion:
+        example: Introducción al cálculo diferencial e integral
+        type: string
+      facultad:
+        example: Ingeniería
+        type: string
+      nombre:
+        example: Cálculo I
+        type: string
+    type: object
+  handler.UpdateReporteRequest:
+    type: object
+  handler.UpdateTutorMateriaRequest:
+    properties:
+      activo:
+        example: false
+        type: boolean
+    type: object
+  handler.UpdateTutorRequest:
+    properties:
+      apellido:
+        example: Perez
+        type: string
+      correo:
+        example: juan.perez@urosario.edu.co
+        type: string
+      nombre:
+        example: Juan Carlos
+        type: string
+      programa_academico:
+        example: Ingeniería de Sistemas
+        type: string
+    type: object
+  handler.UpdateTutoriaEstadoRequest:
+    properties:
+      estado:
+        example: confirmada
+        type: string
+    type: object
+  handler.UpdateTutoriaRequest:
+    properties:
+      asistencia_confirmada:
+        example: true
+        type: boolean
+      fecha:
+        example: "2024-12-15"
+        type: string
+      hora_fin:
+        example: "11:00"
+        type: string
+      hora_inicio:
+        example: "10:00"
+        type: string
+      lugar:
+        example: Biblioteca Central
+        type: string
+      temas_tratados:
+        example: Derivadas y límites
+        type: string
+    type: object
+  pgtype.Bool:
+    properties:
+      bool:
+        type: boolean
+      valid:
+        type: boolean
+    type: object
+  pgtype.Date:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        type: string
+      valid:
+        type: boolean
+    type: object
   pgtype.InfinityModifier:
     enum:
     - 1
@@ -111,6 +620,13 @@ definitions:
     properties:
       int32:
         type: integer
+      valid:
+        type: boolean
+    type: object
+  pgtype.Text:
+    properties:
+      string:
+        type: string
       valid:
         type: boolean
     type: object
@@ -132,7 +648,180 @@ info:
   title: Proyecto de Ingenieria de  Datos API
   version: "1.0"
 paths:
+  /v1/disponibilidad:
+    get:
+      description: Retrieves disponibilidad slots for a specific day of the week.
+      parameters:
+      - description: Day of week (1=Monday, 7=Sunday)
+        in: query
+        name: dia_semana
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved disponibilidad
+          schema:
+            items:
+              $ref: '#/definitions/db.ListDisponibilidadByDiaRow'
+            type: array
+        "400":
+          description: Invalid day
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve disponibilidad
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Disponibilidad by Day
+      tags:
+      - Disponibilidad
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tutor availability slot.
+      parameters:
+      - description: Disponibilidad Data
+        in: body
+        name: disponibilidad
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateDisponibilidadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created disponibilidad
+          schema:
+            $ref: '#/definitions/handler.CreateDisponibilidadResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create disponibilidad
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Disponibilidad
+      tags:
+      - Disponibilidad
+  /v1/disponibilidad/{id}:
+    delete:
+      description: Deletes a disponibilidad slot by its ID.
+      parameters:
+      - description: Disponibilidad ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted disponibilidad
+        "400":
+          description: Invalid disponibilidad ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete disponibilidad
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Disponibilidad
+      tags:
+      - Disponibilidad
+    get:
+      description: Retrieves a specific disponibilidad by its ID.
+      parameters:
+      - description: Disponibilidad ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved disponibilidad
+          schema:
+            $ref: '#/definitions/db.Disponibilidad'
+        "400":
+          description: Invalid disponibilidad ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Disponibilidad not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve disponibilidad
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Disponibilidad by ID
+      tags:
+      - Disponibilidad
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing disponibilidad slot.
+      parameters:
+      - description: Disponibilidad ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Disponibilidad Data
+        in: body
+        name: disponibilidad
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateDisponibilidadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated disponibilidad
+          schema:
+            $ref: '#/definitions/db.Disponibilidad'
+        "400":
+          description: Invalid request body or disponibilidad ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Disponibilidad not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update disponibilidad
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Disponibilidad
+      tags:
+      - Disponibilidad
   /v1/estudiantes:
+    get:
+      description: Retrieves students filtered by academic program.
+      parameters:
+      - description: Academic program
+        in: query
+        name: programa
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved estudiantes
+          schema:
+            items:
+              $ref: '#/definitions/db.Estudiante'
+            type: array
+        "500":
+          description: Failed to retrieve estudiantes
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Estudiantes by Program
+      tags:
+      - Estudiantes
     post:
       consumes:
       - application/json
@@ -160,6 +849,97 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: Create Estudiante
+      tags:
+      - Estudiantes
+  /v1/estudiantes/{id}:
+    delete:
+      description: Deletes a student by their ID.
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted estudiante
+        "400":
+          description: Invalid estudiante ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete estudiante
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Estudiante
+      tags:
+      - Estudiantes
+    get:
+      description: Retrieves a specific student by their ID.
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved estudiante
+          schema:
+            $ref: '#/definitions/db.Estudiante'
+        "400":
+          description: Invalid estudiante ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Estudiante not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve estudiante
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Estudiante by ID
+      tags:
+      - Estudiantes
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing student.
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Estudiante Data
+        in: body
+        name: estudiante
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateEstudianteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated estudiante
+          schema:
+            $ref: '#/definitions/db.Estudiante'
+        "400":
+          description: Invalid request body or estudiante ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Estudiante not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update estudiante
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Estudiante
       tags:
       - Estudiantes
   /v1/login:
@@ -248,7 +1028,500 @@ paths:
       summary: Unified Login
       tags:
       - Authentication
+  /v1/materias:
+    get:
+      description: Retrieves materias filtered by faculty.
+      parameters:
+      - description: Faculty name
+        in: query
+        name: facultad
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved materias
+          schema:
+            items:
+              $ref: '#/definitions/db.Materia'
+            type: array
+        "500":
+          description: Failed to retrieve materias
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Materias by Faculty
+      tags:
+      - Materias
+    post:
+      consumes:
+      - application/json
+      description: Creates a new materia (subject).
+      parameters:
+      - description: Materia Data
+        in: body
+        name: materia
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateMateriaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created materia
+          schema:
+            $ref: '#/definitions/handler.CreateMateriaResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create materia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Materia
+      tags:
+      - Materias
+  /v1/materias/{id}:
+    delete:
+      description: Deletes a materia by its ID.
+      parameters:
+      - description: Materia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted materia
+        "400":
+          description: Invalid materia ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete materia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Materia
+      tags:
+      - Materias
+    get:
+      description: Retrieves a specific materia by its ID.
+      parameters:
+      - description: Materia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved materia
+          schema:
+            $ref: '#/definitions/db.Materia'
+        "400":
+          description: Invalid materia ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Materia not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve materia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Materia by ID
+      tags:
+      - Materias
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing materia.
+      parameters:
+      - description: Materia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Materia Data
+        in: body
+        name: materia
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateMateriaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated materia
+          schema:
+            $ref: '#/definitions/db.Materia'
+        "400":
+          description: Invalid request body or materia ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Materia not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update materia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Materia
+      tags:
+      - Materias
+  /v1/materias/codigo/{codigo}:
+    get:
+      description: Retrieves a specific materia by its code.
+      parameters:
+      - description: Materia Code
+        in: path
+        name: codigo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved materia
+          schema:
+            $ref: '#/definitions/db.Materia'
+        "404":
+          description: Materia not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve materia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Materia by Code
+      tags:
+      - Materias
+  /v1/reportes:
+    get:
+      description: Retrieves reports filtered by date period.
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: periodo_inicio
+        required: true
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: periodo_fin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved reportes
+          schema:
+            items:
+              $ref: '#/definitions/db.Reporte'
+            type: array
+        "400":
+          description: Invalid date format
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve reportes
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Reportes by Period
+      tags:
+      - Reportes
+    post:
+      consumes:
+      - application/json
+      description: Creates a new report.
+      parameters:
+      - description: Reporte Data
+        in: body
+        name: reporte
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateReporteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created reporte
+          schema:
+            $ref: '#/definitions/handler.CreateReporteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create reporte
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Reporte
+      tags:
+      - Reportes
+  /v1/reportes/{id}:
+    delete:
+      description: Deletes a report by its ID.
+      parameters:
+      - description: Reporte ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted reporte
+        "400":
+          description: Invalid reporte ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete reporte
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Reporte
+      tags:
+      - Reportes
+    get:
+      description: Retrieves a specific report by its ID.
+      parameters:
+      - description: Reporte ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved reporte
+          schema:
+            $ref: '#/definitions/db.Reporte'
+        "400":
+          description: Invalid reporte ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Reporte not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve reporte
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Reporte by ID
+      tags:
+      - Reportes
+    put:
+      consumes:
+      - application/json
+      description: Updates the data of an existing report.
+      parameters:
+      - description: Reporte ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Reporte Data
+        in: body
+        name: reporte
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateReporteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated reporte
+          schema:
+            $ref: '#/definitions/db.Reporte'
+        "400":
+          description: Invalid request body or reporte ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Reporte not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update reporte
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Reporte
+      tags:
+      - Reportes
+  /v1/tutor-materias:
+    get:
+      description: Retrieves tutores assigned to a specific materia.
+      parameters:
+      - description: Materia ID
+        in: query
+        name: materia_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tutores
+          schema:
+            items:
+              $ref: '#/definitions/db.ListTutoresByMateriaRow'
+            type: array
+        "400":
+          description: Invalid materia ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve tutores
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Tutores by Materia
+      tags:
+      - TutorMaterias
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tutor-materia assignment.
+      parameters:
+      - description: TutorMateria Assignment Data
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTutorMateriaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created assignment
+          schema:
+            $ref: '#/definitions/handler.CreateTutorMateriaResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create assignment
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create TutorMateria Assignment
+      tags:
+      - TutorMaterias
+  /v1/tutor-materias/{id}:
+    delete:
+      description: Deletes a tutor-materia assignment by its ID.
+      parameters:
+      - description: Assignment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted assignment
+        "400":
+          description: Invalid assignment ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete assignment
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete TutorMateria Assignment
+      tags:
+      - TutorMaterias
+    get:
+      description: Retrieves a specific tutor-materia assignment by its ID.
+      parameters:
+      - description: Assignment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved assignment
+          schema:
+            $ref: '#/definitions/db.TutorMateria'
+        "400":
+          description: Invalid assignment ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Assignment not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve assignment
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get TutorMateria by ID
+      tags:
+      - TutorMaterias
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing tutor-materia assignment.
+      parameters:
+      - description: Assignment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Assignment Data
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutorMateriaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated assignment
+          schema:
+            $ref: '#/definitions/db.TutorMateria'
+        "400":
+          description: Invalid request body or assignment ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Assignment not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update assignment
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update TutorMateria Assignment
+      tags:
+      - TutorMaterias
   /v1/tutores:
+    get:
+      description: Retrieves a list of all tutors.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tutores
+          schema:
+            items:
+              $ref: '#/definitions/db.Tutore'
+            type: array
+        "500":
+          description: Failed to retrieve tutores
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List All Tutores
+      tags:
+      - Tutores
     post:
       consumes:
       - application/json
@@ -280,6 +1553,97 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: Create Tutor from Estudiante
+      tags:
+      - Tutores
+  /v1/tutores/{id}:
+    delete:
+      description: Deletes a tutor by their ID.
+      parameters:
+      - description: Tutor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted tutor
+        "400":
+          description: Invalid tutor ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete tutor
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Tutor
+      tags:
+      - Tutores
+    get:
+      description: Retrieves a specific tutor by their ID.
+      parameters:
+      - description: Tutor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tutor
+          schema:
+            $ref: '#/definitions/db.Tutore'
+        "400":
+          description: Invalid tutor ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutor not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve tutor
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Tutor by ID
+      tags:
+      - Tutores
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing tutor.
+      parameters:
+      - description: Tutor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Tutor Data
+        in: body
+        name: tutor
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated tutor
+          schema:
+            $ref: '#/definitions/db.Tutore'
+        "400":
+          description: Invalid request body or tutor ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutor not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update tutor
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Tutor
       tags:
       - Tutores
   /v1/tutores/login:
@@ -323,6 +1687,184 @@ paths:
       summary: Tutor Login (Legacy)
       tags:
       - Authentication
+  /v1/tutorias:
+    get:
+      description: Retrieves all active tutorias.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved active tutorias
+          schema:
+            items:
+              $ref: '#/definitions/db.Tutoriasactiva'
+            type: array
+        "500":
+          description: Failed to retrieve tutorias
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List Active Tutorias
+      tags:
+      - Tutorias
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tutoring session.
+      parameters:
+      - description: Tutoria Data
+        in: body
+        name: tutoria
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTutoriaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created tutoria
+          schema:
+            $ref: '#/definitions/handler.CreateTutoriaResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to create tutoria
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create Tutoria
+      tags:
+      - Tutorias
+  /v1/tutorias/{id}:
+    delete:
+      description: Deletes a tutoria by its ID.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Successfully deleted tutoria
+        "400":
+          description: Invalid tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to delete tutoria
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete Tutoria
+      tags:
+      - Tutorias
+    get:
+      description: Retrieves a specific tutoria by its ID.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tutoria
+          schema:
+            $ref: '#/definitions/db.Tutoria'
+        "400":
+          description: Invalid tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve tutoria
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Tutoria by ID
+      tags:
+      - Tutorias
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing tutoria.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Tutoria Data
+        in: body
+        name: tutoria
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutoriaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated tutoria
+          schema:
+            $ref: '#/definitions/db.Tutoria'
+        "400":
+          description: Invalid request body or tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update tutoria
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Tutoria
+      tags:
+      - Tutorias
+  /v1/tutorias/{id}/estado:
+    put:
+      consumes:
+      - application/json
+      description: Updates the status of an existing tutoria.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New Status
+        in: body
+        name: estado
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutoriaEstadoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated tutoria status
+          schema:
+            $ref: '#/definitions/db.Tutoria'
+        "400":
+          description: Invalid request body or tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update tutoria status
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Tutoria Status
+      tags:
+      - Tutorias
 schemes:
 - https
 swagger: "2.0"
