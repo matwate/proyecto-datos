@@ -50,7 +50,7 @@ func main() {
 
 	// Unified Authentication Handler
 	unifiedLoginHandler := handler.UnifiedLoginHandler(queries)
-	mux.Handle("/v1/login/{mode}", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
+	mux.Handle("POST /v1/login/{mode}", unifiedLoginHandler) // Path prefix for /v1/login/{mode}
 
 	// Estudiante Handlers
 	estudianteHandlers := handler.EstudianteHandlers(queries)

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/matwate/proyecto-datos/db"
@@ -57,13 +56,7 @@ func UnifiedLoginHandler(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		// Extract mode from URL path
-		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		if len(pathParts) < 3 {
-			http.Error(w, "Invalid URL format. Expected /v1/login/{mode}", http.StatusBadRequest)
-			return
-		}
-		mode := pathParts[2] // v1/login/{mode}
+		mode := r.PathValue("mode")
 		fmt.Println("Login mode:", mode)
 		var req UnifiedLoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
