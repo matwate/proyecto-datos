@@ -136,7 +136,7 @@ func main() {
 	}
 
 	// Apply global middleware
-	wrappedMux := use(mux, handler.LoggingMiddleware) // Apply LoggingMiddleware globally
+	wrappedMux := use(mux, handler.LoggingMiddleware, handler.CORSMiddleware) // Apply LoggingMiddleware and CORSMiddleware globally
 
 	log.Printf("Starting server on port %s...\n", port)
 	if err := http.ListenAndServe(":"+port, wrappedMux); err != nil { // Use wrappedMux
