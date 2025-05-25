@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/matwate/proyecto-datos/db"
 )
 
@@ -22,10 +23,10 @@ type CreateTutorResponse struct {
 
 // UpdateTutorRequest represents the request body for updating a tutor.
 type UpdateTutorRequest struct {
-	Nombre            string `json:"nombre" example:"Juan Carlos"`
-	Apellido          string `json:"apellido" example:"Perez"`
-	Correo            string `json:"correo" example:"juan.perez@urosario.edu.co"`
-	ProgramaAcademico string `json:"programa_academico,omitempty" example:"Ingeniería de Sistemas"`
+	Nombre            string      `json:"nombre" example:"Juan Carlos"`
+	Apellido          string      `json:"apellido" example:"Perez"`
+	Correo            string      `json:"correo" example:"juan.perez@urosario.edu.co"`
+	ProgramaAcademico pgtype.Text `json:"programa_academico,omitempty" example:"Ingeniería de Sistemas"`
 }
 
 // LoginTutorRequest represents the request body for tutor login.
@@ -101,7 +102,7 @@ func createTutorHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 		Nombre:            estudiante.Nombre,
 		Apellido:          estudiante.Apellido,
 		Correo:            estudiante.Correo,
-		ProgramaAcademico: estudiante.ProgramaAcademico, // Changed from pgtype.Text
+		ProgramaAcademico: pgtype.Text{estudiante.ProgramaAcademico, estudiante.ProgramaAcademico != ""},
 	}
 
 	tutorID, err := queries.CreateTutor(r.Context(), tutorParams)

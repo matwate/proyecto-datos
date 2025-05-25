@@ -6,16 +6,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/matwate/proyecto-datos/db"
 )
 
 // CreateMateriaRequest represents the request body for creating a new materia.
 type CreateMateriaRequest struct {
-	Nombre      string `json:"nombre" example:"Cálculo I"`
-	Codigo      string `json:"codigo" example:"MATH101"`
-	Facultad    string `json:"facultad" example:"Ingeniería"`
-	Descripcion string `json:"descripcion,omitempty" example:"Introducción al cálculo diferencial e integral"`
-	Creditos    int32  `json:"creditos" example:"4"`
+	Nombre      string      `json:"nombre" example:"Cálculo I"`
+	Codigo      string      `json:"codigo" example:"MATH101"`
+	Facultad    string      `json:"facultad" example:"Ingeniería"`
+	Descripcion pgtype.Text `json:"descripcion,omitempty" example:"Introducción al cálculo diferencial e integral"`
+	Creditos    int32       `json:"creditos" example:"4"`
 }
 
 // CreateMateriaResponse represents the response body after creating a new materia.
@@ -25,11 +26,11 @@ type CreateMateriaResponse struct {
 
 // UpdateMateriaRequest represents the request body for updating a materia.
 type UpdateMateriaRequest struct {
-	Nombre      string `json:"nombre" example:"Cálculo I"`
-	Codigo      string `json:"codigo" example:"MATH101"`
-	Facultad    string `json:"facultad" example:"Ingeniería"`
-	Descripcion string `json:"descripcion,omitempty" example:"Introducción al cálculo diferencial e integral"`
-	Creditos    int32  `json:"creditos" example:"4"`
+	Nombre      string      `json:"nombre" example:"Cálculo I"`
+	Codigo      string      `json:"codigo" example:"MATH101"`
+	Facultad    string      `json:"facultad" example:"Ingeniería"`
+	Descripcion pgtype.Text `json:"descripcion,omitempty" example:"Introducción al cálculo diferencial e integral"`
+	Creditos    int32       `json:"creditos" example:"4"`
 }
 
 // MateriaHandlers handles all materia-related endpoints using Go 1.24 routing patterns.

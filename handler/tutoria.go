@@ -121,7 +121,7 @@ func createTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		HoraInicio:     horaInicio,
 		HoraFin:        horaFin,
 		Estado:         req.Estado,
-		FechaSolicitud: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		FechaSolicitud: pgtype.Timestamp{Time: time.Now(), Valid: true},
 		Lugar:          req.Lugar,
 	}
 
