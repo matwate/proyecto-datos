@@ -160,5 +160,4 @@ $$ LANGUAGE plpgsql;
 -- Trigger para validar confirmación de tutorías
 CREATE TRIGGER validar_confirmacion_tutoria_trigger
 BEFORE INSERT OR UPDATE ON TUTORIAS
-
-FOR EACH ROW EXECUTE FUNCTION validar_confirmacion_tutoria();OR EACH ROW EXECUTE FUNCTION validar_confirmacion_tutoria();
+FOR EACH ROW EXECUTE FUNCTION validar_confirmacion_tutoria();
