@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -63,7 +64,7 @@ func UnifiedLoginHandler(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 		mode := pathParts[2] // v1/login/{mode}
-
+		fmt.Println("Login mode:", mode)
 		var req UnifiedLoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
