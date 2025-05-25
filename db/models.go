@@ -85,16 +85,17 @@ type Tutore struct {
 }
 
 type Tutoria struct {
-	TutoriaID      int32
-	EstudianteID   int32
-	TutorID        int32
-	MateriaID      int32
-	Fecha          pgtype.Date
-	HoraInicio     pgtype.Time
-	HoraFin        pgtype.Time
-	Estado         string
-	FechaSolicitud pgtype.Timestamptz
-	Lugar          string
+	TutoriaID         int32
+	EstudianteID      int32
+	TutorID           int32
+	MateriaID         int32
+	Fecha             pgtype.Date
+	HoraInicio        pgtype.Time
+	HoraFin           pgtype.Time
+	Estado            string
+	FechaSolicitud    pgtype.Timestamptz
+	FechaConfirmacion pgtype.Timestamptz
+	Lugar             string
 }
 
 type Tutoriasactiva struct {

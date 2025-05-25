@@ -60,6 +60,7 @@ CREATE TABLE TUTORIAS (
     hora_fin TIME NOT NULL,
     estado VARCHAR(100) NOT NULL, -- solicitada, confirmada, completada, cancelada
     fecha_solicitud TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    fecha_confirmacion TIMESTAMP WITH TIME ZONE,
     lugar VARCHAR(100) NOT NULL, -- Changed to NOT NULL
     CHECK (hora_inicio < hora_fin),
     CHECK (fecha >= CURRENT_DATE OR (fecha = CURRENT_DATE AND hora_inicio >= CURRENT_TIME)),
@@ -154,5 +155,4 @@ $$ LANGUAGE plpgsql;
 -- Trigger para validar confirmación de tutorías
 CREATE TRIGGER validar_confirmacion_tutoria_trigger
 BEFORE INSERT OR UPDATE ON TUTORIAS
-
 FOR EACH ROW EXECUTE FUNCTION validar_confirmacion_tutoria();

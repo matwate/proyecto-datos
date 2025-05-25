@@ -340,7 +340,7 @@ const createTutoria = `-- name: CreateTutoria :one
 
 INSERT INTO TUTORIAS (estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, lugar
 `
 
 type CreateTutoriaParams struct {
@@ -381,6 +381,7 @@ func (q *Queries) CreateTutoria(ctx context.Context, arg CreateTutoriaParams) (T
 		&i.HoraFin,
 		&i.Estado,
 		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
 		&i.Lugar,
 	)
 	return i, err
@@ -1119,7 +1120,7 @@ func (q *Queries) ListTutoriasActivas(ctx context.Context) ([]Tutoriasactiva, er
 }
 
 const listTutoriasByEstado = `-- name: ListTutoriasByEstado :many
-SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, 
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, 
        tu.nombre as tutor_nombre, tu.apellido as tutor_apellido, m.nombre as materia_nombre
 FROM TUTORIAS t
 JOIN ESTUDIANTES e ON t.estudiante_id = e.estudiante_id
@@ -1139,6 +1140,7 @@ type ListTutoriasByEstadoRow struct {
 	HoraFin            pgtype.Time
 	Estado             string
 	FechaSolicitud     pgtype.Timestamptz
+	FechaConfirmacion  pgtype.Timestamptz
 	Lugar              string
 	EstudianteNombre   string
 	EstudianteApellido string
@@ -1166,6 +1168,7 @@ func (q *Queries) ListTutoriasByEstado(ctx context.Context, estado string) ([]Li
 			&i.HoraFin,
 			&i.Estado,
 			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
 			&i.Lugar,
 			&i.EstudianteNombre,
 			&i.EstudianteApellido,
@@ -1184,7 +1187,7 @@ func (q *Queries) ListTutoriasByEstado(ctx context.Context, estado string) ([]Li
 }
 
 const listTutoriasByEstudiante = `-- name: ListTutoriasByEstudiante :many
-SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.lugar, tu.nombre as tutor_nombre, tu.apellido as tutor_apellido, m.nombre as materia_nombre
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.lugar, tu.nombre as tutor_nombre, tu.apellido as tutor_apellido, m.nombre as materia_nombre
 FROM TUTORIAS t
 JOIN TUTORES tu ON t.tutor_id = tu.tutor_id
 JOIN MATERIAS m ON t.materia_id = m.materia_id
@@ -1193,19 +1196,20 @@ ORDER BY t.fecha DESC, t.hora_inicio DESC
 `
 
 type ListTutoriasByEstudianteRow struct {
-	TutoriaID      int32
-	EstudianteID   int32
-	TutorID        int32
-	MateriaID      int32
-	Fecha          pgtype.Date
-	HoraInicio     pgtype.Time
-	HoraFin        pgtype.Time
-	Estado         string
-	FechaSolicitud pgtype.Timestamptz
-	Lugar          string
-	TutorNombre    string
-	TutorApellido  string
-	MateriaNombre  string
+	TutoriaID         int32
+	EstudianteID      int32
+	TutorID           int32
+	MateriaID         int32
+	Fecha             pgtype.Date
+	HoraInicio        pgtype.Time
+	HoraFin           pgtype.Time
+	Estado            string
+	FechaSolicitud    pgtype.Timestamptz
+	FechaConfirmacion pgtype.Timestamptz
+	Lugar             string
+	TutorNombre       string
+	TutorApellido     string
+	MateriaNombre     string
 }
 
 func (q *Queries) ListTutoriasByEstudiante(ctx context.Context, estudianteID int32) ([]ListTutoriasByEstudianteRow, error) {
@@ -1227,6 +1231,7 @@ func (q *Queries) ListTutoriasByEstudiante(ctx context.Context, estudianteID int
 			&i.HoraFin,
 			&i.Estado,
 			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
 			&i.Lugar,
 			&i.TutorNombre,
 			&i.TutorApellido,
@@ -1243,7 +1248,7 @@ func (q *Queries) ListTutoriasByEstudiante(ctx context.Context, estudianteID int
 }
 
 const listTutoriasByTutor = `-- name: ListTutoriasByTutor :many
-SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, m.nombre as materia_nombre
+SELECT t.tutoria_id, t.estudiante_id, t.tutor_id, t.materia_id, t.fecha, t.hora_inicio, t.hora_fin, t.estado, t.fecha_solicitud, t.fecha_confirmacion, t.lugar, e.nombre as estudiante_nombre, e.apellido as estudiante_apellido, m.nombre as materia_nombre
 FROM TUTORIAS t
 JOIN ESTUDIANTES e ON t.estudiante_id = e.estudiante_id
 JOIN MATERIAS m ON t.materia_id = m.materia_id
@@ -1261,6 +1266,7 @@ type ListTutoriasByTutorRow struct {
 	HoraFin            pgtype.Time
 	Estado             string
 	FechaSolicitud     pgtype.Timestamptz
+	FechaConfirmacion  pgtype.Timestamptz
 	Lugar              string
 	EstudianteNombre   string
 	EstudianteApellido string
@@ -1286,6 +1292,7 @@ func (q *Queries) ListTutoriasByTutor(ctx context.Context, tutorID int32) ([]Lis
 			&i.HoraFin,
 			&i.Estado,
 			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
 			&i.Lugar,
 			&i.EstudianteNombre,
 			&i.EstudianteApellido,
@@ -1591,7 +1598,7 @@ func (q *Queries) SelectTutorMateriaById(ctx context.Context, asignacionID int32
 }
 
 const selectTutoriaById = `-- name: SelectTutoriaById :one
-SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar FROM TUTORIAS WHERE tutoria_id = $1
+SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, lugar FROM TUTORIAS WHERE tutoria_id = $1
 `
 
 func (q *Queries) SelectTutoriaById(ctx context.Context, tutoriaID int32) (Tutoria, error) {
@@ -1607,6 +1614,7 @@ func (q *Queries) SelectTutoriaById(ctx context.Context, tutoriaID int32) (Tutor
 		&i.HoraFin,
 		&i.Estado,
 		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
 		&i.Lugar,
 	)
 	return i, err
@@ -1878,7 +1886,7 @@ const updateTutoria = `-- name: UpdateTutoria :one
 UPDATE TUTORIAS 
 SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
 WHERE tutoria_id = $1
-RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, lugar
 `
 
 type UpdateTutoriaParams struct {
@@ -1908,6 +1916,7 @@ func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (T
 		&i.HoraFin,
 		&i.Estado,
 		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
 		&i.Lugar,
 	)
 	return i, err
@@ -1917,7 +1926,7 @@ const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :one
 UPDATE TUTORIAS 
 SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
 WHERE tutoria_id = $1
-RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, lugar
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, lugar
 `
 
 type UpdateTutoriaEstadoParams struct {
@@ -1938,6 +1947,7 @@ func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEsta
 		&i.HoraFin,
 		&i.Estado,
 		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
 		&i.Lugar,
 	)
 	return i, err
