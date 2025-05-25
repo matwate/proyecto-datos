@@ -20,7 +20,7 @@ ORDER BY total_estudiantes DESC
 `
 
 type CountEstudiantesByProgramaRow struct {
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	TotalEstudiantes  int64
 }
 
@@ -144,7 +144,7 @@ type CreateEstudianteParams struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	Semestre          pgtype.Int4
 	Ti                pgtype.Int4
 }
@@ -154,7 +154,7 @@ type CreateEstudianteRow struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	Semestre          pgtype.Int4
 	Ti                pgtype.Int4
 	FechaRegistro     pgtype.Timestamp
@@ -196,8 +196,8 @@ RETURNING materia_id, nombre, codigo, facultad, descripcion, creditos
 type CreateMateriaParams struct {
 	Nombre      string
 	Codigo      string
-	Facultad    pgtype.Text
-	Descripcion pgtype.Text
+	Facultad    string
+	Descripcion string
 	Creditos    int32
 }
 
@@ -276,7 +276,7 @@ type CreateTutorParams struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 }
 
 // ========================================
@@ -352,7 +352,7 @@ type CreateTutoriaParams struct {
 	HoraFin        pgtype.Time
 	Estado         string
 	FechaSolicitud pgtype.Timestamptz
-	Lugar          pgtype.Text
+	Lugar          string
 }
 
 // ========================================
@@ -615,7 +615,7 @@ const listEstudiantesByPrograma = `-- name: ListEstudiantesByPrograma :many
 SELECT estudiante_id, nombre, apellido, correo, programa_academico, semestre, fecha_registro, ti FROM ESTUDIANTES WHERE programa_academico = $1 ORDER BY apellido, nombre
 `
 
-func (q *Queries) ListEstudiantesByPrograma(ctx context.Context, programaAcademico pgtype.Text) ([]Estudiante, error) {
+func (q *Queries) ListEstudiantesByPrograma(ctx context.Context, programaAcademico string) ([]Estudiante, error) {
 	rows, err := q.db.Query(ctx, listEstudiantesByPrograma, programaAcademico)
 	if err != nil {
 		return nil, err
@@ -714,7 +714,7 @@ const listMateriasByFacultad = `-- name: ListMateriasByFacultad :many
 SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS WHERE facultad = $1 ORDER BY codigo
 `
 
-func (q *Queries) ListMateriasByFacultad(ctx context.Context, facultad pgtype.Text) ([]Materia, error) {
+func (q *Queries) ListMateriasByFacultad(ctx context.Context, facultad string) ([]Materia, error) {
 	rows, err := q.db.Query(ctx, listMateriasByFacultad, facultad)
 	if err != nil {
 		return nil, err
@@ -986,7 +986,7 @@ type ListTutoresDisponiblesByMateriaAndDiaRow struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	FechaRegistro     pgtype.Timestamp
 	DiaSemana         int32
 	HoraInicio        pgtype.Time
@@ -1041,7 +1041,7 @@ type ListTutoresWithMateriasRow struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	FechaRegistro     pgtype.Timestamp
 	MateriasAsignadas []byte
 	TotalMaterias     int64
@@ -1139,7 +1139,7 @@ type ListTutoriasByEstadoRow struct {
 	HoraFin            pgtype.Time
 	Estado             string
 	FechaSolicitud     pgtype.Timestamptz
-	Lugar              pgtype.Text
+	Lugar              string
 	EstudianteNombre   string
 	EstudianteApellido string
 	TutorNombre        string
@@ -1202,7 +1202,7 @@ type ListTutoriasByEstudianteRow struct {
 	HoraFin        pgtype.Time
 	Estado         string
 	FechaSolicitud pgtype.Timestamptz
-	Lugar          pgtype.Text
+	Lugar          string
 	TutorNombre    string
 	TutorApellido  string
 	MateriaNombre  string
@@ -1261,7 +1261,7 @@ type ListTutoriasByTutorRow struct {
 	HoraFin            pgtype.Time
 	Estado             string
 	FechaSolicitud     pgtype.Timestamptz
-	Lugar              pgtype.Text
+	Lugar              string
 	EstudianteNombre   string
 	EstudianteApellido string
 	MateriaNombre      string
@@ -1721,7 +1721,7 @@ type UpdateEstudianteParams struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 	Semestre          pgtype.Int4
 	Ti                pgtype.Int4
 }
@@ -1761,8 +1761,8 @@ type UpdateMateriaParams struct {
 	MateriaID   int32
 	Nombre      string
 	Codigo      string
-	Facultad    pgtype.Text
-	Descripcion pgtype.Text
+	Facultad    string
+	Descripcion string
 	Creditos    int32
 }
 
@@ -1826,7 +1826,7 @@ type UpdateTutorParams struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico pgtype.Text
+	ProgramaAcademico string
 }
 
 func (q *Queries) UpdateTutor(ctx context.Context, arg UpdateTutorParams) (Tutore, error) {
@@ -1886,7 +1886,7 @@ type UpdateTutoriaParams struct {
 	Fecha      pgtype.Date
 	HoraInicio pgtype.Time
 	HoraFin    pgtype.Time
-	Lugar      pgtype.Text
+	Lugar      string
 }
 
 func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (Tutoria, error) {

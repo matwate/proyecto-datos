@@ -1981,9 +1981,6 @@ const docTemplate = `{
         "db.ListTutoriasByEstadoRow": {
             "type": "object",
             "properties": {
-                "asistenciaConfirmada": {
-                    "$ref": "#/definitions/pgtype.Bool"
-                },
                 "estado": {
                     "type": "string"
                 },
@@ -1999,11 +1996,8 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
-                "fechaConfirmacion": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2019,9 +2013,6 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
-                },
-                "temasTratados": {
-                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorApellido": {
                     "type": "string"
@@ -2040,9 +2031,6 @@ const docTemplate = `{
         "db.ListTutoriasByEstudianteRow": {
             "type": "object",
             "properties": {
-                "asistenciaConfirmada": {
-                    "$ref": "#/definitions/pgtype.Bool"
-                },
                 "estado": {
                     "type": "string"
                 },
@@ -2052,11 +2040,8 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
-                "fechaConfirmacion": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2072,9 +2057,6 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
-                },
-                "temasTratados": {
-                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorApellido": {
                     "type": "string"
@@ -2093,9 +2075,6 @@ const docTemplate = `{
         "db.ListTutoriasByTutorRow": {
             "type": "object",
             "properties": {
-                "asistenciaConfirmada": {
-                    "$ref": "#/definitions/pgtype.Bool"
-                },
                 "estado": {
                     "type": "string"
                 },
@@ -2111,11 +2090,8 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
-                "fechaConfirmacion": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2131,9 +2107,6 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
-                },
-                "temasTratados": {
-                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2153,7 +2126,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "descripcion": {
-                    "$ref": "#/definitions/pgtype.Text"
+                    "type": "string"
                 },
                 "facultad": {
                     "type": "string"
@@ -2231,7 +2204,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "programaAcademico": {
-                    "$ref": "#/definitions/pgtype.Text"
+                    "type": "string"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2241,9 +2214,6 @@ const docTemplate = `{
         "db.Tutoria": {
             "type": "object",
             "properties": {
-                "asistenciaConfirmada": {
-                    "$ref": "#/definitions/pgtype.Bool"
-                },
                 "estado": {
                     "type": "string"
                 },
@@ -2253,11 +2223,8 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
-                "fechaConfirmacion": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2270,9 +2237,6 @@ const docTemplate = `{
                 },
                 "materiaID": {
                     "type": "integer"
-                },
-                "temasTratados": {
-                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2721,17 +2685,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pgtype.Bool": {
-            "type": "object",
-            "properties": {
-                "bool": {
-                    "type": "boolean"
-                },
-                "valid": {
-                    "type": "boolean"
-                }
-            }
-        },
         "pgtype.Date": {
             "type": "object",
             "properties": {
@@ -2770,17 +2723,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pgtype.Text": {
-            "type": "object",
-            "properties": {
-                "string": {
-                    "type": "string"
-                },
-                "valid": {
-                    "type": "boolean"
-                }
-            }
-        },
         "pgtype.Timestamp": {
             "type": "object",
             "properties": {
@@ -2789,6 +2731,20 @@ const docTemplate = `{
                 },
                 "time": {
                     "description": "Time zone will be ignored when encoding to PostgreSQL.",
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Timestamptz": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
                     "type": "string"
                 },
                 "valid": {

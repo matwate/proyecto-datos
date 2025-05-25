@@ -1,11 +1,10 @@
-
 -- Tabla de Estudiantes
 CREATE TABLE ESTUDIANTES (
     estudiante_id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
-    programa_academico VARCHAR(100),
+    programa_academico VARCHAR(100) NOT NULL, -- Changed to NOT NULL
     semestre INTEGER CHECK (semestre > 0 AND semestre <= 12),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -16,7 +15,7 @@ CREATE TABLE TUTORES (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
-    programa_academico VARCHAR(100),
+    programa_academico VARCHAR(100) NOT NULL, -- Changed to NOT NULL
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -25,8 +24,8 @@ CREATE TABLE MATERIAS (
     materia_id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     codigo VARCHAR(100) NOT NULL UNIQUE,
-    facultad VARCHAR(100),
-    descripcion TEXT,
+    facultad VARCHAR(100) NOT NULL, -- Changed to NOT NULL
+    descripcion TEXT NOT NULL, -- Changed to NOT NULL
     creditos INTEGER NOT NULL CHECK (creditos > 0)
 );
 
@@ -61,7 +60,7 @@ CREATE TABLE TUTORIAS (
     hora_fin TIME NOT NULL,
     estado VARCHAR(100) NOT NULL, -- solicitada, confirmada, completada, cancelada
     fecha_solicitud TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    lugar VARCHAR(100),
+    lugar VARCHAR(100) NOT NULL, -- Changed to NOT NULL
     CHECK (hora_inicio < hora_fin),
     CHECK (fecha >= CURRENT_DATE OR (fecha = CURRENT_DATE AND hora_inicio >= CURRENT_TIME)),
     CHECK (fecha_confirmacion IS NULL OR estado != 'confirmada' OR 

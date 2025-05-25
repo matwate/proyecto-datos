@@ -7,17 +7,18 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/matwate/proyecto-datos/db"
 )
 
 // CreateEstudianteRequest represents the request body for creating a new student.
 type CreateEstudianteRequest struct {
-	Nombre            string `json:"nombre" example:"Juan"`
-	Apellido          string `json:"apellido" example:"Perez"`
-	Correo            string `json:"correo" example:"juan.perez@urosario.edu.co"`
+	Nombre            string `json:"nombre"             example:"Juan"`
+	Apellido          string `json:"apellido"           example:"Perez"`
+	Correo            string `json:"correo"             example:"juan.perez@urosario.edu.co"`
 	ProgramaAcademico string `json:"programa_academico" example:"Ingeniería de Sistemas"`
-	Semestre          int32  `json:"semestre" example:"5"`
-	TI                int32  `json:"ti" example:"1000123456"`
+	Semestre          int32  `json:"semestre"           example:"5"`
+	TI                int32  `json:"ti"                 example:"1000123456"`
 }
 
 // CreateEstudianteResponse represents the response body after creating a new student.
@@ -27,12 +28,12 @@ type CreateEstudianteResponse struct {
 
 // UpdateEstudianteRequest represents the request body for updating a student.
 type UpdateEstudianteRequest struct {
-	Nombre            string `json:"nombre" example:"Juan Carlos"`
-	Apellido          string `json:"apellido" example:"Perez"`
-	Correo            string `json:"correo" example:"juan.perez@urosario.edu.co"`
+	Nombre            string `json:"nombre"             example:"Juan Carlos"`
+	Apellido          string `json:"apellido"           example:"Perez"`
+	Correo            string `json:"correo"             example:"juan.perez@urosario.edu.co"`
 	ProgramaAcademico string `json:"programa_academico" example:"Ingeniería de Sistemas"`
-	Semestre          int32  `json:"semestre" example:"6"`
-	TI                int32  `json:"ti" example:"1000123456"`
+	Semestre          int32  `json:"semestre"           example:"6"`
+	TI                int32  `json:"ti"                 example:"1000123456"`
 }
 
 // EstudianteHandlers handles all estudiante-related endpoints using Go 1.24 routing patterns.
@@ -131,7 +132,11 @@ func handleEstudianteGET(w http.ResponseWriter, r *http.Request, queries *db.Que
 func listEstudiantesHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
 	estudiantes, err := queries.ListEstudiantes(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to retrieve estudiantes: "+err.Error(), http.StatusInternalServerError)
+		http.Error(
+			w,
+			"Failed to retrieve estudiantes: "+err.Error(),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
@@ -150,7 +155,12 @@ func listEstudiantesHandler(w http.ResponseWriter, r *http.Request, queries *db.
 // @Failure      404 {object} ErrorResponse "Estudiante not found"
 // @Failure      500 {object} ErrorResponse "Failed to retrieve estudiante"
 // @Router       /v1/estudiantes/{id} [get]
-func getEstudianteByIDHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, idStr string) {
+func getEstudianteByIDHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	idStr string,
+) {
 	id, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid estudiante ID", http.StatusBadRequest)
@@ -180,10 +190,19 @@ func getEstudianteByIDHandler(w http.ResponseWriter, r *http.Request, queries *d
 // @Success      200 {array} db.Estudiante "Successfully retrieved estudiantes"
 // @Failure      500 {object} ErrorResponse "Failed to retrieve estudiantes"
 // @Router       /v1/estudiantes [get]
-func listEstudiantesByProgramaHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, programa string) {
+func listEstudiantesByProgramaHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	programa string,
+) {
 	estudiantes, err := queries.ListEstudiantesByPrograma(r.Context(), programa)
 	if err != nil {
-		http.Error(w, "Failed to retrieve estudiantes: "+err.Error(), http.StatusInternalServerError)
+		http.Error(
+			w,
+			"Failed to retrieve estudiantes: "+err.Error(),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 

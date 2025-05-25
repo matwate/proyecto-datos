@@ -121,7 +121,7 @@ func createTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		HoraInicio:     horaInicio,
 		HoraFin:        horaFin,
 		Estado:         req.Estado,
-		FechaSolicitud: pgtype.Timestamp{Time: time.Now(), Valid: true},
+		FechaSolicitud: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 		Lugar:          req.Lugar,
 	}
 
@@ -366,13 +366,11 @@ func updateTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 	}
 
 	params := db.UpdateTutoriaParams{
-		TutoriaID:            int32(id),
-		Fecha:                fecha,
-		HoraInicio:           horaInicio,
-		HoraFin:              horaFin,
-		Lugar:                req.Lugar,
-		TemasTratados:        pgtype.Text{String: req.TemasTratados, Valid: req.TemasTratados != ""},
-		AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
+		TutoriaID:  int32(id),
+		Fecha:      fecha,
+		HoraInicio: horaInicio,
+		HoraFin:    horaFin,
+		Lugar:      req.Lugar,
 	}
 
 	tutoria, err := queries.UpdateTutoria(r.Context(), params)

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/matwate/proyecto-datos/db"
 )
 
@@ -76,7 +75,7 @@ func createMateriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		Nombre:      req.Nombre,
 		Codigo:      req.Codigo,
 		Facultad:    req.Facultad,
-		Descripcion: pgtype.Text{String: req.Descripcion, Valid: req.Descripcion != ""},
+		Descripcion: req.Descripcion,
 		Creditos:    req.Creditos,
 	}
 
@@ -253,7 +252,7 @@ func updateMateriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		Nombre:      req.Nombre,
 		Codigo:      req.Codigo,
 		Facultad:    req.Facultad,
-		Descripcion: pgtype.Text{String: req.Descripcion, Valid: req.Descripcion != ""},
+		Descripcion: req.Descripcion,
 		Creditos:    req.Creditos,
 	}
 

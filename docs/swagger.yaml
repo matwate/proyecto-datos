@@ -85,8 +85,6 @@ definitions:
     type: object
   db.ListTutoriasByEstadoRow:
     properties:
-      asistenciaConfirmada:
-        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteApellido:
@@ -97,10 +95,8 @@ definitions:
         type: string
       fecha:
         $ref: '#/definitions/pgtype.Date'
-      fechaConfirmacion:
-        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamp'
+        $ref: '#/definitions/pgtype.Timestamptz'
       horaFin:
         type: string
       horaInicio:
@@ -111,8 +107,6 @@ definitions:
         type: integer
       materiaNombre:
         type: string
-      temasTratados:
-        $ref: '#/definitions/pgtype.Text'
       tutorApellido:
         type: string
       tutorID:
@@ -124,18 +118,14 @@ definitions:
     type: object
   db.ListTutoriasByEstudianteRow:
     properties:
-      asistenciaConfirmada:
-        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteID:
         type: integer
       fecha:
         $ref: '#/definitions/pgtype.Date'
-      fechaConfirmacion:
-        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamp'
+        $ref: '#/definitions/pgtype.Timestamptz'
       horaFin:
         type: string
       horaInicio:
@@ -146,8 +136,6 @@ definitions:
         type: integer
       materiaNombre:
         type: string
-      temasTratados:
-        $ref: '#/definitions/pgtype.Text'
       tutorApellido:
         type: string
       tutorID:
@@ -159,8 +147,6 @@ definitions:
     type: object
   db.ListTutoriasByTutorRow:
     properties:
-      asistenciaConfirmada:
-        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteApellido:
@@ -171,10 +157,8 @@ definitions:
         type: string
       fecha:
         $ref: '#/definitions/pgtype.Date'
-      fechaConfirmacion:
-        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamp'
+        $ref: '#/definitions/pgtype.Timestamptz'
       horaFin:
         type: string
       horaInicio:
@@ -185,8 +169,6 @@ definitions:
         type: integer
       materiaNombre:
         type: string
-      temasTratados:
-        $ref: '#/definitions/pgtype.Text'
       tutorID:
         type: integer
       tutoriaID:
@@ -199,7 +181,7 @@ definitions:
       creditos:
         type: integer
       descripcion:
-        $ref: '#/definitions/pgtype.Text'
+        type: string
       facultad:
         type: string
       materiaID:
@@ -250,24 +232,20 @@ definitions:
       nombre:
         type: string
       programaAcademico:
-        $ref: '#/definitions/pgtype.Text'
+        type: string
       tutorID:
         type: integer
     type: object
   db.Tutoria:
     properties:
-      asistenciaConfirmada:
-        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteID:
         type: integer
       fecha:
         $ref: '#/definitions/pgtype.Date'
-      fechaConfirmacion:
-        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamp'
+        $ref: '#/definitions/pgtype.Timestamptz'
       horaFin:
         type: string
       horaInicio:
@@ -276,8 +254,6 @@ definitions:
         type: string
       materiaID:
         type: integer
-      temasTratados:
-        $ref: '#/definitions/pgtype.Text'
       tutorID:
         type: integer
       tutoriaID:
@@ -590,13 +566,6 @@ definitions:
         example: Derivadas y límites
         type: string
     type: object
-  pgtype.Bool:
-    properties:
-      bool:
-        type: boolean
-      valid:
-        type: boolean
-    type: object
   pgtype.Date:
     properties:
       infinityModifier:
@@ -623,19 +592,21 @@ definitions:
       valid:
         type: boolean
     type: object
-  pgtype.Text:
-    properties:
-      string:
-        type: string
-      valid:
-        type: boolean
-    type: object
   pgtype.Timestamp:
     properties:
       infinityModifier:
         $ref: '#/definitions/pgtype.InfinityModifier'
       time:
         description: Time zone will be ignored when encoding to PostgreSQL.
+        type: string
+      valid:
+        type: boolean
+    type: object
+  pgtype.Timestamptz:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
         type: string
       valid:
         type: boolean
