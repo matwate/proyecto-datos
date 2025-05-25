@@ -219,7 +219,7 @@ RETURNING *;
 
 -- name: UpdateTutoria :one
 UPDATE TUTORIAS 
-SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, temas_tratados = $6, asistencia_confirmada = $7
+SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
 WHERE tutoria_id = $1
 RETURNING *;
 
@@ -288,5 +288,44 @@ WHERE periodo_inicio >= $1 AND periodo_fin <= $2
 ORDER BY fecha_generacion DESC;
 
 
+-- ========================================
+-- ADDITIONAL USEFUL QUERIES FOR URTUTORIAS
+-- ========================================
 
+-- ========================================
+-- TUTORES - MISSING QUERIES
+-- ========================================
+
+-- name: ListTutoresWithMaterias :many
+SELECT t.*, 
+       STRING_AGG(m.nombre, ', ') as materias_asignadas,
+       COUNT(tm.materia_id) as total_materias
+FROM TUTORES t
+LEFT JOIN TUTOR_MATERIAS tm ON t.tutor_id = tm.tutor_id AND tm.activo = true
+LEFT JOIN MATERIAS m ON tm.materia_id = m.materia_id
+GROUP BY t.tutor_id, t.nombre, t.apellido, t.correo, t.programa_academico, t.fecha_registro
+ORDER BY t.apellido, t.nombre;
+
+-- name: ListTutoresDisponiblesByMateriaAndDia :many
+SELECT DISTINCT t.*, d.dia_semana, d.hora_inicio, d.hora_fin
+FROM TUTORES t
+JOIN TUTOR_MATERIAS tm ON t.tutor_id = tm.tutor_id
+JOIN DISPONIBILIDAD d ON t.tutor_id = d.tutor_id
+WHERE tm.materia_id = $1 AND tm.activo = true AND d.dia_semana = $2
+ORDER BY d.hora_inicio;
+
+-- ========================================
+-- ESTUDIANTES - MISSING QUERIES
+-- ========================================
+
+-- name: CountEstudiantesByPrograma :many
+SELECT programa_academico, COUNT(*) as total_estudiantes
+FROM ESTUDIANTES
+GROUP BY programa_academico
+ORDER BY total_estudiantes DESC;
+
+-- name: ListEstudiantesBySemestre :many
+SELECT * FROM ESTUDIANTES 
+WHERE semestre = $1 
+ORDER BY apellido, nombre;
 

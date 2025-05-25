@@ -42,7 +42,7 @@ type Estudiante struct {
 	Nombre            string
 	Apellido          string
 	Correo            string
-	ProgramaAcademico string
+	ProgramaAcademico pgtype.Text
 	Semestre          pgtype.Int4
 	FechaRegistro     pgtype.Timestamp
 	Ti                pgtype.Int4
@@ -52,7 +52,7 @@ type Materia struct {
 	MateriaID   int32
 	Nombre      string
 	Codigo      string
-	Facultad    string
+	Facultad    pgtype.Text
 	Descripcion pgtype.Text
 	Creditos    int32
 }
@@ -85,19 +85,16 @@ type Tutore struct {
 }
 
 type Tutoria struct {
-	TutoriaID            int32
-	EstudianteID         int32
-	TutorID              int32
-	MateriaID            int32
-	Fecha                pgtype.Date
-	HoraInicio           pgtype.Time
-	HoraFin              pgtype.Time
-	Estado               string
-	FechaSolicitud       pgtype.Timestamp
-	FechaConfirmacion    pgtype.Timestamp
-	TemasTratados        pgtype.Text
-	AsistenciaConfirmada pgtype.Bool
-	Lugar                string
+	TutoriaID      int32
+	EstudianteID   int32
+	TutorID        int32
+	MateriaID      int32
+	Fecha          pgtype.Date
+	HoraInicio     pgtype.Time
+	HoraFin        pgtype.Time
+	Estado         string
+	FechaSolicitud pgtype.Timestamptz
+	Lugar          pgtype.Text
 }
 
 type Tutoriasactiva struct {
@@ -110,6 +107,6 @@ type Tutoriasactiva struct {
 	Fecha              pgtype.Date
 	HoraInicio         pgtype.Time
 	HoraFin            pgtype.Time
-	Lugar              string
+	Lugar              pgtype.Text
 	Estado             string
 }

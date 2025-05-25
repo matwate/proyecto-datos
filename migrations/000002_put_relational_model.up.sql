@@ -1,5 +1,3 @@
--- Crear base de datos para URTutorias
--- SQL compatible con PostgreSQL
 
 -- Tabla de Estudiantes
 CREATE TABLE ESTUDIANTES (
@@ -7,7 +5,7 @@ CREATE TABLE ESTUDIANTES (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
-    programa_academico VARCHAR(100) NOT NULL,
+    programa_academico VARCHAR(100),
     semestre INTEGER CHECK (semestre > 0 AND semestre <= 12),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -25,9 +23,9 @@ CREATE TABLE TUTORES (
 -- Tabla de Materias
 CREATE TABLE MATERIAS (
     materia_id SERIAL PRIMARY KEY,
-    nombre VARCHAR(200) NOT NULL,
-    codigo VARCHAR(20) NOT NULL UNIQUE,
-    facultad VARCHAR(100) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    codigo VARCHAR(100) NOT NULL UNIQUE,
+    facultad VARCHAR(100),
     descripcion TEXT,
     creditos INTEGER NOT NULL CHECK (creditos > 0)
 );
@@ -61,12 +59,9 @@ CREATE TABLE TUTORIAS (
     fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
-    estado VARCHAR(20) NOT NULL CHECK (estado IN ('solicitada', 'confirmada', 'cancelada', 'completada')),
-    fecha_solicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_confirmacion TIMESTAMP,
-    temas_tratados TEXT,
-    asistencia_confirmada BOOLEAN DEFAULT FALSE,
-    lugar VARCHAR(100) NOT NULL,
+    estado VARCHAR(100) NOT NULL, -- solicitada, confirmada, completada, cancelada
+    fecha_solicitud TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    lugar VARCHAR(100),
     CHECK (hora_inicio < hora_fin),
     CHECK (fecha >= CURRENT_DATE OR (fecha = CURRENT_DATE AND hora_inicio >= CURRENT_TIME)),
     CHECK (fecha_confirmacion IS NULL OR estado != 'confirmada' OR 
@@ -80,7 +75,7 @@ WHERE (estado = 'solicitada' OR estado = 'confirmada');
 -- Tabla de reportes
 CREATE TABLE REPORTES (
     reporte_id SERIAL PRIMARY KEY,
-    tipo_reporte VARCHAR(50) NOT NULL,
+    tipo_reporte VARCHAR(100) NOT NULL,
     fecha_generacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     periodo_inicio DATE NOT NULL,
     periodo_fin DATE NOT NULL,

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/matwate/proyecto-datos/db"
 )
 
@@ -23,16 +24,16 @@ type CreateTutorResponse struct {
 
 // UpdateTutorRequest represents the request body for updating a tutor.
 type UpdateTutorRequest struct {
-	Nombre            string `json:"nombre" example:"Juan Carlos"`
-	Apellido          string `json:"apellido" example:"Perez"`
-	Correo            string `json:"correo" example:"juan.perez@urosario.edu.co"`
+	Nombre            string `json:"nombre"                       example:"Juan Carlos"`
+	Apellido          string `json:"apellido"                     example:"Perez"`
+	Correo            string `json:"correo"                       example:"juan.perez@urosario.edu.co"`
 	ProgramaAcademico string `json:"programa_academico,omitempty" example:"Ingeniería de Sistemas"`
 }
 
 // LoginTutorRequest represents the request body for tutor login.
 type LoginTutorRequest struct {
 	Correo string `json:"correo" example:"tutor.perez@urosario.edu.co"`
-	TI     int32  `json:"ti" example:"1000123456"`
+	TI     int32  `json:"ti"     example:"1000123456"`
 }
 
 // LoginTutorResponse represents the response for a successful tutor login.
@@ -47,6 +48,31 @@ type LoginTutorResponse struct {
 // @Tags         Tutores
 func TutorHandlers(queries *db.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Handle specific new routes first
+		if strings.HasSuffix(r.URL.Path, "/with-materias") && r.Method == http.MethodGet {
+			listTutoresWithMateriasHandler(w, r, queries)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/v1/tutores/disponibles/") && r.Method == http.MethodGet {
+			parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/v1/tutores/disponibles/"), "/")
+			if len(parts) == 2 { // Expecting materia/{materia_id}/dia/{dia_semana}
+				materiaIDStr := parts[0]
+				diaSemana := parts[1]
+				diaSemanaInt, err := strconv.ParseInt(diaSemana, 10, 32)
+				if err != nil {
+					http.Error(w, "Invalid Dia Semana", http.StatusBadRequest)
+				}
+				listTutoresDisponiblesByMateriaAndDiaHandler(
+					w,
+					r,
+					queries,
+					materiaIDStr,
+					int32(diaSemanaInt),
+				)
+				return
+			}
+		}
+
 		switch r.Method {
 		case http.MethodPost:
 			createTutorHandler(w, r, queries)
@@ -99,10 +125,13 @@ func createTutorHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 
 	// 2. Create Tutor using Estudiante's data
 	tutorParams := db.CreateTutorParams{
-		Nombre:            estudiante.Nombre,
-		Apellido:          estudiante.Apellido,
-		Correo:            estudiante.Correo,
-		ProgramaAcademico: pgtype.Text{String: estudiante.ProgramaAcademico, Valid: estudiante.ProgramaAcademico != ""},
+		Nombre:   estudiante.Nombre,
+		Apellido: estudiante.Apellido,
+		Correo:   estudiante.Correo,
+		ProgramaAcademico: pgtype.Text{
+			String: estudiante.ProgramaAcademico,
+			Valid:  estudiante.ProgramaAcademico != "",
+		},
 	}
 
 	tutorID, err := queries.CreateTutor(r.Context(), tutorParams)
@@ -114,6 +143,77 @@ func createTutorHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CreateTutorResponse{TutorID: tutorID.TutorID})
+}
+
+// listTutoresWithMateriasHandler handles GET /v1/tutores/with-materias
+// @Summary      List Tutores With Materias
+// @Description  Retrieves a list of all tutors along with the materias they are assigned to.
+// @Tags         Tutores
+// @Produce      json
+// @Success      200 {array} db.ListTutoresWithMateriasRow "Successfully retrieved tutores with materias"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve tutores"
+// @Router       /v1/tutores/with-materias [get]
+func listTutoresWithMateriasHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	tutores, err := queries.ListTutoresWithMaterias(r.Context())
+	if err != nil {
+		http.Error(
+			w,
+			"Failed to retrieve tutores with materias: "+err.Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tutores)
+}
+
+// listTutoresDisponiblesByMateriaAndDiaHandler handles GET /v1/tutores/disponibles/{materia_id}/{dia_semana}
+// @Summary      List Tutores Disponibles by Materia and Dia
+// @Description  Retrieves a list of tutors available for a specific materia on a specific day of the week.
+// @Tags         Tutores
+// @Produce      json
+// @Param        materia_id path int true "Materia ID"
+// @Param        dia_semana path string true "Day of the week (e.g., Lunes, Martes)"
+// @Success      200 {array} db.ListTutoresDisponiblesByMateriaAndDiaRow "Successfully retrieved available tutores"
+// @Failure      400 {object} ErrorResponse "Invalid Materia ID or Dia Semana"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve available tutores"
+// @Router       /v1/tutores/disponibles/{materia_id}/{dia_semana} [get]
+func listTutoresDisponiblesByMateriaAndDiaHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	materiaIDStr string,
+	diaSemana int32,
+) {
+	materiaID, err := strconv.ParseInt(materiaIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid Materia ID", http.StatusBadRequest)
+		return
+	}
+
+	if diaSemana == 0 {
+		http.Error(w, "Dia Semana cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	params := db.ListTutoresDisponiblesByMateriaAndDiaParams{
+		MateriaID: int32(materiaID),
+		DiaSemana: diaSemana,
+	}
+
+	tutores, err := queries.ListTutoresDisponiblesByMateriaAndDia(r.Context(), params)
+	if err != nil {
+		http.Error(
+			w,
+			"Failed to retrieve available tutores: "+err.Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tutores)
 }
 
 // handleTutorGET handles GET requests for tutores
@@ -166,7 +266,12 @@ func listTutoresHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 // @Failure      404 {object} ErrorResponse "Tutor not found"
 // @Failure      500 {object} ErrorResponse "Failed to retrieve tutor"
 // @Router       /v1/tutores/{id} [get]
-func getTutorByIDHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, idStr string) {
+func getTutorByIDHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	idStr string,
+) {
 	id, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid tutor ID", http.StatusBadRequest)
@@ -215,11 +320,14 @@ func updateTutorHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 	}
 
 	params := db.UpdateTutorParams{
-		TutorID:           int32(id),
-		Nombre:            req.Nombre,
-		Apellido:          req.Apellido,
-		Correo:            req.Correo,
-		ProgramaAcademico: pgtype.Text{String: req.ProgramaAcademico, Valid: req.ProgramaAcademico != ""},
+		TutorID:  int32(id),
+		Nombre:   req.Nombre,
+		Apellido: req.Apellido,
+		Correo:   req.Correo,
+		ProgramaAcademico: pgtype.Text{
+			String: req.ProgramaAcademico,
+			Valid:  req.ProgramaAcademico != "",
+		},
 	}
 
 	tutor, err := queries.UpdateTutor(r.Context(), params)
