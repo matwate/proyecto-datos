@@ -2083,7 +2083,7 @@ func (q *Queries) UpdateTutorMateria(ctx context.Context, arg UpdateTutorMateria
 const updateTutoria = `-- name: UpdateTutoria :one
 UPDATE TUTORIAS 
 SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, estado = $6, asistencia_confirmada = $7, temas_tratados = $8,
-    fecha_confirmacion = CASE WHEN $6 = 'confirmada' AND estado != 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+    fecha_confirmacion = CASE WHEN $6::VARCHAR(20) = 'confirmada' AND estado != 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
 WHERE tutoria_id = $1
 RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
 `
