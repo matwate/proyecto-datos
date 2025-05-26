@@ -461,6 +461,17 @@ func (q *Queries) DeleteTutoria(ctx context.Context, tutoriaID int32) error {
 	return err
 }
 
+const getMateriaIdByName = `-- name: GetMateriaIdByName :one
+SELECT materia_id FROM MATERIAS WHERE nombre = $1
+`
+
+func (q *Queries) GetMateriaIdByName(ctx context.Context, nombre string) (int32, error) {
+	row := q.db.QueryRow(ctx, getMateriaIdByName, nombre)
+	var materia_id int32
+	err := row.Scan(&materia_id)
+	return materia_id, err
+}
+
 const getProximasTutoriasByEstudiante = `-- name: GetProximasTutoriasByEstudiante :many
 SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
 FROM TUTORIAS

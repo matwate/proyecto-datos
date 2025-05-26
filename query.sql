@@ -134,6 +134,9 @@ SELECT * FROM MATERIAS WHERE facultad = $1 ORDER BY codigo;
 -- name: ListMateriaNombres :many
 SELECT materia_id, nombre, codigo FROM MATERIAS ORDER BY codigo;
 
+-- name: GetMateriaIdByName :one
+SELECT materia_id FROM MATERIAS WHERE nombre = $1;
+
 -- ========================================
 -- TUTOR_MATERIAS QUERIES
 -- ========================================

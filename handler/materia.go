@@ -114,6 +114,12 @@ func handleMateriaGET(w http.ResponseWriter, r *http.Request, queries *db.Querie
 		return
 	}
 
+	if nombre := r.URL.Query().Get("nombre"); nombre != "" {
+		// GET /v1/materias?nombre={nombre}
+		getMateriaIdByNameHandler(w, r, queries, nombre)
+		return
+	}
+
 	// Parse ID from path: /v1/materias/{id}
 	pathParts := strings.Split(strings.Trim(path, "/"), "/")
 	if len(pathParts) == 1 && pathParts[0] != "" {
@@ -205,6 +211,35 @@ func getMateriaByCodigoHandler(w http.ResponseWriter, r *http.Request, queries *
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(materia)
+}
+
+// getMateriaIdByNameHandler handles GET /v1/materias?nombre={nombre}
+// @Summary      Get Materia ID by Name
+// @Description  Retrieves a materia ID by its name.
+// @Tags         Materias
+// @Produce      json
+// @Param        nombre query string true "Materia Name"
+// @Success      200 {object} object{materia_id=int32} "Successfully retrieved materia ID"
+// @Failure      404 {object} ErrorResponse "Materia not found"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve materia"
+// @Router       /v1/materias [get]
+func getMateriaIdByNameHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, nombre string) {
+	materiaID, err := queries.GetMateriaIdByName(r.Context(), nombre)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			http.Error(w, "Materia not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to retrieve materia: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]int32{
+		"materia_id": materiaID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 // listMateriasByFacultadHandler handles GET /v1/materias?facultad={facultad}
