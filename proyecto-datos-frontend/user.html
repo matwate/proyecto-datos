@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>UR MONITORIA - Sistema de Tutorías Académicas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/user.css">
+</head>
+<body>
+    <!-- Elementos flotantes decorativos -->
+    <div class="floating-elements">
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <h1>UR MONITORIA</h1>
+            </div>            <div class="user-info">
+                <div class="user-details">
+                    <strong id="navbar-user-name">Cargando...</strong>
+                    <br>
+                    <small id="navbar-user-subtitle">Estudiante</small>
+                </div>
+                <button class="profile-btn" onclick="showTab('perfil')">
+                    <i class="fas fa-user"></i> Mi Perfil
+                </button>
+                <div class="user-avatar" id="navbar-user-avatar">--</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </button>
+            <button class="nav-tab" onclick="showTab('tutorias')">
+                <i class="fas fa-chalkboard-teacher"></i> Mis Tutorías
+            </button>
+            <button class="nav-tab" onclick="showTab('solicitar')">
+                <i class="fas fa-plus-circle"></i> Solicitar Tutoría
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2 style="margin-bottom: 30px; color: #333;"><i class="fas fa-tachometer-alt"></i> Dashboard Académico</h2>
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <i class="fas fa-user-graduate"></i>
+                    <h3>8</h3>
+                    <p>Tutores Disponibles</p>
+                </div>
+            </div>
+            <div class="table-container">
+                <h3 style="margin-bottom: 20px; color: #333;">Próximas Tutorías</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Tutor</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTableBody">
+                        <!-- Se llenará dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>        <div id="perfil" class="tab-content">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar-large" id="profile-avatar-large">--</div>
+                    <h1 class="profile-title">Información Personal</h1>
+                    <p class="profile-subtitle">Perfil de estudiante</p>
+                </div>
+
+                <div class="profile-info">
+                    <div class="info-item">
+                        <div class="info-label">Nombre</div>
+                        <div class="info-value" id="profile-nombre">Cargando...</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Apellido</div>
+                        <div class="info-value" id="profile-apellido">Cargando...</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Correo Electrónico</div>
+                        <div class="info-value" id="profile-email">Cargando...</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Programa Académico</div>
+                        <div class="info-value" id="profile-programa">Cargando...</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Fecha de Registro</div>
+                        <div class="info-value" id="profile-fecha">Cargando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mis Tutorías Tab -->
+        <div id="tutorias" class="tab-content">
+            <h2 style="margin-bottom: 30px; color: #333;"><i class="fas fa-chalkboard-teacher"></i> Mis Tutorías</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="openModal('filtros')">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Materia</th>
+                            <th>Tutor</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Lugar</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tutoriasTableBody">
+                        <!-- Se llenará dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Solicitar Tutoría Tab -->
+        <div id="solicitar" class="tab-content">
+            <h2 style="margin-bottom: 30px; color: #333;"><i class="fas fa-plus-circle"></i> Solicitar Nueva Tutoría</h2>
+            
+            <form class="form-grid" id="solicitudForm">
+                <div>
+                    <div class="form-group">
+                        <label for="programa">Programa</label>
+                        <select id="programa" class="form-control">
+                            <option value="">Seleccionar programa...</option>
+                            <option value="matematicas">Matemáticas Aplicadas en Ciencias de la Computación</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="materia">Materia</label>
+                        <select id="materia" class="form-control">
+                            <option value="">Seleccionar materia...</option>
+                            <option value="calc1">Cálculo I</option>
+                            <option value="calc2">Cálculo II</option>
+                            <option value="calc3">Cálculo III</option>
+                            <option value="prog1">Programación I</option>
+                            <option value="algebra">Álgebra Lineal</option>
+                            <option value="algoritmos">Algoritmos y Estructura de datos</option>
+                            <option value="fisica1">Física I</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha">Fecha Preferida</label>
+                        <input type="date" id="fecha" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="hora">Hora Preferida</label>
+                        <select id="hora" class="form-control">
+                            <option value="">Seleccionar hora...</option>
+                            <option value="08:00">8:00 AM</option>
+                            <option value="09:00">9:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="14:00">2:00 PM</option>
+                            <option value="15:00">3:00 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label for="lugar">Sedes</label>
+                        <select id="lugar" class="form-control">
+                            <option value="">Seleccionar lugar...</option>
+                            <option value="sede-norte">Sede Norte</option>
+                            <option value="claustro">Claustro</option>
+                            <option value="mutis">Mutis</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="temas">Temas a Tratar</label>
+                        <textarea id="temas" class="form-control" rows="4" placeholder="Describe los temas específicos que necesitas repasar..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Solicitar Tutoría
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modales -->
+        <div id="detalleTutoria" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 style="margin-bottom: 20px; color: #333;">
+                    <i class="fas fa-info-circle"></i> Detalle de Tutoría
+                </h2>
+                <div class="form-grid">
+                    <div>
+                        <p><strong>Materia:</strong> <span id="detalleMateria">-</span></p>
+                        <p><strong>Tutor:</strong> <span id="detalleTutor">-</span></p>
+                        <p><strong>Fecha:</strong> <span id="detalleFecha">-</span></p>
+                        <p><strong>Hora:</strong> <span id="detalleHora">-</span></p>
+                        <p><strong>Lugar:</strong> <span id="detalleLugar">-</span></p>
+                        <p><strong>Estado:</strong> <span id="detalleEstado">-</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Temas a tratar:</strong></p>
+                        <ul id="detalleTemas">
+                            <!-- Se llenará dinámicamente -->
+                        </ul>
+                        <p><strong>Notas del tutor:</strong></p>
+                        <p id="detalleNotas" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-style: italic;">
+                            <!-- Se llenará dinámicamente -->
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-success" id="confirmarBtn" onclick="confirmarAsistencia()" style="display: none;">
+                        <i class="fas fa-check"></i> Confirmar Asistencia
+                    </button>
+                    <button class="btn btn-danger" id="cancelarBtn" onclick="cancelarTutoria()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Confirmación de Cancelación -->
+        <div id="confirmarCancelacion" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 style="margin-bottom: 20px; color: #333;">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Cancelación
+                </h2>
+                <p style="font-size: 1.1rem; margin-bottom: 20px;">
+                    ¿Está seguro que desea cancelar esta tutoría?
+                </p>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Nota:</strong> Una vez cancelada, la tutoría cambiará su estado a "Cancelada" y será necesario solicitar una nueva sesión.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-danger" onclick="confirmarCancelacionTutoria()">
+                        <i class="fas fa-check"></i> Sí, Cancelar
+                    </button>
+                    <button class="btn btn-primary" onclick="closeModal('confirmarCancelacion')">
+                        <i class="fas fa-times"></i> No, Mantener
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="filtros" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 style="margin-bottom: 20px; color: #333;">
+                    <i class="fas fa-filter"></i> Filtrar Tutorías
+                </h2>
+                <form id="filtrosForm">
+                    <div class="form-group">
+                        <label for="filtroEstado">Estado</label>
+                        <select id="filtroEstado" class="form-control">
+                            <option value="">Todos los estados</option>
+                            <option value="solicitada">Solicitada</option>
+                            <option value="confirmada">Confirmada</option>
+                            <option value="completada">Completada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filtroMateriaModal">Materia</label>
+                        <select id="filtroMateriaModal" class="form-control">
+                            <option value="">Todas las materias</option>
+                            <option value="calc1">Cálculo Diferencial</option>
+                            <option value="prog1">Programación I</option>
+                            <option value="algebra">Álgebra Linear</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Fecha Inicio</label>
+                        <input type="date" id="fechaInicio" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Fecha Fin</label>
+                        <input type="date" id="fechaFin" class="form-control">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Aplicar Filtros
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="limpiarFiltros()">
+                            <i class="fas fa-undo"></i> Limpiar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>    </main>
+
+    <script src="js/user.js"></script>
+</body>
+</html>
