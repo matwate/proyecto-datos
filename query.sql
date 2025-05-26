@@ -329,3 +329,22 @@ SELECT * FROM ESTUDIANTES
 WHERE semestre = $1 
 ORDER BY apellido, nombre;
 
+-- name: SelectMateriasByEstudiante :many
+-- Get materias corresponding to a specific estudiante's semester
+SELECT m.*
+FROM MATERIAS m
+JOIN ESTUDIANTES e ON e.programa_academico = m.facultad
+WHERE e.estudiante_id = $1 AND e.semestre = $2
+ORDER BY m.codigo;
+
+-- name: GetProximasTutoriasByEstudiante :many
+SELECT *
+FROM TUTORIAS
+WHERE estudiante_id = $1
+  AND (
+    fecha > CURRENT_DATE OR
+    (fecha = CURRENT_DATE AND hora_inicio > CURRENT_TIME)
+  )
+ORDER BY fecha, hora_inicio;
+
+

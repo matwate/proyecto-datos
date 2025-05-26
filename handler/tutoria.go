@@ -54,10 +54,6 @@ func TutoriaHandlers(queries *db.Queries) http.HandlerFunc {
 			createTutoriaHandler(w, r, queries)
 		case http.MethodGet:
 			handleTutoriaGET(w, r, queries)
-		case http.MethodPut:
-			handleTutoriaPUT(w, r, queries)
-		case http.MethodDelete:
-			deleteTutoriaHandler(w, r, queries)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -162,7 +158,13 @@ func handleTutoriaGET(w http.ResponseWriter, r *http.Request, queries *db.Querie
 			listTutoriasActivasHandler(w, r, queries)
 			return
 		}
-		http.Error(w, "Missing required query parameter: estudiante_id, tutor_id, estado, or activas=true", http.StatusBadRequest)
+		// Add this new case for proximas tutorias by estudiante_id
+		if estudianteID := r.URL.Query().Get("proximas_estudiante_id"); estudianteID != "" {
+			// GET /v1/tutorias?proximas_estudiante_id={estudiante_id}
+			getProximasTutoriasByEstudianteHandler(w, r, queries, estudianteID)
+			return
+		}
+		http.Error(w, "Missing required query parameter: estudiante_id, tutor_id, estado, activas=true, or proximas_estudiante_id", http.StatusBadRequest)
 		return
 	}
 
@@ -289,7 +291,7 @@ func listTutoriasByEstadoHandler(w http.ResponseWriter, r *http.Request, queries
 // @Produce      json
 // @Success      200 {array} db.Tutoriasactiva "Successfully retrieved active tutorias"
 // @Failure      500 {object} ErrorResponse "Failed to retrieve tutorias"
-// @Router       /v1/tutorias [get]
+// @Router       /v1/tutorias [get] // Note: Swagger might not differentiate this well from other GET /v1/tutorias based on query params alone
 func listTutoriasActivasHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
 	tutorias, err := queries.ListTutoriasActivas(r.Context())
 	if err != nil {
@@ -301,159 +303,28 @@ func listTutoriasActivasHandler(w http.ResponseWriter, r *http.Request, queries 
 	json.NewEncoder(w).Encode(tutorias)
 }
 
-// handleTutoriaPUT handles PUT requests for tutorias
-func handleTutoriaPUT(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
-	path := strings.TrimPrefix(r.URL.Path, "/v1/tutorias/")
-	pathParts := strings.Split(path, "/")
-
-	if len(pathParts) >= 2 && pathParts[1] == "estado" {
-		// PUT /v1/tutorias/{id}/estado
-		updateTutoriaEstadoHandler(w, r, queries, pathParts[0])
-		return
-	}
-
-	if len(pathParts) == 1 && pathParts[0] != "" {
-		// PUT /v1/tutorias/{id}
-		updateTutoriaHandler(w, r, queries, pathParts[0])
-		return
-	}
-
-	http.Error(w, "Invalid path", http.StatusBadRequest)
-}
-
-// updateTutoriaHandler handles PUT /v1/tutorias/{id}
-// @Summary      Update Tutoria
-// @Description  Updates an existing tutoria.
+// getProximasTutoriasByEstudianteHandler handles GET /v1/tutorias?proximas_estudiante_id={estudiante_id}
+// @Summary      Get Upcoming Tutorias for Student
+// @Description  Retrieves upcoming tutorias for a specific student that have not started yet.
 // @Tags         Tutorias
-// @Accept       json
 // @Produce      json
-// @Param        id path int true "Tutoria ID"
-// @Param        tutoria body UpdateTutoriaRequest true "Updated Tutoria Data"
-// @Success      200 {object} db.Tutoria "Successfully updated tutoria"
-// @Failure      400 {object} ErrorResponse "Invalid request body or tutoria ID"
-// @Failure      404 {object} ErrorResponse "Tutoria not found"
-// @Failure      500 {object} ErrorResponse "Failed to update tutoria"
-// @Router       /v1/tutorias/{id} [put]
-func updateTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, idStr string) {
-	id, err := strconv.ParseInt(idStr, 10, 32)
+// @Param        proximas_estudiante_id query int true "Student ID"
+// @Success      200 {array} db.Tutoria "Successfully retrieved upcoming tutorias"
+// @Failure      400 {object} ErrorResponse "Invalid student ID"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve upcoming tutorias"
+// @Router       /v1/tutorias [get] // Note: Swagger might not differentiate this well
+func getProximasTutoriasByEstudianteHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, estudianteIDStr string) {
+	estudianteID, err := strconv.ParseInt(estudianteIDStr, 10, 32)
 	if err != nil {
-		http.Error(w, "Invalid tutoria ID", http.StatusBadRequest)
+		http.Error(w, "Invalid estudiante ID", http.StatusBadRequest)
 		return
 	}
 
-	var req UpdateTutoriaRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	fecha, err := parseDateString(req.Fecha)
+	tutorias, err := queries.GetProximasTutoriasByEstudiante(r.Context(), int32(estudianteID))
 	if err != nil {
-		http.Error(w, "Invalid fecha format (use YYYY-MM-DD)", http.StatusBadRequest)
+		http.Error(w, "Failed to retrieve upcoming tutorias: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	horaInicio, err := parseTimeString(req.HoraInicio)
-	if err != nil {
-		http.Error(w, "Invalid hora_inicio format (use HH:MM)", http.StatusBadRequest)
-		return
-	}
-
-	horaFin, err := parseTimeString(req.HoraFin)
-	if err != nil {
-		http.Error(w, "Invalid hora_fin format (use HH:MM)", http.StatusBadRequest)
-		return
-	}
-
-	params := db.UpdateTutoriaParams{
-		TutoriaID:  int32(id),
-		Fecha:      fecha,
-		HoraInicio: horaInicio,
-		HoraFin:    horaFin,
-		Lugar:      req.Lugar,
-	}
-
-	tutoria, err := queries.UpdateTutoria(r.Context(), params)
-	if err != nil {
-		if err.Error() == "no rows in result set" {
-			http.Error(w, "Tutoria not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Failed to update tutoria: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tutoria)
-}
-
-// updateTutoriaEstadoHandler handles PUT /v1/tutorias/{id}/estado
-// @Summary      Update Tutoria Status
-// @Description  Updates the status of an existing tutoria.
-// @Tags         Tutorias
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "Tutoria ID"
-// @Param        estado body UpdateTutoriaEstadoRequest true "New Status"
-// @Success      200 {object} db.Tutoria "Successfully updated tutoria status"
-// @Failure      400 {object} ErrorResponse "Invalid request body or tutoria ID"
-// @Failure      404 {object} ErrorResponse "Tutoria not found"
-// @Failure      500 {object} ErrorResponse "Failed to update tutoria status"
-// @Router       /v1/tutorias/{id}/estado [put]
-func updateTutoriaEstadoHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, idStr string) {
-	id, err := strconv.ParseInt(idStr, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid tutoria ID", http.StatusBadRequest)
-		return
-	}
-
-	var req UpdateTutoriaEstadoRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	params := db.UpdateTutoriaEstadoParams{
-		TutoriaID: int32(id),
-		Estado:    req.Estado,
-	}
-
-	tutoria, err := queries.UpdateTutoriaEstado(r.Context(), params)
-	if err != nil {
-		if err.Error() == "no rows in result set" {
-			http.Error(w, "Tutoria not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Failed to update tutoria status: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tutoria)
-}
-
-// deleteTutoriaHandler handles DELETE /v1/tutorias/{id}
-// @Summary      Delete Tutoria
-// @Description  Deletes a tutoria by its ID.
-// @Tags         Tutorias
-// @Param        id path int true "Tutoria ID"
-// @Success      204 "Successfully deleted tutoria"
-// @Failure      400 {object} ErrorResponse "Invalid tutoria ID"
-// @Failure      500 {object} ErrorResponse "Failed to delete tutoria"
-// @Router       /v1/tutorias/{id} [delete]
-func deleteTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
-	path := strings.TrimPrefix(r.URL.Path, "/v1/tutorias/")
-	id, err := strconv.ParseInt(path, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid tutoria ID", http.StatusBadRequest)
-		return
-	}
-
-	err = queries.DeleteTutoria(r.Context(), int32(id))
-	if err != nil {
-		http.Error(w, "Failed to delete tutoria: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	json.NewEncoder(w).Encode(tutorias)
 }

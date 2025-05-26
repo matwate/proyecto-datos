@@ -461,6 +461,51 @@ func (q *Queries) DeleteTutoria(ctx context.Context, tutoriaID int32) error {
 	return err
 }
 
+const getProximasTutoriasByEstudiante = `-- name: GetProximasTutoriasByEstudiante :many
+SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+FROM TUTORIAS
+WHERE estudiante_id = $1
+  AND (
+    fecha > CURRENT_DATE OR
+    (fecha = CURRENT_DATE AND hora_inicio > CURRENT_TIME)
+  )
+ORDER BY fecha, hora_inicio
+`
+
+func (q *Queries) GetProximasTutoriasByEstudiante(ctx context.Context, estudianteID int32) ([]Tutoria, error) {
+	rows, err := q.db.Query(ctx, getProximasTutoriasByEstudiante, estudianteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tutoria
+	for rows.Next() {
+		var i Tutoria
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAdmins = `-- name: ListAdmins :many
 SELECT admin_id, nombre, apellido, correo, rol, activo, fecha_registro FROM ADMINS ORDER BY apellido, nombre
 `
@@ -1537,6 +1582,47 @@ func (q *Queries) SelectMateriaById(ctx context.Context, materiaID int32) (Mater
 		&i.Creditos,
 	)
 	return i, err
+}
+
+const selectMateriasByEstudiante = `-- name: SelectMateriasByEstudiante :many
+SELECT m.materia_id, m.nombre, m.codigo, m.facultad, m.descripcion, m.creditos
+FROM MATERIAS m
+JOIN ESTUDIANTES e ON e.programa_academico = m.facultad
+WHERE e.estudiante_id = $1 AND e.semestre = $2
+ORDER BY m.codigo
+`
+
+type SelectMateriasByEstudianteParams struct {
+	EstudianteID int32
+	Semestre     pgtype.Int4
+}
+
+// Get materias corresponding to a specific estudiante's semester
+func (q *Queries) SelectMateriasByEstudiante(ctx context.Context, arg SelectMateriasByEstudianteParams) ([]Materia, error) {
+	rows, err := q.db.Query(ctx, selectMateriasByEstudiante, arg.EstudianteID, arg.Semestre)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Materia
+	for rows.Next() {
+		var i Materia
+		if err := rows.Scan(
+			&i.MateriaID,
+			&i.Nombre,
+			&i.Codigo,
+			&i.Facultad,
+			&i.Descripcion,
+			&i.Creditos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const selectReporteById = `-- name: SelectReporteById :one
