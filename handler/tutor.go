@@ -41,6 +41,12 @@ type LoginTutorResponse struct {
 	Tutor      db.Tutore     `json:"tutor"`
 }
 
+// GetTutorNameResponse represents the response body for getting a tutor's name.
+type GetTutorNameResponse struct {
+	Nombre   string `json:"nombre"`
+	Apellido string `json:"apellido"`
+}
+
 // TutorHandlers handles all tutor-related endpoints using Go 1.24 routing patterns.
 // @Summary      Handle Tutor Operations
 // @Description  Comprehensive CRUD operations for tutors.
@@ -133,6 +139,12 @@ func handleTutorGET(w http.ResponseWriter, r *http.Request, queries *db.Queries)
 		return
 	}
 
+	// Handle /v1/tutores/{id}/nombre
+	if len(pathParts) == 2 && pathParts[1] == "nombre" {
+		getTutorNameHandler(w, r, queries, pathParts[0])
+		return
+	}
+
 	http.Error(w, "Invalid path", http.StatusBadRequest)
 }
 
@@ -185,6 +197,41 @@ func getTutorByIDHandler(w http.ResponseWriter, r *http.Request, queries *db.Que
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tutor)
+}
+
+// getTutorNameHandler handles GET /v1/tutores/{id}/nombre
+// @Summary      Get Tutor Name by ID
+// @Description  Retrieves just the name of a specific tutor by their ID.
+// @Tags         Tutores
+// @Produce      json
+// @Param        id path int true "Tutor ID"
+// @Success      200 {object} GetTutorNameResponse "Successfully retrieved tutor name"
+// @Failure      400 {object} ErrorResponse "Invalid tutor ID"
+// @Failure      404 {object} ErrorResponse "Tutor not found"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve tutor name"
+// @Router       /v1/tutores/{id}/nombre [get]
+func getTutorNameHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries, idStr string) {
+	id, err := strconv.ParseInt(idStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid tutor ID", http.StatusBadRequest)
+		return
+	}
+
+	tutor, err := queries.GetTutorNameById(r.Context(), int32(id))
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			http.Error(w, "Tutor not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to retrieve tutor name: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(GetTutorNameResponse{
+		Nombre:   tutor.Nombre,
+		Apellido: tutor.Apellido,
+	})
 }
 
 // updateTutorHandler handles PUT /v1/tutores/{id}

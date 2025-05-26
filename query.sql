@@ -358,3 +358,6 @@ SELECT nombre
 FROM MATERIAS
 ORDER BY nombre;
 
+-- name: GetTutorNameById :one
+SELECT nombre, apellido FROM TUTORES WHERE tutor_id = $1;
+

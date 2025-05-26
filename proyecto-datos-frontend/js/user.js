@@ -277,7 +277,7 @@ function getMockTutoringSessions() {
             
             const now = new Date();
             const fecha = tutoring.fecha || tutoring.date;
-            const horaInicio = tutoring.hora_inicio || (tutoring.time ? tutoring.time.split('-')[0] : null);
+            const horaInicio = tutoring.horaInicio || tutoring.hora_inicio || (tutoring.time ? tutoring.time.split('-')[0] : null);
             
             if (!fecha || !horaInicio) return false;
             
@@ -289,7 +289,7 @@ function getMockTutoringSessions() {
 
         // Función para generar botones de acción según el estado y condiciones
         function generateActionButtons(tutoring) {
-            const tutoriaId = tutoring.tutoria_id || tutoring.id;
+            const tutoriaId = tutoring.tutoriaID || tutoring.tutoria_id || tutoring.id;
             const status = tutoring.estado || tutoring.status;
             
             let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoriaId})">Ver</button>`;
@@ -327,17 +327,21 @@ function getMockTutoringSessions() {
             futureTutorings.forEach(tutoring => {
                 const row = document.createElement('tr');
                 
-                // Map API data to display format
-                const subject = tutoring.materia_nombre || tutoring.subject || 'N/A';
-                const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+                // Map API data to display format - handle both API response format and local format
+                const subject = tutoring.materiaNombre || tutoring.materia_nombre || tutoring.subject || 'N/A';
+                const tutor = (tutoring.tutorNombre && tutoring.tutorApellido) 
+                    ? `${tutoring.tutorNombre} ${tutoring.tutorApellido}` 
+                    : (tutoring.tutor_nombre && tutoring.tutor_apellido) 
                     ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
                     : tutoring.tutor || 'N/A';
                 const fecha = tutoring.fecha || tutoring.date;
-                const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
+                const time = tutoring.time || (tutoring.horaInicio && tutoring.horaFin 
+                    ? `${tutoring.horaInicio}-${tutoring.horaFin}` 
+                    : (tutoring.hora_inicio && tutoring.hora_fin 
                     ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
-                    : 'N/A');
+                    : 'N/A'));
                 const status = tutoring.estado || tutoring.status;
-                const tutoriaId = tutoring.tutoria_id || tutoring.id;
+                const tutoriaId = tutoring.tutoriaID || tutoring.tutoria_id || tutoring.id;
                 
                 const statusClass = `status-${status}`;
                 const statusText = getStatusText(status);
@@ -371,18 +375,18 @@ function getMockTutoringSessions() {
             sessionData.tutoringSessions.forEach(tutoring => {
                 const row = document.createElement('tr');
                 
-                // Map API data to display format
-                const tutoriaId = tutoring.tutoria_id || tutoring.id || '';
-                const materiaName = tutoring.materia_nombre || tutoring.subject || 'N/A';
-                const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+                // Map API data to display format - handle both API response format and local format
+                const tutoriaId = tutoring.TutoriaID 
+                const materiaName = GetIdFromName(tutoring.MateriaID)
+                const tutor = (tutoring.tutorNombre && tutoring.tutorApellido) 
+                    ? `${tutoring.tutorNombre} ${tutoring.tutorApellido}` 
+                    : (tutoring.tutor_nombre && tutoring.tutor_apellido) 
                     ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
                     : tutoring.tutor || 'N/A';
-                const fecha = tutoring.fecha || tutoring.date;
-                const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
-                    ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
-                    : 'N/A');
-                const location = tutoring.lugar || tutoring.location || 'N/A';
-                const status = tutoring.estado || tutoring.status;
+                const fecha = tutoring.Fecha
+                const time = `${tutoring.HoraInicio.Microseconds / 3600000000}:00-${tutoring.HoraFin.Microseconds / 3600000000}:00`;
+                const location = tutoring.Lugar
+                const status = tutoring.Estado
                 
                 const statusClass = `status-${status}`;
                 const statusText = getStatusText(status);
@@ -404,20 +408,24 @@ function getMockTutoringSessions() {
 
         // Función para abrir detalle de tutoría
         function openTutoriaDetail(tutoriaId) {
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoriaID || t.tutoria_id || t.id) === tutoriaId);
             if (!tutoring) return;
 
             currentTutoriaId = tutoriaId;
 
-            // Map API data to display format
-            const subject = tutoring.materia_nombre || tutoring.subject || 'N/A';
-            const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+            // Map API data to display format - handle both API response format and local format
+            const subject = tutoring.materiaNombre || tutoring.materia_nombre || tutoring.subject || 'N/A';
+            const tutor = (tutoring.tutorNombre && tutoring.tutorApellido) 
+                ? `${tutoring.tutorNombre} ${tutoring.tutorApellido}` 
+                : (tutoring.tutor_nombre && tutoring.tutor_apellido) 
                 ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
                 : tutoring.tutor || 'N/A';
             const fecha = tutoring.fecha || tutoring.date;
-            const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
+            const time = tutoring.time || (tutoring.horaInicio && tutoring.horaFin 
+                ? `${tutoring.horaInicio}-${tutoring.horaFin}` 
+                : (tutoring.hora_inicio && tutoring.hora_fin 
                 ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
-                : 'N/A');
+                : 'N/A'));
             const location = tutoring.lugar || tutoring.location || 'N/A';
             const status = tutoring.estado || tutoring.status || 'N/A';
 
@@ -438,7 +446,11 @@ function getMockTutoringSessions() {
             
             // Handle topics from API (temas_tratados) or mock data (topics)
             const topics = [];
-            if (tutoring.temas_tratados && tutoring.temas_tratados.String) {
+            if (tutoring.temasTratados && tutoring.temasTratados.String) {
+                // API format (camelCase from JSON)
+                topics.push(tutoring.temasTratados.String);
+            } else if (tutoring.temas_tratados && tutoring.temas_tratados.String) {
+                // API format (snake_case if using different serialization)
                 topics.push(tutoring.temas_tratados.String);
             } else if (tutoring.topics && Array.isArray(tutoring.topics)) {
                 topics.push(...tutoring.topics);
@@ -485,7 +497,7 @@ function getMockTutoringSessions() {
         async function confirmarAsistencia() {
             if (!currentTutoriaId) return;
 
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === currentTutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoriaID || t.tutoria_id || t.id) === currentTutoriaId);
             if (!tutoring || !canConfirmTutoring(tutoring)) {
                 showNotification('No se puede confirmar esta tutoría en este momento', 'error');
                 return;
@@ -512,7 +524,7 @@ function getMockTutoringSessions() {
 
         // Función para confirmar tutoría directamente desde la tabla
         async function confirmarTutoriaDirecta(tutoriaId) {
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoriaID || t.tutoria_id || t.id) === tutoriaId);
             if (!tutoring || !canConfirmTutoring(tutoring)) {
                 showNotification('No se puede confirmar esta tutoría. Debe confirmarse mínimo 12 horas antes.', 'warning');
                 return;
@@ -553,7 +565,7 @@ function getMockTutoringSessions() {
         async function confirmarCancelacionTutoria() {
             if (!currentTutoriaId) return;
 
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === currentTutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoriaID || t.tutoria_id || t.id) === currentTutoriaId);
             if (!tutoring) return;
 
             try {
@@ -742,8 +754,11 @@ function checkTutoringConflicts(fecha, hora) {
         const tutoringDate = tutoring.fecha || tutoring.date;
         let tutoringTimeStart;
         
-        if (tutoring.hora_inicio) {
-            // API format
+        if (tutoring.horaInicio) {
+            // API format (camelCase from JSON)
+            tutoringTimeStart = tutoring.horaInicio;
+        } else if (tutoring.hora_inicio) {
+            // API format (snake_case if using different serialization)
             tutoringTimeStart = tutoring.hora_inicio;
         } else if (tutoring.time) {
             // Mock data format
@@ -1054,7 +1069,7 @@ async function populateSedeDropdown() {
                         // Prepare API request data matching backend structure
                         const submitData = {
                             estudiante_id: parseInt(sessionData.currentUser.id),
-                            tutor_id: 1, // Will be assigned by admin/system later
+                            tutor_id: 0, // System will automatically assign qualified and available tutor
                             materia_id: materiaId || 1, // Use found ID or fallback
                             fecha: formData.fecha,
                             hora_inicio: horaInicio,
@@ -1075,14 +1090,36 @@ async function populateSedeDropdown() {
                             
                             // Add to local session data for immediate UI update
                             const newTutoring = {
+                                tutoriaID: result.tutoria_id,
+                                tutoria_id: result.tutoria_id,
                                 id: result.tutoria_id,
+                                materiaNombre: materiaName,
+                                materia_nombre: materiaName,
                                 subject: materiaName,
-                                tutor: 'Por asignar',
+                                tutorNombre: result.tutorNombre || result.tutor_nombre || 'Tutor',
+                                tutorApellido: result.tutorApellido || result.tutor_apellido || 'Asignado',
+                                tutor_nombre: result.tutorNombre || result.tutor_nombre || 'Tutor',
+                                tutor_apellido: result.tutorApellido || result.tutor_apellido || 'Asignado',
+                                tutor: (result.tutorNombre && result.tutorApellido) 
+                                    ? `${result.tutorNombre} ${result.tutorApellido}` 
+                                    : (result.tutor_nombre && result.tutor_apellido) 
+                                    ? `${result.tutor_nombre} ${result.tutor_apellido}` 
+                                    : 'Sistema asignará automáticamente',
+                                fecha: formData.fecha,
                                 date: formData.fecha,
+                                horaInicio: horaInicio,
+                                horaFin: horaFin,
+                                hora_inicio: horaInicio,
+                                hora_fin: horaFin,
                                 time: `${horaInicio}-${horaFin}`,
+                                estado: 'solicitada',
                                 status: 'solicitada',
+                                lugar: sedeName,
                                 location: sedeName,
+                                temasTratados: formData.temas ? { String: formData.temas } : null,
+                                temas_tratados: formData.temas ? { String: formData.temas } : null,
                                 topics: formData.temas ? formData.temas.split(',').map(t => t.trim()) : [],
+                                observaciones: '',
                                 notes: ''
                             };
                             
@@ -1097,11 +1134,19 @@ async function populateSedeDropdown() {
                             // Switch to tutoring tab
                             showTab('tutorias');
                         } else {
-                            throw new Error('No se recibió confirmación del servidor');
+                            // If tutoria_id is not present, it means there was an error or specific message from backend
+                            const errorMessage = (result && (result.message || result.error)) || 'No se pudo crear la tutoría. Verifique los datos.';
+                            throw new Error(errorMessage);
                         }
                     } catch (error) {
                         console.error('Error submitting tutoring request:', error);
-                        showNotification('Error al enviar la solicitud. Inténtalo nuevamente.', 'error');
+                        // Display the error message from the backend, or a fallback generic message.
+                        // error.message should contain the message from 'throw new Error(serverMessage)' in the 'else' block,
+                        // or from an error thrown by submitTutoringRequest itself (e.g., network error, or HTTP 4xx/5xx).
+                        const displayMessage = (error && typeof error.message === 'string' && error.message.trim() !== '')
+                                             ? error.message
+                                             : 'Error al enviar la solicitud. Por favor, inténtalo nuevamente o contacta a soporte si el problema persiste.';
+                        showNotification(displayMessage, 'error');
                     } finally {
                         // Restore button state
                         submitButton.innerHTML = originalText;

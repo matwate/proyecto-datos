@@ -517,6 +517,22 @@ func (q *Queries) GetProximasTutoriasByEstudiante(ctx context.Context, estudiant
 	return items, nil
 }
 
+const getTutorNameById = `-- name: GetTutorNameById :one
+SELECT nombre, apellido FROM TUTORES WHERE tutor_id = $1
+`
+
+type GetTutorNameByIdRow struct {
+	Nombre   string
+	Apellido string
+}
+
+func (q *Queries) GetTutorNameById(ctx context.Context, tutorID int32) (GetTutorNameByIdRow, error) {
+	row := q.db.QueryRow(ctx, getTutorNameById, tutorID)
+	var i GetTutorNameByIdRow
+	err := row.Scan(&i.Nombre, &i.Apellido)
+	return i, err
+}
+
 const listAdmins = `-- name: ListAdmins :many
 SELECT admin_id, nombre, apellido, correo, rol, activo, fecha_registro FROM ADMINS ORDER BY apellido, nombre
 `
