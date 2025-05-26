@@ -2157,18 +2157,18 @@ func (q *Queries) UpdateTutoriaAsistencia(ctx context.Context, arg UpdateTutoria
 
 const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :one
 UPDATE TUTORIAS 
-SET estado = $2::VARCHAR, fecha_confirmacion = CASE WHEN $2::VARCHAR = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
-WHERE tutoria_id = $1
+SET estado = $1, fecha_confirmacion = CASE WHEN $1 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+WHERE tutoria_id = $2
 RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
 `
 
 type UpdateTutoriaEstadoParams struct {
+	Estado    string
 	TutoriaID int32
-	Column2   string
 }
 
 func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEstadoParams) (Tutoria, error) {
-	row := q.db.QueryRow(ctx, updateTutoriaEstado, arg.TutoriaID, arg.Column2)
+	row := q.db.QueryRow(ctx, updateTutoriaEstado, arg.Estado, arg.TutoriaID)
 	var i Tutoria
 	err := row.Scan(
 		&i.TutoriaID,
