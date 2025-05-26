@@ -366,44 +366,108 @@ function getMockTutoringSessions() {
         }
 
         // Función para actualizar tabla de tutorías
-        function updateTutoriasTable() {
+        async function updateTutoriasTable() {
             const tableBody = document.getElementById('tutoriasTableBody');
             if (!tableBody) return;
 
             tableBody.innerHTML = '';
             
-            sessionData.tutoringSessions.forEach(tutoring => {
+            // Process each tutoring session asynchronously
+            for (const tutoring of sessionData.tutoringSessions) {
                 const row = document.createElement('tr');
                 
-                // Map API data to display format - handle both API response format and local format
-                const tutoriaId = tutoring.TutoriaID 
-                const materiaName = GetIdFromName(tutoring.MateriaID)
-                const tutor = (tutoring.tutorNombre && tutoring.tutorApellido) 
-                    ? `${tutoring.tutorNombre} ${tutoring.tutorApellido}` 
-                    : (tutoring.tutor_nombre && tutoring.tutor_apellido) 
-                    ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
-                    : tutoring.tutor || 'N/A';
-                const fecha = tutoring.Fecha
-                const time = `${tutoring.HoraInicio.Microseconds / 3600000000}:00-${tutoring.HoraFin.Microseconds / 3600000000}:00`;
-                const location = tutoring.Lugar
-                const status = tutoring.Estado
-                
-                const statusClass = `status-${status}`;
-                const statusText = getStatusText(status);
-                
-                row.innerHTML = `
-                    <td>#${tutoriaId.toString().padStart(3, '0')}</td>
-                    <td>${materiaName}</td>
-                    <td>${tutor}</td>
-                    <td>${formatDate(fecha)}</td>
-                    <td>${time}</td>
-                    <td>${location}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${generateActionButtons(tutoring)}</td>
-                `;
-                
+                try {
+                    // Map API data to display format - handle both API response format and local format
+                    const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
+                    
+                    // Handle materia name
+                    let materiaName = 'N/A';
+                    if (tutoring.materiaNombre) {
+                        materiaName = tutoring.materiaNombre;
+                    } else if (tutoring.materia_nombre) {
+                        materiaName = tutoring.materia_nombre;
+                    } else if (tutoring.subject) {
+                        materiaName = tutoring.subject;
+                    } else if (tutoring.MateriaID) {
+                        materiaName = GetIdFromName(tutoring.MateriaID);
+                    }
+                    
+                    // Handle tutor name
+                    let tutor = 'N/A';
+                    if (tutoring.tutorNombre && tutoring.tutorApellido) {
+                        tutor = `${tutoring.tutorNombre} ${tutoring.tutorApellido}`;
+                    } else if (tutoring.tutor_nombre && tutoring.tutor_apellido) {
+                        tutor = `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}`;
+                    } else if (tutoring.tutor) {
+                        tutor = tutoring.tutor;
+                    } else if (tutoring.TutorID) {
+                        tutor = await getTutorName(tutoring.TutorID);
+                    }
+                    
+                    // Handle date
+                    const fecha = tutoring.fecha || tutoring.Fecha || tutoring.date || 'N/A';
+                    
+                    // Handle time
+                    let time = 'N/A';
+                    if (tutoring.time) {
+                        time = tutoring.time;
+                    } else if (tutoring.horaInicio && tutoring.horaFin) {
+                        time = `${tutoring.horaInicio}-${tutoring.horaFin}`;
+                    } else if (tutoring.hora_inicio && tutoring.hora_fin) {
+                        time = `${tutoring.hora_inicio}-${tutoring.hora_fin}`;
+                    } else if (tutoring.HoraInicio && tutoring.HoraFin) {
+                        // Handle Go time format - convert microseconds to hours
+                        if (tutoring.HoraInicio.Microseconds && tutoring.HoraFin.Microseconds) {
+                            const startHour = Math.floor(tutoring.HoraInicio.Microseconds / 3600000000);
+                            const endHour = Math.floor(tutoring.HoraFin.Microseconds / 3600000000);
+                            time = `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                        }
+                    }
+                    
+                    // Handle location
+                    const location = tutoring.lugar || tutoring.Lugar || tutoring.location || 'N/A';
+                    
+                    // Handle status
+                    const status = tutoring.estado || tutoring.Estado || tutoring.status || 'N/A';
+                    
+                    const statusClass = `status-${status}`;
+                    const statusText = getStatusText(status);
+                    
+                    row.innerHTML = `
+                        <td>#${tutoriaId.toString().padStart(3, '0')}</td>
+                        <td>${materiaName}</td>
+                        <td>${tutor}</td>
+                        <td>${formatDate(fecha)}</td>
+                        <td>${time}</td>
+                        <td>${location}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${generateActionButtons(tutoring)}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                } catch (error) {
+                    console.error('Error processing tutoring session:', error, tutoring);
+                    // Still add a row with fallback data to prevent the table from disappearing
+                    row.innerHTML = `
+                        <td>Error</td>
+                        <td>Error cargando datos</td>
+                        <td>Error cargando datos</td>
+                        <td>Error cargando datos</td>
+                        <td>Error cargando datos</td>
+                        <td>Error cargando datos</td>
+                        <td><span class="status-badge status-error">Error</span></td>
+                        <td>-</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+            }
+            
+            // Show message if no tutoring sessions
+            if (sessionData.tutoringSessions.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="8" style="text-align: center; color: #666;">No tienes tutorías registradas</td>';
                 tableBody.appendChild(row);
-            });
+            }
         }
 
         // Función para abrir detalle de tutoría
@@ -1209,3 +1273,22 @@ async function populateSedeDropdown() {
             updateDashboardTable();
         }, 60000);
 
+async function getTutorName(tutorId) {
+   try {
+        const response = await fetch(`${API_BASE_URL}/tutores/${tutorId}/nombre`);
+        if (!response.ok) throw new Error('Failed to fetch tutor name');
+        const data = await response.json()
+        
+        // API returns both Nombre and Apellido, combine them
+        if (data.Nombre && data.Apellido) {
+            return `${data.Nombre} ${data.Apellido}`;
+        } else if (data.Nombre) {
+            return data.Nombre;
+        } else {
+            return 'Tutor no encontrado';
+        }
+   } catch (error) {
+        console.error('Error fetching tutor name:', error);
+        return 'Tutor no encontrado';
+    }
+}

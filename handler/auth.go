@@ -7,8 +7,9 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/matwate/proyecto-datos/db"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/matwate/proyecto-datos/db"
 )
 
 // ErrorResponse represents a generic error response for API operations.
@@ -18,9 +19,9 @@ type ErrorResponse struct {
 
 // UnifiedLoginRequest represents the request body for the unified login endpoint.
 type UnifiedLoginRequest struct {
-	Correo   string `json:"correo" example:"user@urosario.edu.co"`
+	Correo   string `json:"correo"             example:"user@urosario.edu.co"`
 	Password string `json:"password,omitempty" example:"securepassword123"` // For admin login
-	TI       *int32 `json:"ti,omitempty" example:"123456789"`               // For student/tutor login
+	TI       *int32 `json:"ti,omitempty"       example:"123456789"`         // For student/tutor login
 }
 
 // LoginResponse represents a successful login response.
@@ -74,12 +75,21 @@ func UnifiedLoginHandler(queries *db.Queries) http.HandlerFunc {
 		case "admin":
 			handleAdminLogin(w, r, queries, req)
 		default:
-			http.Error(w, "Invalid login mode. Use 'estudiante', 'tutor', or 'admin'", http.StatusBadRequest)
+			http.Error(
+				w,
+				"Invalid login mode. Use 'estudiante', 'tutor', or 'admin'",
+				http.StatusBadRequest,
+			)
 		}
 	}
 }
 
-func handleEstudianteLogin(w http.ResponseWriter, r *http.Request, queries *db.Queries, req UnifiedLoginRequest) {
+func handleEstudianteLogin(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	req UnifiedLoginRequest,
+) {
 	if req.TI == nil {
 		http.Error(w, "TI is required for student login", http.StatusBadRequest)
 		return
@@ -94,7 +104,7 @@ func handleEstudianteLogin(w http.ResponseWriter, r *http.Request, queries *db.Q
 			http.Error(w, "Invalid student credentials", http.StatusUnauthorized)
 			return
 		}
-		http.Error(w, "Failed to authenticate student", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -105,7 +115,12 @@ func handleEstudianteLogin(w http.ResponseWriter, r *http.Request, queries *db.Q
 	json.NewEncoder(w).Encode(response)
 }
 
-func handleTutorLogin(w http.ResponseWriter, r *http.Request, queries *db.Queries, req UnifiedLoginRequest) {
+func handleTutorLogin(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	req UnifiedLoginRequest,
+) {
 	if req.TI == nil {
 		http.Error(w, "TI is required for tutor login", http.StatusBadRequest)
 		return
@@ -146,7 +161,12 @@ func handleTutorLogin(w http.ResponseWriter, r *http.Request, queries *db.Querie
 	json.NewEncoder(w).Encode(response)
 }
 
-func handleAdminLogin(w http.ResponseWriter, r *http.Request, queries *db.Queries, req UnifiedLoginRequest) {
+func handleAdminLogin(
+	w http.ResponseWriter,
+	r *http.Request,
+	queries *db.Queries,
+	req UnifiedLoginRequest,
+) {
 	if req.Password == "" {
 		http.Error(w, "Password is required for admin login", http.StatusBadRequest)
 		return
@@ -203,7 +223,11 @@ func handleAdminLogin(w http.ResponseWriter, r *http.Request, queries *db.Querie
 func LoginHandler(queries *db.Queries) http.HandlerFunc {
 	// LoginHandler is deprecated, UnifiedLoginHandler should be used instead.
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "This endpoint is deprecated. Use /v1/login/estudiante.", http.StatusMovedPermanently)
+		http.Error(
+			w,
+			"This endpoint is deprecated. Use /v1/login/estudiante.",
+			http.StatusMovedPermanently,
+		)
 	}
 }
 
@@ -223,6 +247,10 @@ func LoginHandler(queries *db.Queries) http.HandlerFunc {
 func LoginTutorHandler(queries *db.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// This handler is deprecated. Use UnifiedLoginHandler at /v1/login/tutor instead.
-		http.Error(w, "This endpoint is deprecated. Use /v1/login/tutor.", http.StatusMovedPermanently)
+		http.Error(
+			w,
+			"This endpoint is deprecated. Use /v1/login/tutor.",
+			http.StatusMovedPermanently,
+		)
 	}
 }
