@@ -219,7 +219,7 @@ SELECT * FROM TUTORIAS WHERE tutoria_id = $1;
 
 -- name: UpdateTutoriaEstado :one
 UPDATE TUTORIAS 
-SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+SET estado = $2::VARCHAR, fecha_confirmacion = CASE WHEN $2::VARCHAR = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
 WHERE tutoria_id = $1
 RETURNING *;
 
