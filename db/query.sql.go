@@ -2122,11 +2122,10 @@ func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (T
 	return i, err
 }
 
-const updateTutoriaAsistencia = `-- name: UpdateTutoriaAsistencia :one
+const updateTutoriaAsistencia = `-- name: UpdateTutoriaAsistencia :exec
 UPDATE TUTORIAS 
 SET asistencia_confirmada = $2
 WHERE tutoria_id = $1
-RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
 `
 
 type UpdateTutoriaAsistenciaParams struct {
@@ -2134,56 +2133,23 @@ type UpdateTutoriaAsistenciaParams struct {
 	AsistenciaConfirmada pgtype.Bool
 }
 
-func (q *Queries) UpdateTutoriaAsistencia(ctx context.Context, arg UpdateTutoriaAsistenciaParams) (Tutoria, error) {
-	row := q.db.QueryRow(ctx, updateTutoriaAsistencia, arg.TutoriaID, arg.AsistenciaConfirmada)
-	var i Tutoria
-	err := row.Scan(
-		&i.TutoriaID,
-		&i.EstudianteID,
-		&i.TutorID,
-		&i.MateriaID,
-		&i.Fecha,
-		&i.HoraInicio,
-		&i.HoraFin,
-		&i.Estado,
-		&i.FechaSolicitud,
-		&i.FechaConfirmacion,
-		&i.TemasTratados,
-		&i.AsistenciaConfirmada,
-		&i.Lugar,
-	)
-	return i, err
+func (q *Queries) UpdateTutoriaAsistencia(ctx context.Context, arg UpdateTutoriaAsistenciaParams) error {
+	_, err := q.db.Exec(ctx, updateTutoriaAsistencia, arg.TutoriaID, arg.AsistenciaConfirmada)
+	return err
 }
 
-const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :one
+const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :exec
 UPDATE TUTORIAS 
-SET estado = $1, fecha_confirmacion = CASE WHEN $1 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
-WHERE tutoria_id = $2
-RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+WHERE tutoria_id = $1
 `
 
 type UpdateTutoriaEstadoParams struct {
-	Estado    string
 	TutoriaID int32
+	Estado    string
 }
 
-func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEstadoParams) (Tutoria, error) {
-	row := q.db.QueryRow(ctx, updateTutoriaEstado, arg.Estado, arg.TutoriaID)
-	var i Tutoria
-	err := row.Scan(
-		&i.TutoriaID,
-		&i.EstudianteID,
-		&i.TutorID,
-		&i.MateriaID,
-		&i.Fecha,
-		&i.HoraInicio,
-		&i.HoraFin,
-		&i.Estado,
-		&i.FechaSolicitud,
-		&i.FechaConfirmacion,
-		&i.TemasTratados,
-		&i.AsistenciaConfirmada,
-		&i.Lugar,
-	)
-	return i, err
+func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEstadoParams) error {
+	_, err := q.db.Exec(ctx, updateTutoriaEstado, arg.TutoriaID, arg.Estado)
+	return err
 }

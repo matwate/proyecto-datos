@@ -594,13 +594,16 @@ func updateTutoriaEstadoHandler(w http.ResponseWriter, r *http.Request, queries 
 		Estado:    req.Estado,
 	}
 
-	tutoria, err := queries.UpdateTutoriaEstado(r.Context(), params)
+	err := queries.UpdateTutoriaEstado(r.Context(), params)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
-			http.Error(w, "Tutoria not found", http.StatusNotFound)
-			return
-		}
 		http.Error(w, "Failed to update tutoria status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get the updated tutoria
+	tutoria, err := queries.SelectTutoriaById(r.Context(), tutoriaID)
+	if err != nil {
+		http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -732,23 +735,38 @@ func UpdateTutoriaEstadoEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		params := db.UpdateTutoriaEstadoParams{
-			TutoriaID: int32(id),
-			Estado:    req.Estado,
-		}
-
-		tutoria, err := queries.UpdateTutoriaEstado(r.Context(), params)
+		// First, check if the tutoria exists
+		_, err = queries.SelectTutoriaById(r.Context(), int32(id))
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				http.Error(w, "Tutoria not found", http.StatusNotFound)
 				return
 			}
+			http.Error(w, "Failed to get tutoria: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Update the estado
+		params := db.UpdateTutoriaEstadoParams{
+			TutoriaID: int32(id),
+			Estado:    req.Estado,
+		}
+
+		err = queries.UpdateTutoriaEstado(r.Context(), params)
+		if err != nil {
 			http.Error(w, "Failed to update tutoria estado: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// Get the updated tutoria
+		updatedTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
+		if err != nil {
+			http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tutoria)
+		json.NewEncoder(w).Encode(updatedTutoria)
 	}
 }
 
@@ -786,22 +804,37 @@ func UpdateTutoriaAsistenciaEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		params := db.UpdateTutoriaAsistenciaParams{
-			TutoriaID:            int32(id),
-			AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
-		}
-
-		tutoria, err := queries.UpdateTutoriaAsistencia(r.Context(), params)
+		// First, check if the tutoria exists
+		_, err = queries.SelectTutoriaById(r.Context(), int32(id))
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				http.Error(w, "Tutoria not found", http.StatusNotFound)
 				return
 			}
+			http.Error(w, "Failed to get tutoria: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Update the asistencia
+		params := db.UpdateTutoriaAsistenciaParams{
+			TutoriaID:            int32(id),
+			AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
+		}
+
+		err = queries.UpdateTutoriaAsistencia(r.Context(), params)
+		if err != nil {
 			http.Error(w, "Failed to update tutoria asistencia: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// Get the updated tutoria
+		updatedTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
+		if err != nil {
+			http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tutoria)
+		json.NewEncoder(w).Encode(updatedTutoria)
 	}
 }

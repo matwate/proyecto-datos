@@ -217,11 +217,10 @@ RETURNING *;
 -- name: SelectTutoriaById :one
 SELECT * FROM TUTORIAS WHERE tutoria_id = $1;
 
--- name: UpdateTutoriaEstado :one
+-- name: UpdateTutoriaEstado :exec
 UPDATE TUTORIAS 
-SET estado = sqlc.arg(estado), fecha_confirmacion = CASE WHEN sqlc.arg(estado) = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
-WHERE tutoria_id = sqlc.arg(tutoria_id)
-RETURNING *;
+SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
+WHERE tutoria_id = $1;
 
 -- name: UpdateTutoria :one
 UPDATE TUTORIAS 
@@ -229,11 +228,10 @@ SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
 WHERE tutoria_id = $1
 RETURNING *;
 
--- name: UpdateTutoriaAsistencia :one
+-- name: UpdateTutoriaAsistencia :exec
 UPDATE TUTORIAS 
 SET asistencia_confirmada = $2
-WHERE tutoria_id = $1
-RETURNING *;
+WHERE tutoria_id = $1;
 
 -- name: DeleteTutoria :exec
 DELETE FROM TUTORIAS WHERE tutoria_id = $1;
