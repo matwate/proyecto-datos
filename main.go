@@ -79,6 +79,14 @@ func main() {
 	mux.HandleFunc("PATCH /v1/tutorias/{id}/estado", handler.UpdateTutoriaEstadoEndpoint(queries))
 	mux.HandleFunc("PATCH /v1/tutorias/{id}/asistencia", handler.UpdateTutoriaAsistenciaEndpoint(queries))
 
+	// Specific endpoints for selecting tutorias by tutor or estudiante ID
+	mux.HandleFunc("GET /v1/tutorias/tutor/{tutor_id}", func(w http.ResponseWriter, r *http.Request) {
+		handler.SelectTutoriaByTutorIDHandler(w, r, queries)
+	})
+	mux.HandleFunc("GET /v1/tutorias/estudiante/{estudiante_id}", func(w http.ResponseWriter, r *http.Request) {
+		handler.SelectTutoriaByEstudianteIDHandler(w, r, queries)
+	})
+
 	reporteHandlers := handler.ReporteHandlers(queries)
 	mux.Handle("/v1/reportes", reporteHandlers)
 	mux.Handle("/v1/reportes/", reporteHandlers)
