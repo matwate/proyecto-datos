@@ -170,7 +170,7 @@ loginForm.addEventListener('submit', async function(e) {
             
             // Handle specific error messages
             if (result.error.includes('timeout')) {
-                errorMessage = 'Error de conexión. Verifica tu conexión a internet e inténtalo nuevamente.';
+                errorMessage = 'Error de profile-programaconexión. Verifica tu conexión a internet e inténtalo nuevamente.';
             } else if (result.error.includes('401') || result.error.includes('Invalid credentials')) {
                 errorMessage = 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
             } else if (result.error.includes('403')) {

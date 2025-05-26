@@ -1793,6 +1793,44 @@ func (q *Queries) SelectTutorMateriaById(ctx context.Context, asignacionID int32
 	return i, err
 }
 
+const selectTutoriaByEstudianteId = `-- name: SelectTutoriaByEstudianteId :many
+SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar FROM TUTORIAS WHERE estudiante_id = $1 ORDER BY fecha DESC, hora_inicio DESC
+`
+
+func (q *Queries) SelectTutoriaByEstudianteId(ctx context.Context, estudianteID int32) ([]Tutoria, error) {
+	rows, err := q.db.Query(ctx, selectTutoriaByEstudianteId, estudianteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tutoria
+	for rows.Next() {
+		var i Tutoria
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const selectTutoriaById = `-- name: SelectTutoriaById :one
 SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar FROM TUTORIAS WHERE tutoria_id = $1
 `
@@ -1816,6 +1854,44 @@ func (q *Queries) SelectTutoriaById(ctx context.Context, tutoriaID int32) (Tutor
 		&i.Lugar,
 	)
 	return i, err
+}
+
+const selectTutoriaByTutorId = `-- name: SelectTutoriaByTutorId :many
+SELECT tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar FROM TUTORIAS WHERE tutor_id = $1 ORDER BY fecha DESC, hora_inicio DESC
+`
+
+func (q *Queries) SelectTutoriaByTutorId(ctx context.Context, tutorID int32) ([]Tutoria, error) {
+	rows, err := q.db.Query(ctx, selectTutoriaByTutorId, tutorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tutoria
+	for rows.Next() {
+		var i Tutoria
+		if err := rows.Scan(
+			&i.TutoriaID,
+			&i.EstudianteID,
+			&i.TutorID,
+			&i.MateriaID,
+			&i.Fecha,
+			&i.HoraInicio,
+			&i.HoraFin,
+			&i.Estado,
+			&i.FechaSolicitud,
+			&i.FechaConfirmacion,
+			&i.TemasTratados,
+			&i.AsistenciaConfirmada,
+			&i.Lugar,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAdmin = `-- name: UpdateAdmin :one

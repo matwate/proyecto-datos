@@ -217,6 +217,12 @@ RETURNING *;
 -- name: SelectTutoriaById :one
 SELECT * FROM TUTORIAS WHERE tutoria_id = $1;
 
+-- name: SelectTutoriaByTutorId :many
+SELECT * FROM TUTORIAS WHERE tutor_id = $1 ORDER BY fecha DESC, hora_inicio DESC;
+
+-- name: SelectTutoriaByEstudianteId :many
+SELECT * FROM TUTORIAS WHERE estudiante_id = $1 ORDER BY fecha DESC, hora_inicio DESC;
+
 -- name: UpdateTutoria :one
 UPDATE TUTORIAS 
 SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, estado = $6, asistencia_confirmada = $7, temas_tratados = $8,

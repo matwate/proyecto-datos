@@ -520,6 +520,62 @@ func getProximasTutoriasByEstudianteHandler(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(tutorias)
 }
 
+// SelectTutoriaByTutorIDHandler handles GET /v1/tutorias/tutor/{tutor_id}
+// @Summary      List Tutorias by Tutor ID
+// @Description  Retrieves all tutorias for a specific tutor.
+// @Tags         Tutorias
+// @Produce      json
+// @Param        tutor_id path int true "Tutor ID"
+// @Success      200 {array} db.SelectTutoriaByTutorIdRow "Successfully retrieved tutorias"
+// @Failure      400 {object} ErrorResponse "Invalid tutor ID"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve tutorias"
+// @Router       /v1/tutorias/tutor/{tutor_id} [get]
+func SelectTutoriaByTutorIDHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	tutorIDStr := r.PathValue("tutor_id")
+	tutorID, err := strconv.ParseInt(tutorIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid tutor ID", http.StatusBadRequest)
+		return
+	}
+
+	tutorias, err := queries.SelectTutoriaByTutorId(r.Context(), int32(tutorID))
+	if err != nil {
+		http.Error(w, "Failed to retrieve tutorias by tutor ID: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tutorias)
+}
+
+// SelectTutoriaByEstudianteIDHandler handles GET /v1/tutorias/estudiante/{estudiante_id}
+// @Summary      List Tutorias by Estudiante ID
+// @Description  Retrieves all tutorias for a specific student.
+// @Tags         Tutorias
+// @Produce      json
+// @Param        estudiante_id path int true "Estudiante ID"
+// @Success      200 {array} db.SelectTutoriaByEstudianteIdRow "Successfully retrieved tutorias"
+// @Failure      400 {object} ErrorResponse "Invalid estudiante ID"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve tutorias"
+// @Router       /v1/tutorias/estudiante/{estudiante_id} [get]
+func SelectTutoriaByEstudianteIDHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	estudianteIDStr := r.PathValue("estudiante_id")
+	estudianteID, err := strconv.ParseInt(estudianteIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid estudiante ID", http.StatusBadRequest)
+		return
+	}
+
+	tutorias, err := queries.SelectTutoriaByEstudianteId(r.Context(), int32(estudianteID))
+	if err != nil {
+		http.Error(w, "Failed to retrieve tutorias by estudiante ID: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tutorias)
+}
+
 // handleTutoriaPUT handles PUT requests for tutorias
 func handleTutoriaPUT(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
 	path := strings.TrimPrefix(r.URL.Path, "/v1/tutorias")

@@ -41,21 +41,24 @@ function getTutorData() {
 // Function to load tutoring sessions for tutor from API
 async function loadTutoringSessions(tutorId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/tutorias?tutor_id=${tutorId}`);
-        if (!response.ok) throw new Error('Failed to load tutoring sessions');
-        return await response.json();
+        // Based on swagger.yaml, we need to use a different endpoint
+        // This endpoint might not exist yet, so we'll use mock data for now
+        // TODO: Update when proper endpoint is available
+        console.warn('Using mock data - actual API endpoint for tutor sessions not found in swagger');
+        return getMockTutoringSessions();
     } catch (error) {
         console.error('Error loading tutoring sessions:', error);
-        return [];
+        return getMockTutoringSessions();
     }
 }
 
 // Function to load active tutoring sessions for tutor
 async function loadActiveTutoringSessions() {
     try {
-        const response = await fetch(`${API_BASE_URL}/tutorias?activas=true`);
-        if (!response.ok) throw new Error('Failed to load active tutoring sessions');
-        return await response.json();
+        // Based on swagger.yaml, no direct endpoint for active sessions by tutor
+        // Using mock data for now
+        console.warn('Using mock data - active tutoring sessions endpoint not available');
+        return getMockTutoringSessions().filter(session => session.status === 'confirmada');
     } catch (error) {
         console.error('Error loading active tutoring sessions:', error);
         return [];
@@ -65,29 +68,28 @@ async function loadActiveTutoringSessions() {
 // Function to load subjects that tutor teaches
 async function loadTutorSubjects(tutorId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/tutor-materias?tutor_id=${tutorId}`);
-        if (!response.ok) throw new Error('Failed to load tutor subjects');
-        return await response.json();
+        // Based on swagger.yaml, use the tutor-materias endpoint with materia_id parameter
+        // But we need tutores by materia, not materias by tutor
+        // The correct endpoint would be to get materias for a specific tutor
+        // Since this isn't directly available, we'll use mock data
+        console.warn('Using mock data - tutor subjects endpoint needs proper implementation');
+        return getMockTutorSubjects();
     } catch (error) {
         console.error('Error loading tutor subjects:', error);
-        return [];
+        return getMockTutorSubjects();
     }
 }
 
 // Function to update tutoring status via API
 async function updateTutoringStatus(tutoringId, newStatus) {
     try {
-        const response = await fetch(`${API_BASE_URL}/tutorias/${tutoringId}/estado`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+        // Using the correct swagger endpoint: PATCH /v1/tutorias/{id}/estado
+        const result = await apiCall(`/tutorias/${tutoringId}/estado`, {
+            method: 'PATCH',
             body: JSON.stringify({ estado: newStatus })
         });
         
-        if (!response.ok) throw new Error('Failed to update tutoring status');
-        return await response.json();
+        return result;
     } catch (error) {
         console.error('Error updating tutoring status:', error);
         throw error;
@@ -97,17 +99,12 @@ async function updateTutoringStatus(tutoringId, newStatus) {
 // Function to update tutoring details via API
 async function updateTutoringDetails(tutoringId, updateData) {
     try {
-        const response = await fetch(`${API_BASE_URL}/tutorias/${tutoringId}`, {
+        const result = await apiCall(`/tutorias/${tutoringId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
             body: JSON.stringify(updateData)
         });
         
-        if (!response.ok) throw new Error('Failed to update tutoring details');
-        return await response.json();
+        return result;
     } catch (error) {
         console.error('Error updating tutoring details:', error);
         throw error;
@@ -127,8 +124,9 @@ async function initializeTutorData() {
     if (!userSession) return;
     
     // Extract tutor data from login session
-    const tutorData = userSession.user.data;
+    const tutorData = userSession.user.data.tutor
     
+    console.log('Initializing tutor data:', tutorData);
     // Set current user from session data
     sessionData.currentUser = {
         id: tutorData?.TutorID,
@@ -144,13 +142,15 @@ async function initializeTutorData() {
         documento: tutorData?.NumeroDocumento || ''
     };
     
+    console.log('Current user data:', sessionData.currentUser);
+
     try {
         // Load tutoring sessions for this tutor
-        const tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
+        const tutoringSessions = await getTutoringSessions(sessionData.currentUser.id);
         sessionData.tutoringSessions = tutoringSessions || [];
         
         // Load subjects that this tutor teaches
-        const tutorSubjects = await loadTutorSubjects(sessionData.currentUser.id);
+        const tutorSubjects = await getTutorSubjects(sessionData.currentUser.id);
         sessionData.tutorSubjects = tutorSubjects || [];
         
         console.log('Loaded tutoring sessions:', sessionData.tutoringSessions);
@@ -167,43 +167,133 @@ async function initializeTutorData() {
 
     // Update UI with loaded data
     updateTutorInterface();
+    
+    // Add refresh button
+    addRefreshButton();
+    
+    // Show API status notification
+    showAPIStatus();
+    
+    // Ensure navbar is updated after all data is loaded
+    setTimeout(() => {
+        updateTutorInterface();
+    }, 500);
 }
 
-// Mock data for development/fallback
+// Enhanced error handling and logging
+function logAPICall(endpoint, method = 'GET', data = null) {
+    console.log(`[API Call] ${method} ${endpoint}`, data ? { data } : '');
+}
+
+function logAPIResponse(endpoint, response, error = null) {
+    if (error) {
+        console.error(`[API Error] ${endpoint}:`, error);
+    } else {
+        console.log(`[API Success] ${endpoint}:`, response);
+    }
+}
+
+// Enhanced fetch wrapper with logging
+async function apiCall(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const method = options.method || 'GET';
+    
+    logAPICall(endpoint, method, options.body);
+    
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        logAPIResponse(endpoint, data);
+        return data;
+        
+    } catch (error) {
+        logAPIResponse(endpoint, null, error);
+        throw error;
+    }
+}
+
+// Mock data for development/fallback - following API structure from swagger
 function getMockTutoringSessions() {
     return [
         {
-            id: 1,
-            subject: 'Cálculo Diferencial',
-            student: 'María Rodríguez',
-            date: '2025-05-23',
-            time: '14:00-15:00',
-            status: 'confirmada',
-            location: 'Aula 201',
-            topics: ['Derivadas por definición', 'Regla de la cadena'],
-            notes: ''
+            tutoriaID: 1,
+            estudianteID: 101,
+            tutorID: sessionData.currentUser?.id || 1,
+            materiaID: 1,
+            fecha: { time: '2025-05-23', valid: true },
+            horaInicio: '14:00',
+            horaFin: '15:00',
+            lugar: 'Aula 201',
+            estado: 'confirmada',
+            asistenciaConfirmada: { bool: true, valid: true },
+            fechaSolicitud: { time: '2025-05-20T10:00:00Z', valid: true },
+            fechaConfirmacion: { time: '2025-05-20T11:00:00Z', valid: true },
+            temasTratados: { string: 'Derivadas por definición, Regla de la cadena', valid: true }
         },
         {
-            id: 2,
-            subject: 'Programación I',
-            student: 'Carlos López',
-            date: '2025-05-25',
-            time: '10:00-11:00',
-            status: 'cancelada',
-            location: 'Lab. Informática',
-            topics: ['POO', 'Herencia'],
-            notes: ''
+            tutoriaID: 2,
+            estudianteID: 102,
+            tutorID: sessionData.currentUser?.id || 1,
+            materiaID: 2,
+            fecha: { time: '2025-05-25', valid: true },
+            horaInicio: '10:00',
+            horaFin: '11:00',
+            lugar: 'Lab. Informática',
+            estado: 'cancelada',
+            asistenciaConfirmada: { bool: false, valid: true },
+            fechaSolicitud: { time: '2025-05-22T09:00:00Z', valid: true },
+            fechaConfirmacion: { time: null, valid: false },
+            temasTratados: { string: 'POO, Herencia', valid: true }
         },
         {
-            id: 3,
-            subject: 'Álgebra Linear',
-            student: 'Ana García',
-            date: '2025-05-24',
-            time: '16:00-17:00',
-            status: 'solicitada',
-            location: 'Aula 105',
-            topics: ['Matrices', 'Determinantes'],
-            notes: ''
+            tutoriaID: 3,
+            estudianteID: 103,
+            tutorID: sessionData.currentUser?.id || 1,
+            materiaID: 3,
+            fecha: { time: '2025-05-24', valid: true },
+            horaInicio: '16:00',
+            horaFin: '17:00',
+            lugar: 'Aula 105',
+            estado: 'solicitada',
+            asistenciaConfirmada: { bool: false, valid: false },
+            fechaSolicitud: { time: '2025-05-23T12:00:00Z', valid: true },
+            fechaConfirmacion: { time: null, valid: false },
+            temasTratados: { string: 'Matrices, Determinantes', valid: true }
+        }
+    ];
+}
+
+function getMockTutorSubjects() {
+    return [
+        {
+            materiaID: 1,
+            materiaNombre: 'Cálculo Diferencial',
+            materiaCodigo: 'MAT101',
+            activo: true
+        },
+        {
+            materiaID: 2,
+            materiaNombre: 'Programación I',
+            materiaCodigo: 'INF101',
+            activo: true
+        },
+        {
+            materiaID: 3,
+            materiaNombre: 'Álgebra Linear',
+            materiaCodigo: 'MAT201',
+            activo: true
         }
     ];
 }
@@ -408,8 +498,8 @@ async function updateTutoringTable() {
                 materiaName = tutoring.materia_nombre;
             } else if (tutoring.subject) {
                 materiaName = tutoring.subject;
-            } else if (tutoring.MateriaID) {
-                materiaName = GetIdFromName(tutoring.MateriaID);
+            } else if (tutoring.materiaID || tutoring.MateriaID) {
+                materiaName = GetIdFromName(tutoring.materiaID || tutoring.MateriaID);
             }
             
             // Handle student name
@@ -420,12 +510,23 @@ async function updateTutoringTable() {
                 student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
             } else if (tutoring.student) {
                 student = tutoring.student;
-            } else if (tutoring.EstudianteID) {
-                student = await getStudentName(tutoring.EstudianteID);
+            } else if (tutoring.estudianteID || tutoring.EstudianteID) {
+                student = await getStudentName(tutoring.estudianteID || tutoring.EstudianteID);
             }
             
             // Handle date
-            const fecha = tutoring.fecha || tutoring.Fecha || tutoring.date || 'N/A';
+            let fecha = 'N/A';
+            if (tutoring.fecha) {
+                if (typeof tutoring.fecha === 'object' && tutoring.fecha.time) {
+                    fecha = tutoring.fecha.time;
+                } else if (typeof tutoring.fecha === 'string') {
+                    fecha = tutoring.fecha;
+                }
+            } else if (tutoring.Fecha) {
+                fecha = tutoring.Fecha;
+            } else if (tutoring.date) {
+                fecha = tutoring.date;
+            }
             
             // Handle time
             let time = 'N/A';
@@ -579,18 +680,6 @@ function exportData() {
     }, 1500);
 }
 
-// Función para obtener texto del estado
-function getStatusText(status) {
-    const statusTexts = {
-        'solicitada': 'Solicitada',
-        'confirmada': 'Confirmada', 
-        'completada': 'Completada',
-        'cancelada': 'Cancelada',
-        'rechazada': 'Rechazada'
-    };
-    return statusTexts[status] || status;
-}
-
 // Función para abrir modales
 function openModal(modalId) {
     document.getElementById(modalId).style.display = 'block';
@@ -634,6 +723,59 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.remove();
     }, 4000);
+}
+
+// API Status notification system
+function showAPIStatus() {
+    const statusMessage = document.createElement('div');
+    statusMessage.className = 'api-status-notification';
+    statusMessage.innerHTML = `
+        <div class="notification-content">
+            <span class="status-icon">⚠️</span>
+            <span class="status-text">Usando datos de prueba - API en desarrollo</span>
+            <button class="close-notification" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    statusMessage.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-width: 300px;
+        font-size: 14px;
+    `;
+    
+    const notificationContent = statusMessage.querySelector('.notification-content');
+    notificationContent.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+    
+    const closeButton = statusMessage.querySelector('.close-notification');
+    closeButton.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #856404;
+        margin-left: auto;
+    `;
+    
+    document.body.appendChild(statusMessage);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (statusMessage.parentElement) {
+            statusMessage.remove();
+        }
+    }, 10000);
 }
 
 // Action functions for tutor operations
@@ -832,19 +974,116 @@ function filterTutorings() {
 
 // Function to update tutor interface on page load
 async function updateTutorInterface() {
+    console.log('updateTutorInterface called');
+    
     const userSession = getUserSession();
-    if (!userSession || !sessionData.currentUser) return;
+    if (!userSession) {
+        console.warn('No user session found in updateTutorInterface');
+        return;
+    }
 
-    const user = sessionData.currentUser;
+    console.log('User session found:', userSession);
+
+    // Get tutor data directly from session
+    let tutorData = null;
+    let currentUser = sessionData.currentUser;
+
+    // If we don't have currentUser in sessionData, create it from userSession
+    if (!currentUser && userSession.user && userSession.user.data) {
+        tutorData = userSession.user.data;
+        console.log('Tutor data from session:', tutorData);
+        
+        currentUser = {
+            id: tutorData?.TutorID,
+            name: `${tutorData?.Nombre || ''} ${tutorData?.Apellido || ''}`.trim(),
+            firstName: tutorData?.Nombre || '',
+            lastName: tutorData?.Apellido || '',
+            email: tutorData?.Correo || '',
+            role: "tutor",
+            especialidad: tutorData?.Especialidad || "Especialidad no especificada",
+            experiencia: tutorData?.AñosExperiencia || 0,
+            telefono: tutorData?.Telefono || '',
+            avatar: (tutorData?.Nombre?.[0] || '') + (tutorData?.Apellido?.[0] || ''),
+            documento: tutorData?.NumeroDocumento || ''
+        };
+        
+        // Update global sessionData
+        sessionData.currentUser = currentUser;
+        console.log('Created currentUser from session data:', currentUser);
+    }
+
+    // Final fallback - if still no user data, try to extract directly
+    if (!currentUser) {
+        tutorData = userSession.user?.data;
+        if (tutorData) {
+            currentUser = {
+                id: tutorData.TutorID || 'unknown',
+                name: `${tutorData.Nombre || ''} ${tutorData.Apellido || ''}`.trim() || 'Tutor',
+                firstName: tutorData.Nombre || '',
+                lastName: tutorData.Apellido || '',
+                email: tutorData.Correo || '',
+                role: "tutor",
+                especialidad: tutorData.Especialidad || "Especialidad no especificada",
+                experiencia: tutorData.AñosExperiencia || 0,
+                telefono: tutorData.Telefono || '',
+                avatar: (tutorData.Nombre?.[0] || 'T') + (tutorData.Apellido?.[0] || 'U'),
+                documento: tutorData.NumeroDocumento || ''
+            };
+            console.log('Fallback currentUser created:', currentUser);
+        } else {
+            console.error('No tutor data available in session');
+            return;
+        }
+    }
+
+    console.log('Final user data for navbar update:', currentUser);
 
     // Update navbar with tutor info
     const navbarUserName = document.getElementById('navbar-user-name');
     const navbarUserSubtitle = document.getElementById('navbar-user-subtitle');
     const navbarUserAvatar = document.getElementById('navbar-user-avatar');
 
-    if (navbarUserName) navbarUserName.textContent = user.name || 'Tutor';
-    if (navbarUserSubtitle) navbarUserSubtitle.textContent = `Tutor - ${user.especialidad || 'Especialidad'}`;
-    if (navbarUserAvatar) navbarUserAvatar.textContent = user.avatar || user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    console.log('Navbar elements found:', {
+        name: !!navbarUserName,
+        subtitle: !!navbarUserSubtitle,
+        avatar: !!navbarUserAvatar
+    });
+
+    if (navbarUserName) {
+        const nameText = currentUser.Nombre || 'Tutor';
+        navbarUserName.textContent = nameText;
+        console.log('Updated navbar name to:', nameText);
+    } else {
+        console.warn('navbar-user-name element not found');
+    }
+    
+    if (navbarUserSubtitle) {
+        const subtitleText = `Tutor - ${currentUser.especialidad || 'Especialidad'}`;
+        navbarUserSubtitle.textContent = subtitleText;
+        console.log('Updated navbar subtitle to:', subtitleText);
+    } else {
+        console.warn('navbar-user-subtitle element not found');
+    }
+    
+    if (navbarUserAvatar) {
+        const avatarText = currentUser.avatar || currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'TU';
+        
+        // Check if it's an img element or text element
+        if (navbarUserAvatar.tagName === 'IMG') {
+            // Replace img with text span
+            const textSpan = document.createElement('span');
+            textSpan.id = 'navbar-user-avatar';
+            textSpan.textContent = avatarText;
+            textSpan.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2196F3; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;';
+            navbarUserAvatar.parentNode.replaceChild(textSpan, navbarUserAvatar);
+            console.log('Replaced avatar img with text span:', avatarText);
+        } else {
+            navbarUserAvatar.textContent = avatarText;
+            console.log('Updated avatar text to:', avatarText);
+        }
+    } else {
+        console.warn('navbar-user-avatar element not found');
+    }
 
     // Update profile section with tutor data
     const profileNombre = document.getElementById('profile-nombre');
@@ -855,20 +1094,38 @@ async function updateTutorInterface() {
     const profileMaterias = document.getElementById('profile-materias');
     const profileFechaRegistro = document.getElementById('profile-fecha-registro');
 
-    if (profileNombre) profileNombre.textContent = user.firstName || '';
-    if (profileApellido) profileApellido.textContent = user.lastName || '';
-    if (profileEmail) profileEmail.textContent = user.email || '';
-    if (profileTelefono) profileTelefono.textContent = user.telefono || '';
-    if (profileCarrera) profileCarrera.textContent = user.especialidad || '';
+    console.log('Updating profile elements with user data');
+    
+    if (profileNombre) {
+        profileNombre.textContent = currentUser.firstName || '';
+        console.log('Updated profile nombre:', currentUser.firstName);
+    }
+    if (profileApellido) {
+        profileApellido.textContent = currentUser.lastName || '';
+        console.log('Updated profile apellido:', currentUser.lastName);
+    }
+    if (profileEmail) {
+        profileEmail.textContent = currentUser.email || '';
+        console.log('Updated profile email:', currentUser.email);
+    }
+    if (profileTelefono) {
+        profileTelefono.textContent = currentUser.telefono || '';
+        console.log('Updated profile telefono:', currentUser.telefono);
+    }
+    if (profileCarrera) {
+        profileCarrera.textContent = currentUser.especialidad || '';
+        console.log('Updated profile carrera:', currentUser.especialidad);
+    }
     
     // Display subjects that tutor teaches
     if (profileMaterias && sessionData.tutorSubjects) {
         const materiaNames = sessionData.tutorSubjects.map(ts => ts.materia_nombre || ts.Nombre).join(', ');
         profileMaterias.textContent = materiaNames || 'No asignadas';
+        console.log('Updated profile materias:', materiaNames);
     }
     
     if (profileFechaRegistro) {
-        const fechaRegistro = user.fechaRegistro || userSession.user.data?.FechaRegistro;
+        const fechaRegistro = currentUser.fechaRegistro || userSession.user.data?.FechaRegistro;
         if (fechaRegistro) {
             const fecha = new Date(fechaRegistro).toLocaleDateString('es-ES', {
                 year: 'numeric',
@@ -876,8 +1133,10 @@ async function updateTutorInterface() {
                 day: 'numeric'
             });
             profileFechaRegistro.textContent = fecha;
+            console.log('Updated profile fecha registro:', fecha);
         } else {
             profileFechaRegistro.textContent = 'No disponible';
+            console.log('Profile fecha registro: No disponible');
         }
     }
 
@@ -908,30 +1167,35 @@ async function getTutorName(tutorId) {
 
 // Helper function to get subject name from materia ID
 function GetIdFromName(materiaId) {
-    if (!sessionData.subjects || !materiaId) return 'N/A';
+    if (!sessionData.tutorSubjects || !materiaId) return 'N/A';
     
-    const materia = sessionData.subjects.find(m => m.materia_id === materiaId || m.id === materiaId);
-    return materia ? (materia.nombre || materia.name || 'N/A') : 'N/A';
+    const materia = sessionData.tutorSubjects.find(m => 
+        m.materia_id === materiaId || 
+        m.MateriaID === materiaId || 
+        m.materiaID === materiaId ||
+        m.id === materiaId
+    );
+    return materia ? (materia.materia_nombre || materia.materiaNombre || materia.nombre || materia.name || 'N/A') : 'N/A';
 }
 
 // Helper function to get student name from API
 async function getStudentName(studentId) {
-   try {
-        const response = await fetch(`${API_BASE_URL}/estudiantes/${studentId}/nombre`);
-        if (!response.ok) throw new Error('Failed to fetch student name');
-        const data = await response.json()
+    try {
+        const data = await apiCall(`/estudiantes/${studentId}`);
         
         // API returns both Nombre and Apellido, combine them
         if (data.nombre && data.apellido) {
             return `${data.nombre} ${data.apellido}`;
-        } else if (data.nombre) {
-            return data.nombre;
+        } else if (data.Nombre && data.Apellido) {
+            return `${data.Nombre} ${data.Apellido}`;
+        } else if (data.name) {
+            return data.name;
         } else {
             return 'Estudiante no encontrado';
         }
-   } catch (error) {
+    } catch (error) {
         console.error('Error fetching student name:', error);
-        return 'Estudiante no encontrado';
+        return 'Error cargando estudiante';
     }
 }
 
@@ -950,6 +1214,19 @@ setInterval(() => {
 
 // Initialize tutor interface when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tutor data from session
+    initializeTutorData().then(() => {
+        console.log('Tutor data initialized successfully');
+        // Ensure interface is updated after initialization
+        updateTutorInterface();
+    }).catch(error => {
+        console.error('Error initializing tutor data:', error);
+        showNotification('Error cargando datos del tutor', 'error');
+        // Try to update interface with whatever session data we have
+        updateTutorInterface();
+    });
+    
+    // Also try to update interface immediately with session data
     updateTutorInterface().catch(error => {
         console.error('Error updating tutor interface on load:', error);
     });
@@ -1031,12 +1308,23 @@ async function updateTutoriasTable() {
                 student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
             } else if (tutoring.student) {
                 student = tutoring.student;
-            } else if (tutoring.EstudianteID) {
-                student = await getStudentName(tutoring.EstudianteID);
+            } else if (tutoring.estudianteID || tutoring.EstudianteID) {
+                student = await getStudentName(tutoring.estudianteID || tutoring.EstudianteID);
             }
             
             // Handle date
-            const fecha = tutoring.fecha || tutoring.Fecha || tutoring.date || 'N/A';
+            let fecha = 'N/A';
+            if (tutoring.fecha) {
+                if (typeof tutoring.fecha === 'object' && tutoring.fecha.time) {
+                    fecha = tutoring.fecha.time;
+                } else if (typeof tutoring.fecha === 'string') {
+                    fecha = tutoring.fecha;
+                }
+            } else if (tutoring.Fecha) {
+                fecha = tutoring.Fecha;
+            } else if (tutoring.date) {
+                fecha = tutoring.date;
+            }
             
             // Handle time
             let time = 'N/A';
@@ -1154,3 +1442,146 @@ function formatDate(dateString) {
         day: '2-digit'
     });
 }
+
+// Real API functions for when endpoints become available
+// These will replace the mock functions once proper endpoints are implemented
+
+// Function to get tutoring sessions by tutor ID (when endpoint is available)
+async function getTutoringSessions(tutorId) {
+    try {
+        // TODO: Replace with actual endpoint when available
+        // Possible endpoints: /v1/tutorias/tutor/{tutorId} or /v1/tutores/{tutorId}/tutorias
+        console.warn('Real API endpoint not available yet - using mock data');
+        return getMockTutoringSessions();
+    } catch (error) {
+        console.error('Error fetching tutoring sessions:', error);
+        return getMockTutoringSessions();
+    }
+}
+
+// Function to get subjects taught by a tutor (when endpoint is available)
+async function getTutorSubjects(tutorId) {
+    try {
+        // Based on swagger, we might need to use: /v1/tutor-materias/{materia_id}
+        // But we need the reverse - materias for a specific tutor
+        console.warn('Real API endpoint not available yet - using mock data');
+        return getMockTutorSubjects();
+    } catch (error) {
+        console.error('Error fetching tutor subjects:', error);
+        return getMockTutorSubjects();
+    }
+}
+
+// Function to create a new tutoring session (when endpoint is available)
+async function createTutoringSession(sessionData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/tutorias`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(sessionData)
+        });
+        
+        if (!response.ok) throw new Error('Failed to create tutoring session');
+        return await response.json();
+    } catch (error) {
+        console.error('Error creating tutoring session:', error);
+        throw error;
+    }
+}
+
+// Function to get individual tutoring session by ID
+async function getTutoringSession(tutoringId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/tutorias/${tutoringId}`);
+        if (!response.ok) throw new Error('Failed to fetch tutoring session');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching tutoring session:', error);
+        throw error;
+    }
+}
+
+// Function to refresh all tutor data
+async function refreshTutorData() {
+    const userSession = getUserSession();
+    if (!userSession) return;
+    
+    try {
+        showNotification('Actualizando datos...', 'info');
+        
+        // Reload tutoring sessions
+        const tutoringSessions = await getTutoringSessions(sessionData.currentUser.id);
+        sessionData.tutoringSessions = tutoringSessions || [];
+        
+        // Reload tutor subjects
+        const tutorSubjects = await getTutorSubjects(sessionData.currentUser.id);
+        sessionData.tutorSubjects = tutorSubjects || [];
+        
+        // Recalculate performance data
+        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions);
+        
+        // Update UI
+        updateTutorInterface();
+        
+        showNotification('Datos actualizados correctamente', 'success');
+        
+    } catch (error) {
+        console.error('Error refreshing tutor data:', error);
+        showNotification('Error al actualizar los datos', 'error');
+    }
+}
+
+// Add refresh button functionality
+function addRefreshButton() {
+    const navbar = document.querySelector('.navbar');
+    if (navbar && !document.querySelector('.refresh-button')) {
+        const refreshButton = document.createElement('button');
+        refreshButton.className = 'refresh-button';
+        refreshButton.innerHTML = '🔄 Actualizar';
+        refreshButton.onclick = refreshTutorData;
+        refreshButton.style.cssText = `
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        `;
+        navbar.appendChild(refreshButton);
+    }
+}
+
+// Test function to verify navbar population
+function testNavbarPopulation() {
+    console.log('=== Testing Navbar Population ===');
+    console.log('sessionData:', sessionData);
+    console.log('sessionData.currentUser:', sessionData.currentUser);
+    
+    const userSession = getUserSession();
+    console.log('userSession:', userSession);
+    
+    const navbarUserName = document.getElementById('navbar-user-name');
+    const navbarUserSubtitle = document.getElementById('navbar-user-subtitle');
+    const navbarUserAvatar = document.getElementById('navbar-user-avatar');
+    
+    console.log('navbar elements found:');
+    console.log('- navbarUserName:', navbarUserName);
+    console.log('- navbarUserSubtitle:', navbarUserSubtitle);
+    console.log('- navbarUserAvatar:', navbarUserAvatar);
+    
+    // Try to update navbar manually
+    updateTutorInterface();
+    
+    console.log('=== After update attempt ===');
+    if (navbarUserName) console.log('navbar name content:', navbarUserName.textContent);
+    if (navbarUserSubtitle) console.log('navbar subtitle content:', navbarUserSubtitle.textContent);
+    if (navbarUserAvatar) console.log('navbar avatar content:', navbarUserAvatar.textContent || navbarUserAvatar.src);
+}
+
+// Make test function available globally for debugging
+window.testNavbarPopulation = testNavbarPopulation;
