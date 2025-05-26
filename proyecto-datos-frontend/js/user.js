@@ -478,7 +478,7 @@ function getMockTutoringSessions() {
             currentTutoriaId = tutoriaId;
 
             // Map API data to display format - handle both API response format and local format
-            const subject = tutoring.materiaNombre || tutoring.materia_nombre || tutoring.subject || 'N/A';
+            const subject = tutoring.MateriaID
             const tutor = (tutoring.tutorNombre && tutoring.tutorApellido) 
                 ? `${tutoring.tutorNombre} ${tutoring.tutorApellido}` 
                 : (tutoring.tutor_nombre && tutoring.tutor_apellido) 
@@ -1280,10 +1280,10 @@ async function getTutorName(tutorId) {
         const data = await response.json()
         
         // API returns both Nombre and Apellido, combine them
-        if (data.Nombre && data.Apellido) {
-            return `${data.Nombre} ${data.Apellido}`;
-        } else if (data.Nombre) {
-            return data.Nombre;
+        if (data.nombre && data.apellido) {
+            return `${data.nombre} ${data.apellido}`;
+        } else if (data.nombre) {
+            return data.nombre;
         } else {
             return 'Tutor no encontrado';
         }

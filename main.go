@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
 	"github.com/matwate/proyecto-datos/db"
@@ -34,13 +34,13 @@ func main() {
 		log.Fatal("POSTGRES_URL environment variable is not set")
 	}
 
-	conn, err := pgx.Connect(context.Background(), dbURL)
+	pool, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		log.Fatalf("Unable to create connection pool: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
-	queries := db.New(conn)
+	queries := db.New(pool)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
