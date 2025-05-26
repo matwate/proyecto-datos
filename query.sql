@@ -347,4 +347,8 @@ WHERE estudiante_id = $1
   )
 ORDER BY fecha, hora_inicio;
 
+-- name: ListMateriaNames :many
+SELECT nombre 
+FROM MATERIAS
+ORDER BY nombre;
 

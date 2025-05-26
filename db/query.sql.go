@@ -727,6 +727,32 @@ func (q *Queries) ListEstudiantesBySemestre(ctx context.Context, semestre pgtype
 	return items, nil
 }
 
+const listMateriaNames = `-- name: ListMateriaNames :many
+SELECT nombre 
+FROM MATERIAS
+ORDER BY nombre
+`
+
+func (q *Queries) ListMateriaNames(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listMateriaNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var nombre string
+		if err := rows.Scan(&nombre); err != nil {
+			return nil, err
+		}
+		items = append(items, nombre)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMaterias = `-- name: ListMaterias :many
 SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS ORDER BY codigo
 `
