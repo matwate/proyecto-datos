@@ -96,6 +96,12 @@ func handleMateriaGET(w http.ResponseWriter, r *http.Request, queries *db.Querie
 	path := strings.TrimPrefix(r.URL.Path, "/v1/materias")
 
 	if path == "" || path == "/" {
+		// Check for nombres query parameter
+		if r.URL.Query().Get("nombres") == "true" {
+			// GET /v1/materias?nombres=true
+			listMateriaNombresHandler(w, r, queries)
+			return
+		}
 		// GET /v1/materias - List all materias
 		listMateriasHandler(w, r, queries)
 		return
@@ -295,4 +301,39 @@ func deleteMateriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// listMateriaNombresHandler handles GET /v1/materias?nombres=true
+// @Summary      List Materia Names
+// @Description  Retrieves a list of all materia names.
+// @Tags         Materias
+// @Produce      json
+// @Success      200 {array} string "Successfully retrieved materia names"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve materia names"
+// @Router       /v1/materias [get]
+func listMateriaNombresHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	materias, err := queries.ListMateriaNombres(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to retrieve materia names: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create response with materia_id, nombre, and codigo
+	type MateriaName struct {
+		MateriaID int32  `json:"materia_id"`
+		Nombre    string `json:"nombre"`
+		Codigo    string `json:"codigo"`
+	}
+
+	var response []MateriaName
+	for _, materia := range materias {
+		response = append(response, MateriaName{
+			MateriaID: materia.MateriaID,
+			Nombre:    materia.Nombre,
+			Codigo:    materia.Codigo,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

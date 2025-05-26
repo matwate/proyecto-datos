@@ -753,6 +753,36 @@ func (q *Queries) ListMateriaNames(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const listMateriaNombres = `-- name: ListMateriaNombres :many
+SELECT materia_id, nombre, codigo FROM MATERIAS ORDER BY codigo
+`
+
+type ListMateriaNombresRow struct {
+	MateriaID int32
+	Nombre    string
+	Codigo    string
+}
+
+func (q *Queries) ListMateriaNombres(ctx context.Context) ([]ListMateriaNombresRow, error) {
+	rows, err := q.db.Query(ctx, listMateriaNombres)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMateriaNombresRow
+	for rows.Next() {
+		var i ListMateriaNombresRow
+		if err := rows.Scan(&i.MateriaID, &i.Nombre, &i.Codigo); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMaterias = `-- name: ListMaterias :many
 SELECT materia_id, nombre, codigo, facultad, descripcion, creditos FROM MATERIAS ORDER BY codigo
 `
