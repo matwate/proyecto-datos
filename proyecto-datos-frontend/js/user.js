@@ -110,7 +110,7 @@ async function submitTutoringRequest(requestData) {
 async function updateTutoringStatus(tutoringId, newStatus) {
     try {
         const response = await fetch(`${API_BASE_URL}/tutorias/${tutoringId}/estado`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
