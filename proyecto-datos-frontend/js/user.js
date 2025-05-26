@@ -272,10 +272,16 @@ function getMockTutoringSessions() {
 
         // Función para verificar si se puede confirmar una tutoría (12 horas antes)
         function canConfirmTutoring(tutoring) {
-            if (tutoring.status !== 'solicitada') return false;
+            const status = tutoring.estado || tutoring.status;
+            if (status !== 'solicitada') return false;
             
             const now = new Date();
-            const tutoringDateTime = new Date(`${tutoring.date}T${tutoring.time.split('-')[0]}:00`);
+            const fecha = tutoring.fecha || tutoring.date;
+            const horaInicio = tutoring.hora_inicio || (tutoring.time ? tutoring.time.split('-')[0] : null);
+            
+            if (!fecha || !horaInicio) return false;
+            
+            const tutoringDateTime = new Date(`${fecha}T${horaInicio}:00`);
             const hoursUntil = (tutoringDateTime - now) / (1000 * 60 * 60);
             
             return hoursUntil >= 12;
@@ -283,17 +289,20 @@ function getMockTutoringSessions() {
 
         // Función para generar botones de acción según el estado y condiciones
         function generateActionButtons(tutoring) {
-            let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoring.id})">Ver</button>`;
+            const tutoriaId = tutoring.tutoria_id || tutoring.id;
+            const status = tutoring.estado || tutoring.status;
             
-            if (tutoring.status === 'solicitada') {
+            let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoriaId})">Ver</button>`;
+            
+            if (status === 'solicitada') {
                 if (canConfirmTutoring(tutoring)) {
-                    buttons += ` <button class="btn btn-success" onclick="confirmarTutoriaDirecta(${tutoring.id})">Confirmar</button>`;
+                    buttons += ` <button class="btn btn-success" onclick="confirmarTutoriaDirecta(${tutoriaId})">Confirmar</button>`;
                 } else {
                     buttons += ` <button class="btn btn-success" disabled title="Solo se puede confirmar 12 horas antes">Confirmar</button>`;
                 }
-                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoring.id})">Cancelar</button>`;
-            } else if (tutoring.status === 'confirmada') {
-                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoring.id})">Cancelar</button>`;
+                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoriaId})">Cancelar</button>`;
+            } else if (status === 'confirmada') {
+                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoriaId})">Cancelar</button>`;
             }
             
             return buttons;
@@ -308,22 +317,36 @@ function getMockTutoringSessions() {
             
             // Mostrar solo tutorías futuras
             const futureTutorings = sessionData.tutoringSessions.filter(tutoring => {
-                const tutoringDate = new Date(tutoring.date);
+                const tutoringDate = new Date(tutoring.fecha || tutoring.date);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                return tutoringDate >= today && (tutoring.status === 'solicitada' || tutoring.status === 'confirmada');
+                const status = tutoring.estado || tutoring.status;
+                return tutoringDate >= today && (status === 'solicitada' || status === 'confirmada');
             });
 
             futureTutorings.forEach(tutoring => {
                 const row = document.createElement('tr');
-                const statusClass = `status-${tutoring.status}`;
-                const statusText = getStatusText(tutoring.status);
+                
+                // Map API data to display format
+                const subject = tutoring.materia_nombre || tutoring.subject || 'N/A';
+                const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+                    ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
+                    : tutoring.tutor || 'N/A';
+                const fecha = tutoring.fecha || tutoring.date;
+                const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
+                    ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
+                    : 'N/A');
+                const status = tutoring.estado || tutoring.status;
+                const tutoriaId = tutoring.tutoria_id || tutoring.id;
+                
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
                 
                 row.innerHTML = `
-                    <td>${tutoring.subject}</td>
-                    <td>${tutoring.tutor}</td>
-                    <td>${formatDate(tutoring.date)}</td>
-                    <td>${tutoring.time}</td>
+                    <td>${subject}</td>
+                    <td>${tutor}</td>
+                    <td>${formatDate(fecha)}</td>
+                    <td>${time}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>${generateActionButtons(tutoring)}</td>
                 `;
@@ -347,16 +370,30 @@ function getMockTutoringSessions() {
             
             sessionData.tutoringSessions.forEach(tutoring => {
                 const row = document.createElement('tr');
-                const statusClass = `status-${tutoring.status}`;
-                const statusText = getStatusText(tutoring.status);
+                
+                // Map API data to display format
+                const tutoriaId = tutoring.tutoria_id || tutoring.id || '';
+                const materiaName = tutoring.materia_nombre || tutoring.subject || 'N/A';
+                const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+                    ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
+                    : tutoring.tutor || 'N/A';
+                const fecha = tutoring.fecha || tutoring.date;
+                const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
+                    ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
+                    : 'N/A');
+                const location = tutoring.lugar || tutoring.location || 'N/A';
+                const status = tutoring.estado || tutoring.status;
+                
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
                 
                 row.innerHTML = `
-                    <td>#${tutoring.id.toString().padStart(3, '0')}</td>
-                    <td>${tutoring.subject}</td>
-                    <td>${tutoring.tutor}</td>
-                    <td>${formatDate(tutoring.date)}</td>
-                    <td>${tutoring.time}</td>
-                    <td>${tutoring.location}</td>
+                    <td>#${tutoriaId.toString().padStart(3, '0')}</td>
+                    <td>${materiaName}</td>
+                    <td>${tutor}</td>
+                    <td>${formatDate(fecha)}</td>
+                    <td>${time}</td>
+                    <td>${location}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>${generateActionButtons(tutoring)}</td>
                 `;
@@ -367,33 +404,63 @@ function getMockTutoringSessions() {
 
         // Función para abrir detalle de tutoría
         function openTutoriaDetail(tutoriaId) {
-            const tutoring = sessionData.tutoringSessions.find(t => t.id === tutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
             if (!tutoring) return;
 
             currentTutoriaId = tutoriaId;
 
+            // Map API data to display format
+            const subject = tutoring.materia_nombre || tutoring.subject || 'N/A';
+            const tutor = (tutoring.tutor_nombre && tutoring.tutor_apellido) 
+                ? `${tutoring.tutor_nombre} ${tutoring.tutor_apellido}` 
+                : tutoring.tutor || 'N/A';
+            const fecha = tutoring.fecha || tutoring.date;
+            const time = tutoring.time || (tutoring.hora_inicio && tutoring.hora_fin 
+                ? `${tutoring.hora_inicio}-${tutoring.hora_fin}` 
+                : 'N/A');
+            const location = tutoring.lugar || tutoring.location || 'N/A';
+            const status = tutoring.estado || tutoring.status || 'N/A';
+
             // Llenar datos del modal
-            document.getElementById('detalleMateria').textContent = tutoring.subject;
-            document.getElementById('detalleTutor').textContent = tutoring.tutor;
-            document.getElementById('detalleFecha').textContent = formatDate(tutoring.date);
-            document.getElementById('detalleHora').textContent = tutoring.time;
-            document.getElementById('detalleLugar').textContent = tutoring.location;
+            document.getElementById('detalleMateria').textContent = subject;
+            document.getElementById('detalleTutor').textContent = tutor;
+            document.getElementById('detalleFecha').textContent = formatDate(fecha);
+            document.getElementById('detalleHora').textContent = time;
+            document.getElementById('detalleLugar').textContent = location;
             
-            const statusClass = `status-${tutoring.status}`;
-            const statusText = getStatusText(tutoring.status);
+            const statusClass = `status-${status}`;
+            const statusText = getStatusText(status);
             document.getElementById('detalleEstado').innerHTML = `<span class="status-badge ${statusClass}">${statusText}</span>`;
 
             // Llenar temas
             const temasUl = document.getElementById('detalleTemas');
             temasUl.innerHTML = '';
-            tutoring.topics.forEach(topic => {
+            
+            // Handle topics from API (temas_tratados) or mock data (topics)
+            const topics = [];
+            if (tutoring.temas_tratados && tutoring.temas_tratados.String) {
+                topics.push(tutoring.temas_tratados.String);
+            } else if (tutoring.topics && Array.isArray(tutoring.topics)) {
+                topics.push(...tutoring.topics);
+            } else if (typeof tutoring.topics === 'string') {
+                topics.push(tutoring.topics);
+            }
+            
+            if (topics.length > 0) {
+                topics.forEach(topic => {
+                    const li = document.createElement('li');
+                    li.textContent = topic;
+                    temasUl.appendChild(li);
+                });
+            } else {
                 const li = document.createElement('li');
-                li.textContent = topic;
+                li.textContent = 'Sin temas especificados';
                 temasUl.appendChild(li);
-            });
+            }
 
             // Llenar notas
-            document.getElementById('detalleNotas').textContent = tutoring.notes || 'Sin notas adicionales.';
+            const notes = tutoring.observaciones || tutoring.notes || 'Sin notas adicionales.';
+            document.getElementById('detalleNotas').textContent = notes;
 
             // Mostrar/ocultar botones según estado
             const confirmarBtn = document.getElementById('confirmarBtn');
@@ -418,7 +485,7 @@ function getMockTutoringSessions() {
         async function confirmarAsistencia() {
             if (!currentTutoriaId) return;
 
-            const tutoring = sessionData.tutoringSessions.find(t => t.id === currentTutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === currentTutoriaId);
             if (!tutoring || !canConfirmTutoring(tutoring)) {
                 showNotification('No se puede confirmar esta tutoría en este momento', 'error');
                 return;
@@ -427,7 +494,9 @@ function getMockTutoringSessions() {
             try {
                 const result = await updateTutoringStatus(currentTutoriaId, 'confirmada');
                 if (result) {
+                    // Update both possible status fields
                     tutoring.status = 'confirmada';
+                    tutoring.estado = 'confirmada';
                     showNotification('Tutoría confirmada exitosamente', 'success');
                     closeModal('detalleTutoria');
                     updateTutoriasTable();
@@ -443,7 +512,7 @@ function getMockTutoringSessions() {
 
         // Función para confirmar tutoría directamente desde la tabla
         async function confirmarTutoriaDirecta(tutoriaId) {
-            const tutoring = sessionData.tutoringSessions.find(t => t.id === tutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
             if (!tutoring || !canConfirmTutoring(tutoring)) {
                 showNotification('No se puede confirmar esta tutoría. Debe confirmarse mínimo 12 horas antes.', 'warning');
                 return;
@@ -452,7 +521,9 @@ function getMockTutoringSessions() {
             try {
                 const result = await updateTutoringStatus(tutoriaId, 'confirmada');
                 if (result) {
+                    // Update both possible status fields
                     tutoring.status = 'confirmada';
+                    tutoring.estado = 'confirmada';
                     showNotification('Tutoría confirmada exitosamente', 'success');
                     updateTutoriasTable();
                     updateDashboardTable();
@@ -482,13 +553,15 @@ function getMockTutoringSessions() {
         async function confirmarCancelacionTutoria() {
             if (!currentTutoriaId) return;
 
-            const tutoring = sessionData.tutoringSessions.find(t => t.id === currentTutoriaId);
+            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === currentTutoriaId);
             if (!tutoring) return;
 
             try {
                 const result = await updateTutoringStatus(currentTutoriaId, 'cancelada');
                 if (result) {
+                    // Update both possible status fields
                     tutoring.status = 'cancelada';
+                    tutoring.estado = 'cancelada';
                     showNotification('Tutoría cancelada exitosamente', 'success');
                     closeModal('confirmarCancelacion');
                     updateTutoriasTable();
@@ -500,6 +573,9 @@ function getMockTutoringSessions() {
             } catch (error) {
                 console.error('Error canceling tutoring:', error);
                 showNotification('Error al cancelar la tutoría. Inténtalo nuevamente.', 'error');
+            } finally {
+                closeModal('confirmarCancelacion');
+                currentTutoriaId = null;
             }
         }
 
@@ -580,6 +656,14 @@ function getMockTutoringSessions() {
             updateDashboardStats();
         }
 
+        // Helper function to get subject name from materia ID
+        function GetIdFromName(materiaId) {
+            if (!sessionData.subjects || !materiaId) return 'N/A';
+            
+            const materia = sessionData.subjects.find(m => m.materia_id === materiaId || m.id === materiaId);
+            return materia ? (materia.nombre || materia.name || 'N/A') : 'N/A';
+        }
+
         // Función para abrir modales
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'block';
@@ -612,22 +696,61 @@ function getMockTutoringSessions() {
 
         // Función para actualizar estadísticas del dashboard
         function updateDashboardStats() {
-            const completedSessions = sessionData.tutoringSessions.filter(s => s.status === 'completada').length;
-            const pendingSessions = sessionData.tutoringSessions.filter(s => s.status === 'confirmada' || s.status === 'solicitada').length;
+            if (!sessionData.tutoringSessions) return;
             
+            // Handle both API data format (estado) and mock data format (status)
+            const completedSessions = sessionData.tutoringSessions.filter(s => 
+                (s.estado || s.status) === 'completada'
+            ).length;
+            
+            const pendingSessions = sessionData.tutoringSessions.filter(s => 
+                (s.estado || s.status) === 'confirmada' || (s.estado || s.status) === 'solicitada'
+            ).length;
+            
+            const totalSessions = sessionData.tutoringSessions.length;
+            
+            // Update stat cards if they exist
             const statCards = document.querySelectorAll('.stat-card h3');
-            if (statCards.length >= 1) {
-                statCards[0].textContent = Math.floor(Math.random() * 3) + 8;
+            if (statCards.length >= 3) {
+                statCards[0].textContent = pendingSessions; // Próximas tutorías
+                statCards[1].textContent = completedSessions; // Tutorías completadas
+                statCards[2].textContent = totalSessions; // Total de tutorías
             }
+            
+            // Update individual stat elements by ID if they exist
+            const statElements = {
+                'proximas-tutorias': pendingSessions,
+                'tutorias-completadas': completedSessions,
+                'total-tutorias': totalSessions,
+                'tasa-asistencia': totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) + '%' : '0%'
+            };
+            
+            Object.entries(statElements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
         }
 
         // Function to check for tutoring conflicts
 function checkTutoringConflicts(fecha, hora) {
     const conflicts = sessionData.tutoringSessions.filter(tutoring => {
-        if (tutoring.status === 'cancelada') return false;
+        if ((tutoring.estado || tutoring.status) === 'cancelada') return false;
         
-        const tutoringDate = tutoring.date;
-        const tutoringTimeStart = tutoring.time.split('-')[0];
+        // Handle API data format vs mock data format
+        const tutoringDate = tutoring.fecha || tutoring.date;
+        let tutoringTimeStart;
+        
+        if (tutoring.hora_inicio) {
+            // API format
+            tutoringTimeStart = tutoring.hora_inicio;
+        } else if (tutoring.time) {
+            // Mock data format
+            tutoringTimeStart = tutoring.time.split('-')[0];
+        } else {
+            return false; // No time data available
+        }
         
         // Check if same date and overlapping time
         return tutoringDate === fecha && tutoringTimeStart === hora;
@@ -1041,9 +1164,3 @@ async function populateSedeDropdown() {
             updateDashboardTable();
         }, 60000);
 
-function GetIdFromName(materiaName) {
-    // Call an API
-    const materias = sessionData.materias || [];
-    const materia = materias.find(m => m.Nombre === materiaName);
-    return materia ? materia.MateriaID : null;
-}
