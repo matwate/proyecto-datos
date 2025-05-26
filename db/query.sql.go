@@ -47,6 +47,19 @@ func (q *Queries) CountEstudiantesByPrograma(ctx context.Context) ([]CountEstudi
 	return items, nil
 }
 
+const countTutorsWithMaterias = `-- name: CountTutorsWithMaterias :one
+SELECT COUNT(DISTINCT tm.tutor_id) as count
+FROM TUTOR_MATERIAS tm
+WHERE tm.activo = true
+`
+
+func (q *Queries) CountTutorsWithMaterias(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countTutorsWithMaterias)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAdmin = `-- name: CreateAdmin :one
 
 INSERT INTO ADMINS (nombre, apellido, correo, password_hash, rol, activo)
@@ -2090,6 +2103,39 @@ func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (T
 		arg.HoraFin,
 		arg.Lugar,
 	)
+	var i Tutoria
+	err := row.Scan(
+		&i.TutoriaID,
+		&i.EstudianteID,
+		&i.TutorID,
+		&i.MateriaID,
+		&i.Fecha,
+		&i.HoraInicio,
+		&i.HoraFin,
+		&i.Estado,
+		&i.FechaSolicitud,
+		&i.FechaConfirmacion,
+		&i.TemasTratados,
+		&i.AsistenciaConfirmada,
+		&i.Lugar,
+	)
+	return i, err
+}
+
+const updateTutoriaAsistencia = `-- name: UpdateTutoriaAsistencia :one
+UPDATE TUTORIAS 
+SET asistencia_confirmada = $2
+WHERE tutoria_id = $1
+RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
+`
+
+type UpdateTutoriaAsistenciaParams struct {
+	TutoriaID            int32
+	AsistenciaConfirmada pgtype.Bool
+}
+
+func (q *Queries) UpdateTutoriaAsistencia(ctx context.Context, arg UpdateTutoriaAsistenciaParams) (Tutoria, error) {
+	row := q.db.QueryRow(ctx, updateTutoriaAsistencia, arg.TutoriaID, arg.AsistenciaConfirmada)
 	var i Tutoria
 	err := row.Scan(
 		&i.TutoriaID,

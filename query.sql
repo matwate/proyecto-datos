@@ -229,6 +229,12 @@ SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
 WHERE tutoria_id = $1
 RETURNING *;
 
+-- name: UpdateTutoriaAsistencia :one
+UPDATE TUTORIAS 
+SET asistencia_confirmada = $2
+WHERE tutoria_id = $1
+RETURNING *;
+
 -- name: DeleteTutoria :exec
 DELETE FROM TUTORIAS WHERE tutoria_id = $1;
 
@@ -360,4 +366,9 @@ ORDER BY nombre;
 
 -- name: GetTutorNameById :one
 SELECT nombre, apellido FROM TUTORES WHERE tutor_id = $1;
+
+-- name: CountTutorsWithMaterias :one
+SELECT COUNT(DISTINCT tm.tutor_id) as count
+FROM TUTOR_MATERIAS tm
+WHERE tm.activo = true;
 

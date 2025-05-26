@@ -45,6 +45,11 @@ type UpdateTutoriaEstadoRequest struct {
 	Estado string `json:"estado" example:"confirmada"`
 }
 
+// UpdateTutoriaAsistenciaRequest represents the request body for updating tutoria attendance confirmation.
+type UpdateTutoriaAsistenciaRequest struct {
+	AsistenciaConfirmada bool `json:"asistencia_confirmada" example:"true"`
+}
+
 // TutoriaHandlers handles all tutoria-related endpoints using Go 1.24 routing patterns.
 // @Summary      Handle Tutoria Operations
 // @Description  Comprehensive CRUD operations for tutorias (tutoring sessions).
@@ -58,6 +63,8 @@ func TutoriaHandlers(queries *db.Queries) http.HandlerFunc {
 			handleTutoriaGET(w, r, queries)
 		case http.MethodPut:
 			handleTutoriaPUT(w, r, queries)
+		case http.MethodPatch:
+			handleTutoriaPATCH(w, r, queries)
 		case http.MethodDelete:
 			handleTutoriaDELETE(w, r, queries)
 		default:
@@ -684,4 +691,117 @@ func deleteTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleTutoriaPATCH handles PATCH requests for tutorias (legacy handler)
+func handleTutoriaPATCH(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	http.Error(w, "Use specific PATCH endpoints: /v1/tutorias/{id}/estado or /v1/tutorias/{id}/asistencia", http.StatusBadRequest)
+}
+
+// UpdateTutoriaEstadoEndpoint handles PATCH /v1/tutorias/{id}/estado using Go 1.22 routing
+// @Summary      Update Tutoria Estado
+// @Description  Updates only the estado (status) of a specific tutoria using path parameter.
+// @Tags         Tutorias
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Tutoria ID"
+// @Param        estado body UpdateTutoriaEstadoRequest true "Estado Update Data"
+// @Success      200 {object} db.Tutoria "Successfully updated tutoria estado"
+// @Failure      400 {object} ErrorResponse "Invalid request body or tutoria ID"
+// @Failure      404 {object} ErrorResponse "Tutoria not found"
+// @Failure      500 {object} ErrorResponse "Failed to update tutoria estado"
+// @Router       /v1/tutorias/{id}/estado [patch]
+func UpdateTutoriaEstadoEndpoint(queries *db.Queries) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get tutoria ID from path parameter using Go 1.22
+		idStr := r.PathValue("id")
+		if idStr == "" {
+			http.Error(w, "Tutoria ID is required", http.StatusBadRequest)
+			return
+		}
+
+		id, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil {
+			http.Error(w, "Invalid tutoria ID", http.StatusBadRequest)
+			return
+		}
+
+		var req UpdateTutoriaEstadoRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		params := db.UpdateTutoriaEstadoParams{
+			TutoriaID: int32(id),
+			Estado:    req.Estado,
+		}
+
+		tutoria, err := queries.UpdateTutoriaEstado(r.Context(), params)
+		if err != nil {
+			if err.Error() == "no rows in result set" {
+				http.Error(w, "Tutoria not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, "Failed to update tutoria estado: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tutoria)
+	}
+}
+
+// UpdateTutoriaAsistenciaEndpoint handles PATCH /v1/tutorias/{id}/asistencia using Go 1.22 routing
+// @Summary      Update Tutoria Asistencia
+// @Description  Updates only the asistencia_confirmada field of a specific tutoria using path parameter.
+// @Tags         Tutorias
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Tutoria ID"
+// @Param        asistencia body UpdateTutoriaAsistenciaRequest true "Asistencia Update Data"
+// @Success      200 {object} db.Tutoria "Successfully updated tutoria asistencia"
+// @Failure      400 {object} ErrorResponse "Invalid request body or tutoria ID"
+// @Failure      404 {object} ErrorResponse "Tutoria not found"
+// @Failure      500 {object} ErrorResponse "Failed to update tutoria asistencia"
+// @Router       /v1/tutorias/{id}/asistencia [patch]
+func UpdateTutoriaAsistenciaEndpoint(queries *db.Queries) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get tutoria ID from path parameter using Go 1.22
+		idStr := r.PathValue("id")
+		if idStr == "" {
+			http.Error(w, "Tutoria ID is required", http.StatusBadRequest)
+			return
+		}
+
+		id, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil {
+			http.Error(w, "Invalid tutoria ID", http.StatusBadRequest)
+			return
+		}
+
+		var req UpdateTutoriaAsistenciaRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		params := db.UpdateTutoriaAsistenciaParams{
+			TutoriaID:            int32(id),
+			AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
+		}
+
+		tutoria, err := queries.UpdateTutoriaAsistencia(r.Context(), params)
+		if err != nil {
+			if err.Error() == "no rows in result set" {
+				http.Error(w, "Tutoria not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, "Failed to update tutoria asistencia: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tutoria)
+	}
 }

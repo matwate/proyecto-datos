@@ -75,6 +75,10 @@ func main() {
 	mux.Handle("/v1/tutorias", tutoriaHandlers)
 	mux.Handle("/v1/tutorias/", tutoriaHandlers)
 
+	// Specific endpoints for tutoria updates using Go 1.22 routing patterns
+	mux.HandleFunc("PATCH /v1/tutorias/{id}/estado", handler.UpdateTutoriaEstadoEndpoint(queries))
+	mux.HandleFunc("PATCH /v1/tutorias/{id}/asistencia", handler.UpdateTutoriaAsistenciaEndpoint(queries))
+
 	reporteHandlers := handler.ReporteHandlers(queries)
 	mux.Handle("/v1/reportes", reporteHandlers)
 	mux.Handle("/v1/reportes/", reporteHandlers)

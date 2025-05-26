@@ -85,6 +85,8 @@ definitions:
     type: object
   db.ListTutoriasByEstadoRow:
     properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteApellido:
@@ -95,8 +97,10 @@ definitions:
         type: string
       fecha:
         $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamptz'
+        $ref: '#/definitions/pgtype.Timestamp'
       horaFin:
         type: string
       horaInicio:
@@ -107,6 +111,8 @@ definitions:
         type: integer
       materiaNombre:
         type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
       tutorApellido:
         type: string
       tutorID:
@@ -118,14 +124,18 @@ definitions:
     type: object
   db.ListTutoriasByEstudianteRow:
     properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteID:
         type: integer
       fecha:
         $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamptz'
+        $ref: '#/definitions/pgtype.Timestamp'
       horaFin:
         type: string
       horaInicio:
@@ -136,6 +146,8 @@ definitions:
         type: integer
       materiaNombre:
         type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
       tutorApellido:
         type: string
       tutorID:
@@ -147,6 +159,8 @@ definitions:
     type: object
   db.ListTutoriasByTutorRow:
     properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteApellido:
@@ -157,8 +171,10 @@ definitions:
         type: string
       fecha:
         $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamptz'
+        $ref: '#/definitions/pgtype.Timestamp'
       horaFin:
         type: string
       horaInicio:
@@ -169,6 +185,8 @@ definitions:
         type: integer
       materiaNombre:
         type: string
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
       tutorID:
         type: integer
       tutoriaID:
@@ -181,7 +199,7 @@ definitions:
       creditos:
         type: integer
       descripcion:
-        type: string
+        $ref: '#/definitions/pgtype.Text'
       facultad:
         type: string
       materiaID:
@@ -232,20 +250,24 @@ definitions:
       nombre:
         type: string
       programaAcademico:
-        type: string
+        $ref: '#/definitions/pgtype.Text'
       tutorID:
         type: integer
     type: object
   db.Tutoria:
     properties:
+      asistenciaConfirmada:
+        $ref: '#/definitions/pgtype.Bool'
       estado:
         type: string
       estudianteID:
         type: integer
       fecha:
         $ref: '#/definitions/pgtype.Date'
+      fechaConfirmacion:
+        $ref: '#/definitions/pgtype.Timestamp'
       fechaSolicitud:
-        $ref: '#/definitions/pgtype.Timestamptz'
+        $ref: '#/definitions/pgtype.Timestamp'
       horaFin:
         type: string
       horaInicio:
@@ -254,6 +276,8 @@ definitions:
         type: string
       materiaID:
         type: integer
+      temasTratados:
+        $ref: '#/definitions/pgtype.Text'
       tutorID:
         type: integer
       tutoriaID:
@@ -282,6 +306,11 @@ definitions:
       nombreTutor:
         type: string
       tutoriaID:
+        type: integer
+    type: object
+  handler.CountTutorsWithMateriasResponse:
+    properties:
+      count:
         type: integer
     type: object
   handler.CreateDisponibilidadRequest:
@@ -332,22 +361,6 @@ definitions:
         type: integer
     type: object
   handler.CreateMateriaRequest:
-    properties:
-      codigo:
-        example: MATH101
-        type: string
-      creditos:
-        example: 4
-        type: integer
-      descripcion:
-        example: Introducción al cálculo diferencial e integral
-        type: string
-      facultad:
-        example: Ingeniería
-        type: string
-      nombre:
-        example: Cálculo I
-        type: string
     type: object
   handler.CreateMateriaResponse:
     properties:
@@ -418,6 +431,7 @@ definitions:
         example: 1
         type: integer
       tutor_id:
+        description: 'Optional: if 0 or not provided, auto-assign qualified tutor'
         example: 1
         type: integer
     type: object
@@ -430,6 +444,13 @@ definitions:
     properties:
       error:
         example: Descriptive error message
+        type: string
+    type: object
+  handler.GetTutorNameResponse:
+    properties:
+      apellido:
+        type: string
+      nombre:
         type: string
     type: object
   handler.LoginResponse:
@@ -499,22 +520,6 @@ definitions:
         type: integer
     type: object
   handler.UpdateMateriaRequest:
-    properties:
-      codigo:
-        example: MATH101
-        type: string
-      creditos:
-        example: 4
-        type: integer
-      descripcion:
-        example: Introducción al cálculo diferencial e integral
-        type: string
-      facultad:
-        example: Ingeniería
-        type: string
-      nombre:
-        example: Cálculo I
-        type: string
     type: object
   handler.UpdateReporteRequest:
     type: object
@@ -525,19 +530,12 @@ definitions:
         type: boolean
     type: object
   handler.UpdateTutorRequest:
+    type: object
+  handler.UpdateTutoriaAsistenciaRequest:
     properties:
-      apellido:
-        example: Perez
-        type: string
-      correo:
-        example: juan.perez@urosario.edu.co
-        type: string
-      nombre:
-        example: Juan Carlos
-        type: string
-      programa_academico:
-        example: Ingeniería de Sistemas
-        type: string
+      asistencia_confirmada:
+        example: true
+        type: boolean
     type: object
   handler.UpdateTutoriaEstadoRequest:
     properties:
@@ -566,6 +564,13 @@ definitions:
         example: Derivadas y límites
         type: string
     type: object
+  pgtype.Bool:
+    properties:
+      bool:
+        type: boolean
+      valid:
+        type: boolean
+    type: object
   pgtype.Date:
     properties:
       infinityModifier:
@@ -592,21 +597,19 @@ definitions:
       valid:
         type: boolean
     type: object
+  pgtype.Text:
+    properties:
+      string:
+        type: string
+      valid:
+        type: boolean
+    type: object
   pgtype.Timestamp:
     properties:
       infinityModifier:
         $ref: '#/definitions/pgtype.InfinityModifier'
       time:
         description: Time zone will be ignored when encoding to PostgreSQL.
-        type: string
-      valid:
-        type: boolean
-    type: object
-  pgtype.Timestamptz:
-    properties:
-      infinityModifier:
-        $ref: '#/definitions/pgtype.InfinityModifier'
-      time:
         type: string
       valid:
         type: boolean
@@ -1001,27 +1004,21 @@ paths:
       - Authentication
   /v1/materias:
     get:
-      description: Retrieves materias filtered by faculty.
-      parameters:
-      - description: Faculty name
-        in: query
-        name: facultad
-        required: true
-        type: string
+      description: Retrieves a list of all materia names.
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved materias
+          description: Successfully retrieved materia names
           schema:
             items:
-              $ref: '#/definitions/db.Materia'
+              type: string
             type: array
         "500":
-          description: Failed to retrieve materias
+          description: Failed to retrieve materia names
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
-      summary: List Materias by Faculty
+      summary: List Materia Names
       tags:
       - Materias
     post:
@@ -1617,6 +1614,54 @@ paths:
       summary: Update Tutor
       tags:
       - Tutores
+  /v1/tutores/{id}/nombre:
+    get:
+      description: Retrieves just the name of a specific tutor by their ID.
+      parameters:
+      - description: Tutor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tutor name
+          schema:
+            $ref: '#/definitions/handler.GetTutorNameResponse'
+        "400":
+          description: Invalid tutor ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutor not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to retrieve tutor name
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Tutor Name by ID
+      tags:
+      - Tutores
+  /v1/tutores/count-with-materias:
+    get:
+      description: Returns the count of tutors that have at least one materia assigned.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved count
+          schema:
+            $ref: '#/definitions/handler.CountTutorsWithMateriasResponse'
+        "500":
+          description: Failed to count tutors
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Count Tutors with Materias
+      tags:
+      - Tutores
   /v1/tutores/login:
     post:
       consumes:
@@ -1660,27 +1705,39 @@ paths:
       - Authentication
   /v1/tutorias:
     get:
-      description: Retrieves all active tutorias.
+      description: Retrieves upcoming tutorias for a specific student that have not
+        started yet.
+      parameters:
+      - description: Student ID
+        in: query
+        name: proximas_estudiante_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved active tutorias
+          description: Successfully retrieved upcoming tutorias
           schema:
             items:
-              $ref: '#/definitions/db.Tutoriasactiva'
+              $ref: '#/definitions/db.Tutoria'
             type: array
-        "500":
-          description: Failed to retrieve tutorias
+        "400":
+          description: Invalid student ID
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
-      summary: List Active Tutorias
+        "500":
+          description: Failed to retrieve upcoming tutorias
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get Upcoming Tutorias for Student
       tags:
       - Tutorias
     post:
       consumes:
       - application/json
-      description: Creates a new tutoring session.
+      description: Creates a new tutoring session with intelligent tutor assignment
+        and validation.
       parameters:
       - description: Tutoria Data
         in: body
@@ -1696,7 +1753,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.CreateTutoriaResponse'
         "400":
-          description: Invalid request body
+          description: Invalid request body or validation failed
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
         "500":
@@ -1708,18 +1765,24 @@ paths:
       - Tutorias
   /v1/tutorias/{id}:
     delete:
-      description: Deletes a tutoria by its ID.
+      description: Deletes a specific tutoria.
       parameters:
       - description: Tutoria ID
         in: path
         name: id
         required: true
         type: integer
+      produces:
+      - application/json
       responses:
         "204":
           description: Successfully deleted tutoria
         "400":
           description: Invalid tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
         "500":
@@ -1762,14 +1825,14 @@ paths:
     put:
       consumes:
       - application/json
-      description: Updates an existing tutoria.
+      description: Updates a specific tutoria with new details.
       parameters:
       - description: Tutoria ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Updated Tutoria Data
+      - description: Tutoria Update Data
         in: body
         name: tutoria
         required: true
@@ -1797,18 +1860,97 @@ paths:
       summary: Update Tutoria
       tags:
       - Tutorias
-  /v1/tutorias/{id}/estado:
-    put:
+  /v1/tutorias/{id}/asistencia:
+    patch:
       consumes:
       - application/json
-      description: Updates the status of an existing tutoria.
+      description: Updates only the asistencia_confirmada field of a specific tutoria
+        using path parameter.
       parameters:
       - description: Tutoria ID
         in: path
         name: id
         required: true
         type: integer
-      - description: New Status
+      - description: Asistencia Update Data
+        in: body
+        name: asistencia
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutoriaAsistenciaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated tutoria asistencia
+          schema:
+            $ref: '#/definitions/db.Tutoria'
+        "400":
+          description: Invalid request body or tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update tutoria asistencia
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Tutoria Asistencia
+      tags:
+      - Tutorias
+  /v1/tutorias/{id}/estado:
+    patch:
+      consumes:
+      - application/json
+      description: Updates only the estado (status) of a specific tutoria using path
+        parameter.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Estado Update Data
+        in: body
+        name: estado
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTutoriaEstadoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated tutoria estado
+          schema:
+            $ref: '#/definitions/db.Tutoria'
+        "400":
+          description: Invalid request body or tutoria ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Tutoria not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Failed to update tutoria estado
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update Tutoria Estado
+      tags:
+      - Tutorias
+    put:
+      consumes:
+      - application/json
+      description: Updates the status of a specific tutoria.
+      parameters:
+      - description: Tutoria ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status Update Data
         in: body
         name: estado
         required: true

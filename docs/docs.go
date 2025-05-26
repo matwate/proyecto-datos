@@ -590,35 +590,26 @@ const docTemplate = `{
         },
         "/v1/materias": {
             "get": {
-                "description": "Retrieves materias filtered by faculty.",
+                "description": "Retrieves a list of all materia names.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Materias"
                 ],
-                "summary": "List Materias by Faculty",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Faculty name",
-                        "name": "facultad",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
+                "summary": "List Materia Names",
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved materias",
+                        "description": "Successfully retrieved materia names",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/db.Materia"
+                                "type": "string"
                             }
                         }
                     },
                     "500": {
-                        "description": "Failed to retrieve materias",
+                        "description": "Failed to retrieve materia names",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -1384,6 +1375,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/tutores/count-with-materias": {
+            "get": {
+                "description": "Returns the count of tutors that have at least one materia assigned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Count Tutors with Materias",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved count",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CountTutorsWithMateriasResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to count tutors",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tutores/login": {
             "post": {
                 "description": "Authenticates a tutor using their email and TI (Tarjeta de Identidad), then fetches tutor-specific data.",
@@ -1580,28 +1597,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/tutores/{id}/nombre": {
+            "get": {
+                "description": "Retrieves just the name of a specific tutor by their ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutores"
+                ],
+                "summary": "Get Tutor Name by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tutor name",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetTutorNameResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid tutor ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutor not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve tutor name",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tutorias": {
             "get": {
-                "description": "Retrieves all active tutorias.",
+                "description": "Retrieves upcoming tutorias for a specific student that have not started yet.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Tutorias"
                 ],
-                "summary": "List Active Tutorias",
+                "summary": "Get Upcoming Tutorias for Student",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Student ID",
+                        "name": "proximas_estudiante_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved active tutorias",
+                        "description": "Successfully retrieved upcoming tutorias",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/db.Tutoriasactiva"
+                                "$ref": "#/definitions/db.Tutoria"
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid student ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
                     "500": {
-                        "description": "Failed to retrieve tutorias",
+                        "description": "Failed to retrieve upcoming tutorias",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -1609,7 +1688,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new tutoring session.",
+                "description": "Creates a new tutoring session with intelligent tutor assignment and validation.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1639,7 +1718,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body",
+                        "description": "Invalid request body or validation failed",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -1700,7 +1779,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing tutoria.",
+                "description": "Updates a specific tutoria with new details.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1720,7 +1799,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Updated Tutoria Data",
+                        "description": "Tutoria Update Data",
                         "name": "tutoria",
                         "in": "body",
                         "required": true,
@@ -1757,7 +1836,10 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a tutoria by its ID.",
+                "description": "Deletes a specific tutoria.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Tutorias"
                 ],
@@ -1781,6 +1863,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to delete tutoria",
                         "schema": {
@@ -1790,9 +1878,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/tutorias/{id}/asistencia": {
+            "patch": {
+                "description": "Updates only the asistencia_confirmada field of a specific tutoria using path parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Update Tutoria Asistencia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Asistencia Update Data",
+                        "name": "asistencia",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutoriaAsistenciaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated tutoria asistencia",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update tutoria asistencia",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tutorias/{id}/estado": {
             "put": {
-                "description": "Updates the status of an existing tutoria.",
+                "description": "Updates the status of a specific tutoria.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1812,7 +1959,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "New Status",
+                        "description": "Status Update Data",
                         "name": "estado",
                         "in": "body",
                         "required": true,
@@ -1842,6 +1989,63 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update tutoria status",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Updates only the estado (status) of a specific tutoria using path parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tutorias"
+                ],
+                "summary": "Update Tutoria Estado",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tutoria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Estado Update Data",
+                        "name": "estado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTutoriaEstadoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated tutoria estado",
+                        "schema": {
+                            "$ref": "#/definitions/db.Tutoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or tutoria ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Tutoria not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update tutoria estado",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -1981,6 +2185,9 @@ const docTemplate = `{
         "db.ListTutoriasByEstadoRow": {
             "type": "object",
             "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
                 "estado": {
                     "type": "string"
                 },
@@ -1996,8 +2203,11 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
+                    "$ref": "#/definitions/pgtype.Timestamp"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2013,6 +2223,9 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorApellido": {
                     "type": "string"
@@ -2031,6 +2244,9 @@ const docTemplate = `{
         "db.ListTutoriasByEstudianteRow": {
             "type": "object",
             "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
                 "estado": {
                     "type": "string"
                 },
@@ -2040,8 +2256,11 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
+                    "$ref": "#/definitions/pgtype.Timestamp"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2057,6 +2276,9 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorApellido": {
                     "type": "string"
@@ -2075,6 +2297,9 @@ const docTemplate = `{
         "db.ListTutoriasByTutorRow": {
             "type": "object",
             "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
                 "estado": {
                     "type": "string"
                 },
@@ -2090,8 +2315,11 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
+                    "$ref": "#/definitions/pgtype.Timestamp"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2107,6 +2335,9 @@ const docTemplate = `{
                 },
                 "materiaNombre": {
                     "type": "string"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2126,7 +2357,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "descripcion": {
-                    "type": "string"
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "facultad": {
                     "type": "string"
@@ -2204,7 +2435,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "programaAcademico": {
-                    "type": "string"
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2214,6 +2445,9 @@ const docTemplate = `{
         "db.Tutoria": {
             "type": "object",
             "properties": {
+                "asistenciaConfirmada": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
                 "estado": {
                     "type": "string"
                 },
@@ -2223,8 +2457,11 @@ const docTemplate = `{
                 "fecha": {
                     "$ref": "#/definitions/pgtype.Date"
                 },
+                "fechaConfirmacion": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
                 "fechaSolicitud": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
+                    "$ref": "#/definitions/pgtype.Timestamp"
                 },
                 "horaFin": {
                     "type": "string"
@@ -2237,6 +2474,9 @@ const docTemplate = `{
                 },
                 "materiaID": {
                     "type": "integer"
+                },
+                "temasTratados": {
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "tutorID": {
                     "type": "integer"
@@ -2280,6 +2520,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tutoriaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CountTutorsWithMateriasResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
                     "type": "integer"
                 }
             }
@@ -2352,29 +2600,7 @@ const docTemplate = `{
             }
         },
         "handler.CreateMateriaRequest": {
-            "type": "object",
-            "properties": {
-                "codigo": {
-                    "type": "string",
-                    "example": "MATH101"
-                },
-                "creditos": {
-                    "type": "integer",
-                    "example": 4
-                },
-                "descripcion": {
-                    "type": "string",
-                    "example": "Introducción al cálculo diferencial e integral"
-                },
-                "facultad": {
-                    "type": "string",
-                    "example": "Ingeniería"
-                },
-                "nombre": {
-                    "type": "string",
-                    "example": "Cálculo I"
-                }
-            }
+            "type": "object"
         },
         "handler.CreateMateriaResponse": {
             "type": "object",
@@ -2475,6 +2701,7 @@ const docTemplate = `{
                     "example": 1
                 },
                 "tutor_id": {
+                    "description": "Optional: if 0 or not provided, auto-assign qualified tutor",
                     "type": "integer",
                     "example": 1
                 }
@@ -2494,6 +2721,17 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "Descriptive error message"
+                }
+            }
+        },
+        "handler.GetTutorNameResponse": {
+            "type": "object",
+            "properties": {
+                "apellido": {
+                    "type": "string"
+                },
+                "nombre": {
+                    "type": "string"
                 }
             }
         },
@@ -2590,29 +2828,7 @@ const docTemplate = `{
             }
         },
         "handler.UpdateMateriaRequest": {
-            "type": "object",
-            "properties": {
-                "codigo": {
-                    "type": "string",
-                    "example": "MATH101"
-                },
-                "creditos": {
-                    "type": "integer",
-                    "example": 4
-                },
-                "descripcion": {
-                    "type": "string",
-                    "example": "Introducción al cálculo diferencial e integral"
-                },
-                "facultad": {
-                    "type": "string",
-                    "example": "Ingeniería"
-                },
-                "nombre": {
-                    "type": "string",
-                    "example": "Cálculo I"
-                }
-            }
+            "type": "object"
         },
         "handler.UpdateReporteRequest": {
             "type": "object"
@@ -2627,23 +2843,14 @@ const docTemplate = `{
             }
         },
         "handler.UpdateTutorRequest": {
+            "type": "object"
+        },
+        "handler.UpdateTutoriaAsistenciaRequest": {
             "type": "object",
             "properties": {
-                "apellido": {
-                    "type": "string",
-                    "example": "Perez"
-                },
-                "correo": {
-                    "type": "string",
-                    "example": "juan.perez@urosario.edu.co"
-                },
-                "nombre": {
-                    "type": "string",
-                    "example": "Juan Carlos"
-                },
-                "programa_academico": {
-                    "type": "string",
-                    "example": "Ingeniería de Sistemas"
+                "asistencia_confirmada": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -2685,6 +2892,17 @@ const docTemplate = `{
                 }
             }
         },
+        "pgtype.Bool": {
+            "type": "object",
+            "properties": {
+                "bool": {
+                    "type": "boolean"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pgtype.Date": {
             "type": "object",
             "properties": {
@@ -2723,6 +2941,17 @@ const docTemplate = `{
                 }
             }
         },
+        "pgtype.Text": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pgtype.Timestamp": {
             "type": "object",
             "properties": {
@@ -2731,20 +2960,6 @@ const docTemplate = `{
                 },
                 "time": {
                     "description": "Time zone will be ignored when encoding to PostgreSQL.",
-                    "type": "string"
-                },
-                "valid": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "pgtype.Timestamptz": {
-            "type": "object",
-            "properties": {
-                "infinityModifier": {
-                    "$ref": "#/definitions/pgtype.InfinityModifier"
-                },
-                "time": {
                     "type": "string"
                 },
                 "valid": {

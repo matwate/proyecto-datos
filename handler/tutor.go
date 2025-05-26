@@ -47,6 +47,11 @@ type GetTutorNameResponse struct {
 	Apellido string `json:"apellido"`
 }
 
+// CountTutorsWithMateriasResponse represents the response for counting tutors with materias.
+type CountTutorsWithMateriasResponse struct {
+	Count int64 `json:"count"`
+}
+
 // TutorHandlers handles all tutor-related endpoints using Go 1.24 routing patterns.
 // @Summary      Handle Tutor Operations
 // @Description  Comprehensive CRUD operations for tutors.
@@ -129,6 +134,13 @@ func handleTutorGET(w http.ResponseWriter, r *http.Request, queries *db.Queries)
 	if path == "" || path == "/" {
 		// GET /v1/tutores - List all tutores
 		listTutoresHandler(w, r, queries)
+		return
+	}
+
+	// Handle special endpoints
+	if path == "/count-with-materias" {
+		// GET /v1/tutores/count-with-materias
+		countTutorsWithMateriasHandler(w, r, queries)
 		return
 	}
 
@@ -307,4 +319,27 @@ func deleteTutorHandler(w http.ResponseWriter, r *http.Request, queries *db.Quer
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// countTutorsWithMateriasHandler handles GET /v1/tutores/count-with-materias
+// @Summary      Count Tutors with Materias
+// @Description  Returns the count of tutors that have at least one materia assigned.
+// @Tags         Tutores
+// @Produce      json
+// @Success      200 {object} CountTutorsWithMateriasResponse "Successfully retrieved count"
+// @Failure      500 {object} ErrorResponse "Failed to count tutors"
+// @Router       /v1/tutores/count-with-materias [get]
+func countTutorsWithMateriasHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	count, err := queries.CountTutorsWithMaterias(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to count tutors with materias: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := CountTutorsWithMateriasResponse{
+		Count: count,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
