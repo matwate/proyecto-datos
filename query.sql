@@ -217,21 +217,12 @@ RETURNING *;
 -- name: SelectTutoriaById :one
 SELECT * FROM TUTORIAS WHERE tutoria_id = $1;
 
--- name: UpdateTutoriaEstado :exec
-UPDATE TUTORIAS 
-SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
-WHERE tutoria_id = $1;
-
 -- name: UpdateTutoria :one
 UPDATE TUTORIAS 
-SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
+SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, estado = $6, asistencia_confirmada = $7, temas_tratados = $8,
+    fecha_confirmacion = CASE WHEN $6 = 'confirmada' AND estado != 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
 WHERE tutoria_id = $1
 RETURNING *;
-
--- name: UpdateTutoriaAsistencia :exec
-UPDATE TUTORIAS 
-SET asistencia_confirmada = $2
-WHERE tutoria_id = $1;
 
 -- name: DeleteTutoria :exec
 DELETE FROM TUTORIAS WHERE tutoria_id = $1;

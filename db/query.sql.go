@@ -2082,17 +2082,21 @@ func (q *Queries) UpdateTutorMateria(ctx context.Context, arg UpdateTutorMateria
 
 const updateTutoria = `-- name: UpdateTutoria :one
 UPDATE TUTORIAS 
-SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5
+SET fecha = $2, hora_inicio = $3, hora_fin = $4, lugar = $5, estado = $6, asistencia_confirmada = $7, temas_tratados = $8,
+    fecha_confirmacion = CASE WHEN $6 = 'confirmada' AND estado != 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
 WHERE tutoria_id = $1
 RETURNING tutoria_id, estudiante_id, tutor_id, materia_id, fecha, hora_inicio, hora_fin, estado, fecha_solicitud, fecha_confirmacion, temas_tratados, asistencia_confirmada, lugar
 `
 
 type UpdateTutoriaParams struct {
-	TutoriaID  int32
-	Fecha      pgtype.Date
-	HoraInicio pgtype.Time
-	HoraFin    pgtype.Time
-	Lugar      string
+	TutoriaID            int32
+	Fecha                pgtype.Date
+	HoraInicio           pgtype.Time
+	HoraFin              pgtype.Time
+	Lugar                string
+	Estado               string
+	AsistenciaConfirmada pgtype.Bool
+	TemasTratados        pgtype.Text
 }
 
 func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (Tutoria, error) {
@@ -2102,6 +2106,9 @@ func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (T
 		arg.HoraInicio,
 		arg.HoraFin,
 		arg.Lugar,
+		arg.Estado,
+		arg.AsistenciaConfirmada,
+		arg.TemasTratados,
 	)
 	var i Tutoria
 	err := row.Scan(
@@ -2120,36 +2127,4 @@ func (q *Queries) UpdateTutoria(ctx context.Context, arg UpdateTutoriaParams) (T
 		&i.Lugar,
 	)
 	return i, err
-}
-
-const updateTutoriaAsistencia = `-- name: UpdateTutoriaAsistencia :exec
-UPDATE TUTORIAS 
-SET asistencia_confirmada = $2
-WHERE tutoria_id = $1
-`
-
-type UpdateTutoriaAsistenciaParams struct {
-	TutoriaID            int32
-	AsistenciaConfirmada pgtype.Bool
-}
-
-func (q *Queries) UpdateTutoriaAsistencia(ctx context.Context, arg UpdateTutoriaAsistenciaParams) error {
-	_, err := q.db.Exec(ctx, updateTutoriaAsistencia, arg.TutoriaID, arg.AsistenciaConfirmada)
-	return err
-}
-
-const updateTutoriaEstado = `-- name: UpdateTutoriaEstado :exec
-UPDATE TUTORIAS 
-SET estado = $2, fecha_confirmacion = CASE WHEN $2 = 'confirmada' THEN CURRENT_TIMESTAMP ELSE fecha_confirmacion END
-WHERE tutoria_id = $1
-`
-
-type UpdateTutoriaEstadoParams struct {
-	TutoriaID int32
-	Estado    string
-}
-
-func (q *Queries) UpdateTutoriaEstado(ctx context.Context, arg UpdateTutoriaEstadoParams) error {
-	_, err := q.db.Exec(ctx, updateTutoriaEstado, arg.TutoriaID, arg.Estado)
-	return err
 }

@@ -67,7 +67,7 @@ async function authenticateUser(credentials) {
         }
 
         // Check if we got user data (not null)
-        if (data && (data.data.EstudianteID || data.data.TutorID || data.data.AdminID)) {
+        if (data && (data.data.EstudianteID || data.data.tutor.TutorID || data.data.AdminID)) {
             return {
                 success: true,
                 data: data

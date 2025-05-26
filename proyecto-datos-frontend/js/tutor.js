@@ -295,7 +295,7 @@ async function completeTutoring(tutoringId) {
         const result = await updateTutoringStatus(tutoringId, 'completada');
         if (result) {
             tutoring.status = 'completada';
-            updateTutoringTable();
+            await updateTutoringTable();
             showNotification('Tutoría marcada como completada exitosamente', 'success');
         } else {
             showNotification('Error al completar la tutoría. Inténtalo nuevamente.', 'error');
@@ -315,7 +315,7 @@ async function confirmTutoring(tutoringId) {
         const result = await updateTutoringStatus(tutoringId, 'confirmada');
         if (result) {
             tutoring.status = 'confirmada';
-            updateTutoringTable();
+            await updateTutoringTable();
             showNotification('Tutoría confirmada exitosamente', 'success');
         } else {
             showNotification('Error al confirmar la tutoría. Inténtalo nuevamente.', 'error');
@@ -373,7 +373,7 @@ async function confirmarReasignacion() {
             tutoring.notes = `Reasignada: ${motivo}`;
             
             closeModal('reasignarModal');
-            updateTutoringTable();
+            await updateTutoringTable();
             showNotification('Tutoría reasignada exitosamente', 'success');
         } else {
             showNotification('Error al reasignar la tutoría. Inténtalo nuevamente.', 'error');
@@ -384,41 +384,113 @@ async function confirmarReasignacion() {
     }
 }
 
-// Función para actualizar tabla de tutorías
-function updateTutoringTable() {
+// Función para actualizar tabla de tutorías (dashboard - 6 columns)
+async function updateTutoringTable() {
     const tableBody = document.getElementById('tutoriasTableBody');
     if (!tableBody) return;
 
     tableBody.innerHTML = '';
     
-    sessionData.tutoringSessions.forEach(tutoring => {
+    // Process each tutoring session asynchronously
+    for (const tutoring of sessionData.tutoringSessions) {
         const row = document.createElement('tr');
-        row.setAttribute('data-tutoria-id', tutoring.id);
         
-        const statusClass = `status-${tutoring.status}`;
-        const statusText = getStatusText(tutoring.status);
-        
-        let actions = `<button class="btn btn-primary" onclick="openModal('detalleTutoria')">Ver</button>`;
-        
-        if (tutoring.status === 'confirmada') {
-            actions += ` <button class="btn btn-success" onclick="completeTutoring(${tutoring.id})">Completar</button>`;
-        } else if (tutoring.status === 'solicitada') {
-            actions += ` <button class="btn btn-success" onclick="confirmTutoring(${tutoring.id})">Confirmar</button>`;
-        } else if (tutoring.status === 'cancelada') {
-            actions += ` <button class="btn btn-warning" onclick="openReassignModal(${tutoring.id})">Reasignar</button>`;
+        try {
+            // Map API data to display format - handle both API response format and local format
+            const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
+            row.setAttribute('data-tutoria-id', tutoriaId);
+            
+            // Handle materia name
+            let materiaName = 'N/A';
+            if (tutoring.materiaNombre) {
+                materiaName = tutoring.materiaNombre;
+            } else if (tutoring.materia_nombre) {
+                materiaName = tutoring.materia_nombre;
+            } else if (tutoring.subject) {
+                materiaName = tutoring.subject;
+            } else if (tutoring.MateriaID) {
+                materiaName = GetIdFromName(tutoring.MateriaID);
+            }
+            
+            // Handle student name
+            let student = 'N/A';
+            if (tutoring.estudianteNombre && tutoring.estudianteApellido) {
+                student = `${tutoring.estudianteNombre} ${tutoring.estudianteApellido}`;
+            } else if (tutoring.estudiante_nombre && tutoring.estudiante_apellido) {
+                student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
+            } else if (tutoring.student) {
+                student = tutoring.student;
+            } else if (tutoring.EstudianteID) {
+                student = await getStudentName(tutoring.EstudianteID);
+            }
+            
+            // Handle date
+            const fecha = tutoring.fecha || tutoring.Fecha || tutoring.date || 'N/A';
+            
+            // Handle time
+            let time = 'N/A';
+            if (tutoring.time) {
+                time = tutoring.time;
+            } else if (tutoring.horaInicio && tutoring.horaFin) {
+                time = `${tutoring.horaInicio}-${tutoring.horaFin}`;
+            } else if (tutoring.hora_inicio && tutoring.hora_fin) {
+                time = `${tutoring.hora_inicio}-${tutoring.hora_fin}`;
+            } else if (tutoring.HoraInicio && tutoring.HoraFin) {
+                // Handle Go time format - convert microseconds to hours
+                if (tutoring.HoraInicio.Microseconds && tutoring.HoraFin.Microseconds) {
+                    const startHour = Math.floor(tutoring.HoraInicio.Microseconds / 3600000000);
+                    const endHour = Math.floor(tutoring.HoraFin.Microseconds / 3600000000);
+                    time = `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                }
+            }
+            
+            // Handle status
+            const status = tutoring.estado || tutoring.Estado || tutoring.status || 'N/A';
+            const statusClass = `status-${status}`;
+            const statusText = getStatusText(status);
+            
+            // Generate action buttons with comprehensive field access
+            let actions = `<button class="btn btn-primary" onclick="openModal('detalleTutoria')">Ver</button>`;
+            
+            if (status === 'confirmada') {
+                actions += ` <button class="btn btn-success" onclick="completeTutoring(${tutoriaId})">Completar</button>`;
+            } else if (status === 'solicitada') {
+                actions += ` <button class="btn btn-success" onclick="confirmTutoring(${tutoriaId})">Confirmar</button>`;
+            } else if (status === 'cancelada') {
+                actions += ` <button class="btn btn-warning" onclick="openReassignModal(${tutoriaId})">Reasignar</button>`;
+            }
+            
+            row.innerHTML = `
+                <td>${materiaName}</td>
+                <td>${student}</td>
+                <td>${formatDate(fecha)}</td>
+                <td>${time}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${actions}</td>
+            `;
+            
+            tableBody.appendChild(row);
+        } catch (error) {
+            console.error('Error processing tutoring session:', error, tutoring);
+            // Still add a row with fallback data to prevent the table from disappearing
+            row.innerHTML = `
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td><span class="status-badge status-error">Error</span></td>
+                <td>-</td>
+            `;
+            tableBody.appendChild(row);
         }
-        
-        row.innerHTML = `
-            <td>${tutoring.subject}</td>
-            <td>${tutoring.student}</td>
-            <td>${tutoring.date}</td>
-            <td>${tutoring.time}</td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td>${actions}</td>
-        `;
-        
+    }
+    
+    // Show message if no tutoring sessions
+    if (sessionData.tutoringSessions.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" style="text-align: center; color: #666;">No tienes tutorías programadas</td>';
         tableBody.appendChild(row);
-    });
+    }
 }
 
 // Función para actualizar reportes
@@ -575,7 +647,7 @@ async function confirmarTutoria(tutoriaId) {
                 tutoring.status = 'confirmada';
             }
             showNotification('Tutoría confirmada exitosamente', 'success');
-            updateTutoriasTable();
+            await updateTutoriasTable();
         }
     } catch (error) {
         console.error('Error confirming tutoring:', error);
@@ -593,8 +665,8 @@ async function completarTutoria(tutoriaId) {
                 tutoring.status = 'completada';
             }
             showNotification('Tutoría marcada como completada', 'success');
-            updateTutoriasTable();
-            updateTutorDashboard();
+            await updateTutoriasTable();
+            await updateTutorDashboard();
         }
     } catch (error) {
         console.error('Error completing tutoring:', error);
@@ -613,7 +685,7 @@ async function rechazarTutoria(tutoriaId) {
                     tutoring.status = 'cancelada';
                 }
                 showNotification('Tutoría rechazada', 'info');
-                updateTutoriasTable();
+                await updateTutoriasTable();
             }
         } catch (error) {
             console.error('Error rejecting tutoring:', error);
@@ -679,7 +751,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Actualizar tabla inicial
-    updateTutoringTable();
+    updateTutoringTable().catch(error => {
+        console.error('Error updating tutoring table on load:', error);
+    });
 });
 
 // Animación de entrada suave al cargar la página
@@ -757,7 +831,7 @@ function filterTutorings() {
 }
 
 // Function to update tutor interface on page load
-function updateTutorInterface() {
+async function updateTutorInterface() {
     const userSession = getUserSession();
     if (!userSession || !sessionData.currentUser) return;
 
@@ -808,7 +882,57 @@ function updateTutorInterface() {
     }
 
     // Update dashboard tables and statistics
-    updateTutorDashboard();
+    await updateTutorDashboard();
+}
+
+// Mock function to simulate tutor name fetching
+async function getTutorName(tutorId) {
+   try {
+        const response = await fetch(`${API_BASE_URL}/tutores/${tutorId}/nombre`);
+        if (!response.ok) throw new Error('Failed to fetch tutor name');
+        const data = await response.json()
+        
+        // API returns both Nombre and Apellido, combine them
+        if (data.nombre && data.apellido) {
+            return `${data.nombre} ${data.apellido}`;
+        } else if (data.nombre) {
+            return data.nombre;
+        } else {
+            return 'Tutor no encontrado';
+        }
+   } catch (error) {
+        console.error('Error fetching tutor name:', error);
+        return 'Tutor no encontrado';
+    }
+}
+
+// Helper function to get subject name from materia ID
+function GetIdFromName(materiaId) {
+    if (!sessionData.subjects || !materiaId) return 'N/A';
+    
+    const materia = sessionData.subjects.find(m => m.materia_id === materiaId || m.id === materiaId);
+    return materia ? (materia.nombre || materia.name || 'N/A') : 'N/A';
+}
+
+// Helper function to get student name from API
+async function getStudentName(studentId) {
+   try {
+        const response = await fetch(`${API_BASE_URL}/estudiantes/${studentId}/nombre`);
+        if (!response.ok) throw new Error('Failed to fetch student name');
+        const data = await response.json()
+        
+        // API returns both Nombre and Apellido, combine them
+        if (data.nombre && data.apellido) {
+            return `${data.nombre} ${data.apellido}`;
+        } else if (data.nombre) {
+            return data.nombre;
+        } else {
+            return 'Estudiante no encontrado';
+        }
+   } catch (error) {
+        console.error('Error fetching student name:', error);
+        return 'Estudiante no encontrado';
+    }
 }
 
 // Update performance data periodically using session data
@@ -826,19 +950,23 @@ setInterval(() => {
 
 // Initialize tutor interface when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    updateTutorInterface();
+    updateTutorInterface().catch(error => {
+        console.error('Error updating tutor interface on load:', error);
+    });
 });
 
 // Also handle page visibility changes to refresh data
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
         // Page became visible, refresh data
-        updateTutorInterface();
+        updateTutorInterface().catch(error => {
+            console.error('Error updating tutor interface on visibility change:', error);
+        });
     }
 });
 
 // Update tutor dashboard with session data
-function updateTutorDashboard() {
+async function updateTutorDashboard() {
     // Update statistics from performance data
     if (sessionData.performanceData) {
         const stats = sessionData.performanceData;
@@ -860,7 +988,7 @@ function updateTutorDashboard() {
     }
     
     // Update tutoring sessions table
-    updateTutoriasTable();
+    await updateTutoriasTable();
     
     // Update reports if available
     if (typeof updateReports === 'function') {
@@ -868,32 +996,107 @@ function updateTutorDashboard() {
     }
 }
 
-// Update tutoring sessions table with real data
-function updateTutoriasTable() {
-    const tableBody = document.getElementById('tutoriasTableBody');
+// Update tutoring sessions table with comprehensive field handling (full table - 8 columns)
+async function updateTutoriasTable() {
+    const tableBody = document.getElementById('allTutoriasTableBody');
     if (!tableBody || !sessionData.tutoringSessions) return;
 
     tableBody.innerHTML = '';
     
-    sessionData.tutoringSessions.forEach(tutoring => {
+    // Process each tutoring session asynchronously
+    for (const tutoring of sessionData.tutoringSessions) {
         const row = document.createElement('tr');
-        const statusClass = `status-${tutoring.estado || tutoring.status}`;
-        const statusText = getStatusText(tutoring.estado || tutoring.status);
         
-        row.innerHTML = `
-            <td>#${(tutoring.tutoria_id || tutoring.id || '').toString().padStart(3, '0')}</td>
-            <td>${tutoring.materia_nombre || tutoring.subject || 'N/A'}</td>
-            <td>${tutoring.estudiante_nombre || tutoring.student || 'N/A'}</td>
-            <td>${formatDate(tutoring.fecha || tutoring.date)}</td>
-            <td>${formatTime(tutoring.hora_inicio, tutoring.hora_fin) || tutoring.time || 'N/A'}</td>
-            <td>${tutoring.lugar || tutoring.location || 'N/A'}</td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td>${generateTutorActionButtons(tutoring)}</td>
-        `;
-        
-        tableBody.appendChild(row);
-    });
+        try {
+            // Map API data to display format - handle both API response format and local format
+            const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
+            
+            // Handle materia name
+            let materiaName = 'N/A';
+            if (tutoring.materiaNombre) {
+                materiaName = tutoring.materiaNombre;
+            } else if (tutoring.materia_nombre) {
+                materiaName = tutoring.materia_nombre;
+            } else if (tutoring.subject) {
+                materiaName = tutoring.subject;
+            } else if (tutoring.MateriaID) {
+                materiaName = GetIdFromName(tutoring.MateriaID);
+            }
+            
+            // Handle student name
+            let student = 'N/A';
+            if (tutoring.estudianteNombre && tutoring.estudianteApellido) {
+                student = `${tutoring.estudianteNombre} ${tutoring.estudianteApellido}`;
+            } else if (tutoring.estudiante_nombre && tutoring.estudiante_apellido) {
+                student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
+            } else if (tutoring.student) {
+                student = tutoring.student;
+            } else if (tutoring.EstudianteID) {
+                student = await getStudentName(tutoring.EstudianteID);
+            }
+            
+            // Handle date
+            const fecha = tutoring.fecha || tutoring.Fecha || tutoring.date || 'N/A';
+            
+            // Handle time
+            let time = 'N/A';
+            if (tutoring.time) {
+                time = tutoring.time;
+            } else if (tutoring.horaInicio && tutoring.horaFin) {
+                time = `${tutoring.horaInicio}-${tutoring.horaFin}`;
+            } else if (tutoring.hora_inicio && tutoring.hora_fin) {
+                time = `${tutoring.hora_inicio}-${tutoring.hora_fin}`;
+            } else if (tutoring.HoraInicio && tutoring.HoraFin) {
+                // Handle Go time format - convert microseconds to hours
+                if (tutoring.HoraInicio.Microseconds && tutoring.HoraFin.Microseconds) {
+                    const startHour = Math.floor(tutoring.HoraInicio.Microseconds / 3600000000);
+                    const endHour = Math.floor(tutoring.HoraFin.Microseconds / 3600000000);
+                    time = `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                } else {
+                    time = formatTime(tutoring.HoraInicio, tutoring.HoraFin);
+                }
+            } else {
+                time = formatTime(tutoring.hora_inicio, tutoring.hora_fin);
+            }
+            
+            // Handle location
+            const location = tutoring.lugar || tutoring.Lugar || tutoring.location || 'N/A';
+            
+            // Handle status
+            const status = tutoring.estado || tutoring.Estado || tutoring.status || 'N/A';
+            const statusClass = `status-${status}`;
+            const statusText = getStatusText(status);
+            
+            row.innerHTML = `
+                <td>#${tutoriaId.toString().padStart(3, '0')}</td>
+                <td>${materiaName}</td>
+                <td>${student}</td>
+                <td>${formatDate(fecha)}</td>
+                <td>${time}</td>
+                <td>${location}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${generateTutorActionButtons(tutoring)}</td>
+            `;
+            
+            tableBody.appendChild(row);
+        } catch (error) {
+            console.error('Error processing tutoring session:', error, tutoring);
+            // Still add a row with fallback data to prevent the table from disappearing
+            row.innerHTML = `
+                <td>Error</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td>Error cargando datos</td>
+                <td><span class="status-badge status-error">Error</span></td>
+                <td>-</td>
+            `;
+            tableBody.appendChild(row);
+        }
+    }
     
+    // Show message if no tutoring sessions
     if (sessionData.tutoringSessions.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="8" style="text-align: center; color: #666;">No tienes tutorías asignadas</td>';
@@ -901,17 +1104,22 @@ function updateTutoriasTable() {
     }
 }
 
-// Generate action buttons for tutor view
+// Generate action buttons for tutor view with comprehensive field access
 function generateTutorActionButtons(tutoring) {
-    const status = tutoring.estado || tutoring.status;
-    let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoring.tutoria_id || tutoring.id})">Ver</button>`;
+    // Handle ID field variants
+    const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
+    
+    // Handle status field variants
+    const status = tutoring.estado || tutoring.Estado || tutoring.status || '';
+    
+    let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoriaId})">Ver</button>`;
     
     if (status === 'confirmada') {
-        buttons += ` <button class="btn btn-success" onclick="completarTutoria(${tutoring.tutoria_id || tutoring.id})">Completar</button>`;
-        buttons += ` <button class="btn btn-warning" onclick="openRescheduleModal(${tutoring.tutoria_id || tutoring.id})">Reprogramar</button>`;
+        buttons += ` <button class="btn btn-success" onclick="completarTutoria(${tutoriaId})">Completar</button>`;
+        buttons += ` <button class="btn btn-warning" onclick="openRescheduleModal(${tutoriaId})">Reprogramar</button>`;
     } else if (status === 'solicitada') {
-        buttons += ` <button class="btn btn-success" onclick="confirmarTutoria(${tutoring.tutoria_id || tutoring.id})">Confirmar</button>`;
-        buttons += ` <button class="btn btn-danger" onclick="rechazarTutoria(${tutoring.tutoria_id || tutoring.id})">Rechazar</button>`;
+        buttons += ` <button class="btn btn-success" onclick="confirmarTutoria(${tutoriaId})">Confirmar</button>`;
+        buttons += ` <button class="btn btn-danger" onclick="rechazarTutoria(${tutoriaId})">Rechazar</button>`;
     }
     
     return buttons;

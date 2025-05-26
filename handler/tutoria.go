@@ -36,6 +36,7 @@ type UpdateTutoriaRequest struct {
 	HoraInicio           string `json:"hora_inicio" example:"10:00"`
 	HoraFin              string `json:"hora_fin" example:"11:00"`
 	Lugar                string `json:"lugar" example:"Biblioteca Central"`
+	Estado               string `json:"estado,omitempty" example:"confirmada"`
 	TemasTratados        string `json:"temas_tratados,omitempty" example:"Derivadas y límites"`
 	AsistenciaConfirmada bool   `json:"asistencia_confirmada" example:"true"`
 }
@@ -589,21 +590,32 @@ func updateTutoriaEstadoHandler(w http.ResponseWriter, r *http.Request, queries 
 		return
 	}
 
-	params := db.UpdateTutoriaEstadoParams{
-		TutoriaID: tutoriaID,
-		Estado:    req.Estado,
-	}
-
-	err := queries.UpdateTutoriaEstado(r.Context(), params)
+	// First, get the existing tutoria data
+	existingTutoria, err := queries.SelectTutoriaById(r.Context(), tutoriaID)
 	if err != nil {
-		http.Error(w, "Failed to update tutoria status: "+err.Error(), http.StatusInternalServerError)
+		if err.Error() == "no rows in result set" {
+			http.Error(w, "Tutoria not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to get tutoria: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Get the updated tutoria
-	tutoria, err := queries.SelectTutoriaById(r.Context(), tutoriaID)
+	// Update using the existing data but with new estado
+	params := db.UpdateTutoriaParams{
+		TutoriaID:            tutoriaID,
+		Fecha:                existingTutoria.Fecha,
+		HoraInicio:           existingTutoria.HoraInicio,
+		HoraFin:              existingTutoria.HoraFin,
+		Lugar:                existingTutoria.Lugar,
+		Estado:               req.Estado,
+		AsistenciaConfirmada: existingTutoria.AsistenciaConfirmada,
+		TemasTratados:        existingTutoria.TemasTratados,
+	}
+
+	tutoria, err := queries.UpdateTutoria(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to update tutoria status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -631,6 +643,17 @@ func updateTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		return
 	}
 
+	// First, get the existing tutoria data to preserve estado
+	existingTutoria, err := queries.SelectTutoriaById(r.Context(), tutoriaID)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			http.Error(w, "Tutoria not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to get tutoria: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	fecha, err := parseDateString(req.Fecha)
 	if err != nil {
 		http.Error(w, "Invalid fecha format (use YYYY-MM-DD)", http.StatusBadRequest)
@@ -655,6 +678,15 @@ func updateTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		HoraInicio: horaInicio,
 		HoraFin:    horaFin,
 		Lugar:      req.Lugar,
+		Estado: func() string {
+			if req.Estado != "" {
+				return req.Estado
+			} else {
+				return existingTutoria.Estado
+			}
+		}(),
+		AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
+		TemasTratados:        pgtype.Text{String: req.TemasTratados, Valid: req.TemasTratados != ""},
 	}
 
 	tutoria, err := queries.UpdateTutoria(r.Context(), params)
@@ -735,8 +767,8 @@ func UpdateTutoriaEstadoEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		// First, check if the tutoria exists
-		_, err = queries.SelectTutoriaById(r.Context(), int32(id))
+		// First, get the existing tutoria data
+		existingTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				http.Error(w, "Tutoria not found", http.StatusNotFound)
@@ -746,22 +778,21 @@ func UpdateTutoriaEstadoEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		// Update the estado
-		params := db.UpdateTutoriaEstadoParams{
-			TutoriaID: int32(id),
-			Estado:    req.Estado,
+		// Update using existing data but with new estado
+		params := db.UpdateTutoriaParams{
+			TutoriaID:            int32(id),
+			Fecha:                existingTutoria.Fecha,
+			HoraInicio:           existingTutoria.HoraInicio,
+			HoraFin:              existingTutoria.HoraFin,
+			Lugar:                existingTutoria.Lugar,
+			Estado:               req.Estado,
+			AsistenciaConfirmada: existingTutoria.AsistenciaConfirmada,
+			TemasTratados:        existingTutoria.TemasTratados,
 		}
 
-		err = queries.UpdateTutoriaEstado(r.Context(), params)
+		updatedTutoria, err := queries.UpdateTutoria(r.Context(), params)
 		if err != nil {
 			http.Error(w, "Failed to update tutoria estado: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Get the updated tutoria
-		updatedTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
-		if err != nil {
-			http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -804,8 +835,8 @@ func UpdateTutoriaAsistenciaEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		// First, check if the tutoria exists
-		_, err = queries.SelectTutoriaById(r.Context(), int32(id))
+		// First, get the existing tutoria data
+		existingTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				http.Error(w, "Tutoria not found", http.StatusNotFound)
@@ -815,22 +846,21 @@ func UpdateTutoriaAsistenciaEndpoint(queries *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		// Update the asistencia
-		params := db.UpdateTutoriaAsistenciaParams{
+		// Update using existing data but with new asistencia_confirmada
+		params := db.UpdateTutoriaParams{
 			TutoriaID:            int32(id),
+			Fecha:                existingTutoria.Fecha,
+			HoraInicio:           existingTutoria.HoraInicio,
+			HoraFin:              existingTutoria.HoraFin,
+			Lugar:                existingTutoria.Lugar,
+			Estado:               existingTutoria.Estado,
 			AsistenciaConfirmada: pgtype.Bool{Bool: req.AsistenciaConfirmada, Valid: true},
+			TemasTratados:        existingTutoria.TemasTratados,
 		}
 
-		err = queries.UpdateTutoriaAsistencia(r.Context(), params)
+		updatedTutoria, err := queries.UpdateTutoria(r.Context(), params)
 		if err != nil {
 			http.Error(w, "Failed to update tutoria asistencia: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Get the updated tutoria
-		updatedTutoria, err := queries.SelectTutoriaById(r.Context(), int32(id))
-		if err != nil {
-			http.Error(w, "Failed to get updated tutoria: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
