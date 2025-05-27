@@ -41,24 +41,50 @@ function getTutorData() {
 // Function to load tutoring sessions for tutor from API
 async function loadTutoringSessions(tutorId) {
     try {
-        // Based on swagger.yaml, we need to use a different endpoint
-        // This endpoint might not exist yet, so we'll use mock data for now
-        // TODO: Update when proper endpoint is available
-        console.warn('Using mock data - actual API endpoint for tutor sessions not found in swagger');
-        return getMockTutoringSessions();
+        const response = await apiCall(`/tutorias/tutor/${tutorId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        // Assuming apiCall returns an object like { success: true, data: [...] }
+        // or the direct data array if the API is structured that way.
+        // The original check was !Array.isArray(response.data)
+        if (response && response.data && Array.isArray(response.data)) {
+            return response.data;
+        } else if (response && Array.isArray(response)) { // If apiCall returns the array directly
+            return response;
+        } else {
+            console.warn('Invalid or empty response format for tutoring sessions:', response);
+            return []; // Return empty array for invalid format or no data
+        }
     } catch (error) {
         console.error('Error loading tutoring sessions:', error);
-        return getMockTutoringSessions();
+        return []; // Return empty array on error, no mock data
     }
 }
 
 // Function to load active tutoring sessions for tutor
-async function loadActiveTutoringSessions() {
+async function loadActiveTutoringSessions(tutorId) {
     try {
-        // Based on swagger.yaml, no direct endpoint for active sessions by tutor
-        // Using mock data for now
-        console.warn('Using mock data - active tutoring sessions endpoint not available');
-        return getMockTutoringSessions().filter(session => session.status === 'confirmada');
+        // Plausible endpoint for active/upcoming sessions for a tutor
+        const response = await apiCall(`/tutorias/tutor/${tutorId}/activas`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        if (response && response.data && Array.isArray(response.data)) {
+            return response.data;
+        } else if (response && Array.isArray(response)) {
+            return response;
+        } else {
+            console.warn('Invalid or empty response format for active tutoring sessions:', response);
+            return [];
+        }
     } catch (error) {
         console.error('Error loading active tutoring sessions:', error);
         return [];
@@ -68,15 +94,25 @@ async function loadActiveTutoringSessions() {
 // Function to load subjects that tutor teaches
 async function loadTutorSubjects(tutorId) {
     try {
-        // Based on swagger.yaml, use the tutor-materias endpoint with materia_id parameter
-        // But we need tutores by materia, not materias by tutor
-        // The correct endpoint would be to get materias for a specific tutor
-        // Since this isn't directly available, we'll use mock data
-        console.warn('Using mock data - tutor subjects endpoint needs proper implementation');
-        return getMockTutorSubjects();
+        // Plausible endpoint for subjects taught by a tutor
+        const response = await apiCall(`/tutores/${tutorId}/materias`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        if (response && response.data && Array.isArray(response.data)) {
+            return response.data;
+        } else if (response && Array.isArray(response)) {
+            return response;
+        } else {
+            console.warn('Invalid or empty response format for tutor subjects:', response);
+            return [];
+        }
     } catch (error) {
         console.error('Error loading tutor subjects:', error);
-        return getMockTutorSubjects();
+        return [];
     }
 }
 
@@ -118,66 +154,70 @@ let sessionData = {
     performanceData: null
 };
 
-// Initialize tutor data from session
+// Initialize tutor data from session (copied exact pattern from user.js)
 async function initializeTutorData() {
     const userSession = getUserSession();
     if (!userSession) return;
-    
-    // Extract tutor data from login session
+
+    // Extract tutor data from login session (exact pattern from user.js)
     const tutorData = userSession.user.data.tutor
-    
-    console.log('Initializing tutor data:', tutorData);
-    // Set current user from session data
+    console.log('Initializing tutor data from session:', tutorData);
+    // Set current user from session data (exactly like user.js)
     sessionData.currentUser = {
-        id: tutorData?.TutorID,
-        name: `${tutorData?.Nombre || ''} ${tutorData?.Apellido || ''}`.trim(),
-        firstName: tutorData?.Nombre || '',
-        lastName: tutorData?.Apellido || '',
-        email: tutorData?.Correo || '',
+        id: tutorData.TutorID,
+        name: `${tutorData.Nombre || ''} ${tutorData.Apellido || ''}`.trim(),
+        firstName: tutorData.Nombre || '',
+        lastName: tutorData.Apellido || '',
+        email: tutorData.Correo || '',
         role: "tutor",
-        especialidad: tutorData?.Especialidad || "Especialidad no especificada",
-        experiencia: tutorData?.AñosExperiencia || 0,
-        telefono: tutorData?.Telefono || '',
-        avatar: (tutorData?.Nombre?.[0] || '') + (tutorData?.Apellido?.[0] || ''),
-        documento: tutorData?.NumeroDocumento || ''
+        especialidad: tutorData.Especialidad || " ",
+        experiencia: tutorData.AñosExperiencia || 0,
+        telefono: tutorData.Telefono || ' ',
+        avatar: (tutorData.data?.Nombre?.[0] || '') + (tutorData.data?.Apellido?.[0] || ''),
+        documento: tutorData.data?.NumeroDocumento || '',
+        registrationDate: tutorData.data?.FechaRegistro || "Fecha no disponible",
+        lugarPredeterminado: tutorData.data?.LugarPredeterminadoTutorias || "Oficina del tutor",
+        notasPredeterminadas: tutorData.data?.NotasPredeterminadasTutorias || "Traer material de estudio y dudas preparadas."
     };
     
     console.log('Current user data:', sessionData.currentUser);
 
     try {
         // Load tutoring sessions for this tutor
-        const tutoringSessions = await getTutoringSessions(sessionData.currentUser.id);
+        const tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
         sessionData.tutoringSessions = tutoringSessions || [];
         
         // Load subjects that this tutor teaches
-        const tutorSubjects = await getTutorSubjects(sessionData.currentUser.id);
+        const tutorSubjects = await loadTutorSubjects(sessionData.currentUser.id);
         sessionData.tutorSubjects = tutorSubjects || [];
         
         console.log('Loaded tutoring sessions:', sessionData.tutoringSessions);
         console.log('Loaded tutor subjects:', sessionData.tutorSubjects);
         
         // Calculate performance data from sessions
-        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions);
+        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects);
     } catch (error) {
-        console.error('Error loading tutor data:', error);
+        console.error('Error initializing tutor data (sessions, subjects, performance):', error);
         sessionData.tutoringSessions = [];
         sessionData.tutorSubjects = [];
-        sessionData.performanceData = getDefaultPerformanceData();
+        sessionData.performanceData = calculatePerformanceData([], []);
     }
 
     // Update UI with loaded data
     updateTutorInterface();
     
     // Add refresh button
-    addRefreshButton();
+    addRefreshButton(); // Ensure this function exists or is implemented
     
     // Show API status notification
-    showAPIStatus();
+    showAPIStatus(); // Ensure this function exists or is implemented
     
     // Ensure navbar is updated after all data is loaded
     setTimeout(() => {
-        updateTutorInterface();
-    }, 500);
+        if (sessionData.currentUser) {
+            updateNavbar(sessionData.currentUser);
+        }
+    }, 100); // Short delay to ensure DOM is ready
 }
 
 // Enhanced error handling and logging
@@ -226,1362 +266,799 @@ async function apiCall(endpoint, options = {}) {
 
 // Mock data for development/fallback - following API structure from swagger
 function getMockTutoringSessions() {
-    return [
-        {
-            tutoriaID: 1,
-            estudianteID: 101,
-            tutorID: sessionData.currentUser?.id || 1,
-            materiaID: 1,
-            fecha: { time: '2025-05-23', valid: true },
-            horaInicio: '14:00',
-            horaFin: '15:00',
-            lugar: 'Aula 201',
-            estado: 'confirmada',
-            asistenciaConfirmada: { bool: true, valid: true },
-            fechaSolicitud: { time: '2025-05-20T10:00:00Z', valid: true },
-            fechaConfirmacion: { time: '2025-05-20T11:00:00Z', valid: true },
-            temasTratados: { string: 'Derivadas por definición, Regla de la cadena', valid: true }
-        },
-        {
-            tutoriaID: 2,
-            estudianteID: 102,
-            tutorID: sessionData.currentUser?.id || 1,
-            materiaID: 2,
-            fecha: { time: '2025-05-25', valid: true },
-            horaInicio: '10:00',
-            horaFin: '11:00',
-            lugar: 'Lab. Informática',
-            estado: 'cancelada',
-            asistenciaConfirmada: { bool: false, valid: true },
-            fechaSolicitud: { time: '2025-05-22T09:00:00Z', valid: true },
-            fechaConfirmacion: { time: null, valid: false },
-            temasTratados: { string: 'POO, Herencia', valid: true }
-        },
-        {
-            tutoriaID: 3,
-            estudianteID: 103,
-            tutorID: sessionData.currentUser?.id || 1,
-            materiaID: 3,
-            fecha: { time: '2025-05-24', valid: true },
-            horaInicio: '16:00',
-            horaFin: '17:00',
-            lugar: 'Aula 105',
-            estado: 'solicitada',
-            asistenciaConfirmada: { bool: false, valid: false },
-            fechaSolicitud: { time: '2025-05-23T12:00:00Z', valid: true },
-            fechaConfirmacion: { time: null, valid: false },
-            temasTratados: { string: 'Matrices, Determinantes', valid: true }
-        }
-    ];
+    // This function should ideally be removed or only used if API calls consistently fail
+    // For now, per user request, focusing on API calls.
+    console.warn("getMockTutoringSessions called - should be replaced by API calls.");
+    return []; 
 }
 
 function getMockTutorSubjects() {
-    return [
-        {
-            materiaID: 1,
-            materiaNombre: 'Cálculo Diferencial',
-            materiaCodigo: 'MAT101',
-            activo: true
-        },
-        {
-            materiaID: 2,
-            materiaNombre: 'Programación I',
-            materiaCodigo: 'INF101',
-            activo: true
-        },
-        {
-            materiaID: 3,
-            materiaNombre: 'Álgebra Linear',
-            materiaCodigo: 'MAT201',
-            activo: true
+    // This function should ideally be removed.
+    console.warn("getMockTutorSubjects called - should be replaced by API calls.");
+    return [];
+}
+
+// Helper function to format date (e.g., YYYY-MM-DD to DD/MM/YYYY)
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+             // Try to parse if it's already in DD/MM/YYYY or other common non-standard formats
+            const parts = dateString.split(/[-/]/);
+            if (parts.length === 3) {
+                // Assuming DD/MM/YYYY or MM/DD/YYYY - this is ambiguous without more context
+                // For safety, return original if initial parsing failed broadly
+                return dateString; 
+            }
+            return dateString;
         }
-    ];
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const year = date.getUTCFullYear();
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        console.error("Error formatting date:", dateString, e);
+        return dateString; 
+    }
 }
 
-function getMockPerformanceData() {
+// Helper function to format time (e.g., 14:00:00 to 14:00)
+function formatTime(timeString) {
+    if (!timeString) return 'N/A';
+    // Handles "HH:MM:SS" or "HH:MM"
+    if (typeof timeString === 'string' && timeString.includes(':')) {
+        const parts = timeString.split(':');
+        return `${parts[0]}:${parts[1]}`;
+    }
+    return timeString; // Fallback
+}
+
+// Helper function to get status text
+function getStatusText(status) {
+    if (!status) return 'Desconocido';
+    const statusMap = {
+        'solicitada': 'Solicitada',
+        'confirmada': 'Confirmada',
+        'completada': 'Completada',
+        'cancelada': 'Cancelada',
+        'pendiente': 'Pendiente',
+        'rechazada': 'Rechazada'
+    };
+    return statusMap[status.toLowerCase()] || status;
+}
+
+// Placeholder for fetching student name - adapt if student details are part of tutoria object
+async function getStudentName(studentId, session) {
+    if (session && session.NombreEstudiante) return session.NombreEstudiante;
+    if (session && session.estudiante && session.estudiante.Nombre) return `${session.estudiante.Nombre} ${session.estudiante.Apellido || ''}`;
+    // Actual API call would be:
+    // try {
+    //   const student = await apiCall(`/estudiantes/${studentId}`);
+    //   return student && student.data ? `${student.data.Nombre} ${student.data.Apellido || ''}`.trim() : `Estudiante ID: ${studentId}`;
+    // } catch (e) {
+    //   console.error(`Error fetching student ${studentId}`, e);
+    //   return `Estudiante ID: ${studentId}`;
+    // }
+    return `Estudiante ID: ${studentId}`; // Fallback
+}
+
+// Placeholder for fetching subject name - adapt if subject details are part of tutoria object
+async function getSubjectName(materiaId, session) {
+    if (session && session.NombreMateria) return session.NombreMateria;
+    if (session && session.materia && session.materia.Nombre) return session.materia.Nombre;
+    // Actual API call would be:
+    // try {
+    //   const materia = await apiCall(`/materias/${materiaId}`);
+    //   return materia && materia.data ? materia.data.Nombre : `Materia ID: ${materiaId}`;
+    // } catch (e) {
+    //   console.error(`Error fetching materia ${materiaId}`, e);
+    //   return `Materia ID: ${materiaId}`;
+    // }
+    return `Materia ID: ${materiaId}`; // Fallback
+}
+
+
+// Function to calculate performance data
+function calculatePerformanceData(tutoringSessions, tutorSubjects) {
+    if (!tutoringSessions) tutoringSessions = [];
+    if (!tutorSubjects) tutorSubjects = [];
+
+    const completedSessions = tutoringSessions.filter(s => (s.Estado || s.estado || s.status) === 'completada');
+    const upcomingSessions = tutoringSessions.filter(s => {
+        const status = (s.Estado || s.estado || s.status);
+        const sessionDate = new Date(s.Fecha || s.fecha || s.date);
+        return (status === 'confirmada' || status === 'solicitada') && sessionDate >= new Date();
+    });
+
+    let totalHours = 0;
+    completedSessions.forEach(s => {
+        // Assuming HoraInicio and HoraFin are in "HH:MM:SS" format or can be parsed
+        // This is a simplified hour calculation, real calculation would parse HH:MM
+        if (s.HoraInicio && s.HoraFin) {
+            try {
+                const start = new Date(`1970-01-01T${s.HoraInicio}`);
+                const end = new Date(`1970-01-01T${s.HoraFin}`);
+                const diffMillis = end - start;
+                if (diffMillis > 0) {
+                    totalHours += diffMillis / (1000 * 60 * 60);
+                } else {
+                    totalHours += 1; // Default to 1 hour if calculation fails
+                }
+            } catch (e) { totalHours +=1; }
+        } else {
+            totalHours += 1; // Default to 1 hour if times are not available
+        }
+    });
+
+    const topicsCount = {};
+    tutoringSessions.forEach(s => {
+        if (s.TemasTratados && Array.isArray(s.TemasTratados)) {
+            s.TemasTratados.forEach(topic => {
+                topicsCount[topic] = (topicsCount[topic] || 0) + 1;
+            });
+        } else if (s.TemasTratados && typeof s.TemasTratados === 'string') {
+             // If topics is a comma-separated string
+            s.TemasTratados.split(',').forEach(topic => {
+                const trimmedTopic = topic.trim();
+                if(trimmedTopic) topicsCount[trimmedTopic] = (topicsCount[trimmedTopic] || 0) + 1;
+            });
+        }
+    });
+    const topTopics = Object.entries(topicsCount)
+        .sort(([,a],[,b]) => b-a)
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
+
     return {
-        totalTutorias: 24,
-        tutoriasCompletadas: 18,
-        tutoriasCanceladas: 3,
-        tasaAsistencia: 75,
-        horasMes: 18,
-        horasTotal: 156,
-        promedioSemana: 4.5,
-        duracionPromedio: '65min'
+        totalCompleted: completedSessions.length,
+        totalHours: totalHours.toFixed(1),
+        // Placeholder for attendance rate, requires 'asistencia_confirmada_tutor' or similar field
+        attendanceRate: completedSessions.length > 0 ? ((completedSessions.filter(s => s.asistencia_confirmada_tutor === true || s.asistencia_confirmada_tutor === 1).length / completedSessions.length) * 100).toFixed(0) : '0',
+        upcomingScheduled: upcomingSessions.length,
+        topTopics: topTopics,
+        // For chart data, you might group sessions by subject
+        // performanceBySubject: tutorSubjects.map(subj => ({
+        //    name: subj.NombreMateria,
+        //    count: tutoringSessions.filter(s => s.MateriaID === subj.MateriaID && s.Estado === 'completada').length
+        // })),
     };
 }
 
-// Get default performance data when no real data is available
-function getDefaultPerformanceData() {
-    return {
-        totalTutorias: 0,
-        tutoriasCompletadas: 0,
-        tutoriasCanceladas: 0,
-        tasaAsistencia: 0,
-        horasMes: 0,
-        horasTotal: 0,
-        promedioSemana: 0,
-        duracionPromedio: '60min'
-    };
+
+// --- UI Update Functions ---
+function updateNavbar(currentUser) {
+    if (!currentUser) return;
+    const userDetailsDiv = document.querySelector('.navbar .user-details');
+    const profileBtn = document.querySelector('.navbar .profile-btn');
+    // const userAvatarDiv = document.querySelector('.navbar .user-avatar'); // This div might be part of profileBtn or separate
+
+    if (userDetailsDiv) {
+        userDetailsDiv.innerHTML = `
+            <span>${currentUser.name}</span>
+            <small style="text-transform: capitalize;">${currentUser.role}</small>
+        `;
+    }
+    if (profileBtn) {
+        profileBtn.innerHTML = `<i class="fas fa-user-circle"></i> ${currentUser.avatar || (currentUser.firstName?.[0] || '') + (currentUser.lastName?.[0] || '')}`;
+    }
+    // if (userAvatarDiv) { // If there's a separate avatar element
+    //    userAvatarDiv.textContent = currentUser.avatar || (currentUser.firstName?.[0] || '') + (currentUser.lastName?.[0] || '');
+    // }
 }
 
-// Calculate performance data from tutoring sessions
-function calculatePerformanceData(sessions) {
-    const total = sessions.length;
-    const completed = sessions.filter(s => s.status === 'completada').length;
-    const cancelled = sessions.filter(s => s.status === 'cancelada').length;
-    const attendanceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+function updateProfileTab(currentUser) {
+    if (!currentUser) return;
+    const profileHeaderDiv = document.querySelector('#perfil .profile-header');
+    const profileInfoDiv = document.querySelector('#perfil .profile-info');
+
+    if (profileHeaderDiv) {
+        // Using Font Awesome icon as a placeholder avatar
+        profileHeaderDiv.innerHTML = `
+            <div class="profile-avatar-large"><i class="fas fa-user-tie fa-3x"></i></div>
+            <h2>${currentUser.name}</h2>
+            <p>${currentUser.especialidad || 'Tutor Académico'}</p>
+        `;
+    }
+    if (profileInfoDiv) {
+        profileInfoDiv.innerHTML = `
+            <p><strong><i class="fas fa-envelope"></i> Correo Electrónico:</strong> ${currentUser.email || 'No disponible'}</p>
+            <p><strong><i class="fas fa-id-card"></i> Documento:</strong> ${currentUser.documento || 'No disponible'}</p>
+            <p><strong><i class="fas fa-phone"></i> Teléfono:</strong> ${currentUser.telefono || 'No disponible'}</p>
+            <p><strong><i class="fas fa-briefcase"></i> Años de Experiencia:</strong> ${currentUser.experiencia === undefined ? 'No disponible' : currentUser.experiencia}</p>
+            <p><strong><i class="fas fa-calendar-check"></i> Miembro Desde:</strong> ${formatDate(currentUser.registrationDate)}</p>
+            <p><strong><i class="fas fa-map-marker-alt"></i> Lugar Predeterminado Tutorías:</strong> ${currentUser.lugarPredeterminado || 'No especificado'}</p>
+            <p><strong><i class="fas fa-info-circle"></i> Notas Predeterminadas:</strong> ${currentUser.notasPredeterminadas || 'No especificadas'}</p>
+        `;
+    }
+}
+
+async function updateDashboardTable(tutoringSessions) {
+    const dashboardTable = document.querySelector('#dashboard .table-container table');
+    if (!dashboardTable) {
+        console.error("Dashboard table element not found");
+        return;
+    }
+
+    const now = new Date();
+    // Filter for upcoming sessions (confirmada or solicitada, and today or in the future)
+    const upcomingSessions = (tutoringSessions || []).filter(session => {
+        const status = (session.Estado || session.estado || session.status || '').toLowerCase();
+        const sessionDate = new Date(session.Fecha || session.fecha || session.date);
+        // Adjust date to ignore time for comparison with 'now' for "today"
+        sessionDate.setHours(0,0,0,0);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        return (status === 'confirmada' || status === 'solicitada') && sessionDate >= today;
+    })
+    .sort((a,b) => new Date(a.Fecha || a.fecha || a.date) - new Date(b.Fecha || b.fecha || b.date) || (a.HoraInicio || '').localeCompare(b.HoraInicio || ''))
+    .slice(0, 5); // Show top 5 upcoming
+
+    if (upcomingSessions.length === 0) {
+        dashboardTable.innerHTML = '<tr><td colspan="6">No tienes tutorías próximas.</td></tr>';
+        return;
+    }
+
+    let tableHTML = `
+        <thead>
+            <tr>
+                <th>Asignatura</th>
+                <th>Estudiante</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Modalidad</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    for (const session of upcomingSessions) {
+        const studentName = await getStudentName(session.EstudianteID, session);
+        const subjectName = await getSubjectName(session.MateriaID, session);
+        const status = (session.Estado || session.estado || session.status);
+        tableHTML += `
+            <tr>
+                <td>${subjectName}</td>
+                <td>${studentName}</td>
+                <td>${formatDate(session.Fecha || session.fecha || session.date)}</td>
+                <td>${formatTime(session.HoraInicio || session.hora_inicio || session.time)}</td>
+                <td>${session.Modalidad || session.modalidad || 'N/A'}</td>
+                <td><span class="status-badge status-${status.toLowerCase()}">${getStatusText(status)}</span></td>
+            </tr>
+        `;
+    }
+    tableHTML += '</tbody>';
+    dashboardTable.innerHTML = tableHTML;
+}
+
+async function updateTutoriasTable(tutoringSessions) {
+    const tutoriasTable = document.querySelector('#tutorias .table-container table');
+    if (!tutoriasTable) {
+        console.error("Tutorias table element not found");
+        return;
+    }
+
+    if (!tutoringSessions || tutoringSessions.length === 0) {
+        tutoriasTable.innerHTML = '<tr><td colspan="8">No hay tutorías para mostrar.</td></tr>';
+        return;
+    }
+    // Sort by date descending, then time
+    const sortedSessions = [...tutoringSessions].sort((a,b) => 
+        new Date(b.Fecha || b.fecha || b.date) - new Date(a.Fecha || a.fecha || a.date) || 
+        (b.HoraInicio || '').localeCompare(a.HoraInicio || '')
+    );
+
+
+    let tableHTML = `
+        <thead>
+            <tr>
+                <th>Asignatura</th>
+                <th>Estudiante</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Modalidad</th>
+                <th>Estado</th>
+                <th>Temas</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    for (const session of sortedSessions) {
+        const studentName = await getStudentName(session.EstudianteID, session);
+        const subjectName = await getSubjectName(session.MateriaID, session);
+        const tutoriaId = session.TutoriaID || session.id;
+        const status = (session.Estado || session.estado || session.status);
+        const temas = Array.isArray(session.TemasTratados) ? session.TemasTratados.join(', ') : (session.TemasTratados || 'No especificados');
+
+        let actionButtons = `<button class="btn-action btn-view" onclick="openTutoriaDetailModal('${tutoriaId}')" title="Ver Detalles"><i class="fas fa-eye"></i></button>`;
+        if (status === 'solicitada') {
+            actionButtons += ` <button class="btn-action btn-confirm" onclick="confirmTutoria('${tutoriaId}')" title="Confirmar Tutoría"><i class="fas fa-check"></i></button>`;
+            actionButtons += ` <button class="btn-action btn-reject" onclick="rejectTutoria('${tutoriaId}')" title="Rechazar Tutoría"><i class="fas fa-times"></i></button>`;
+        }
+        if (status === 'confirmada' && new Date(session.Fecha || session.fecha || session.date) <= new Date()) { // Can mark completed if today or past
+             actionButtons += ` <button class="btn-action btn-complete" onclick="markTutoriaCompleted('${tutoriaId}')" title="Marcar como Completada"><i class="fas fa-check-circle"></i></button>`;
+        }
+        if (status === 'confirmada' || status === 'solicitada') {
+            actionButtons += ` <button class="btn-action btn-cancel" onclick="openCancelTutoriaModal('${tutoriaId}')" title="Cancelar Tutoría"><i class="fas fa-calendar-times"></i></button>`;
+        }
+        // Add reassign button if applicable
+        // actionButtons += ` <button class="btn-action btn-reassign" onclick="openReassignModal('${tutoriaId}')" title="Reasignar Tutoría"><i class="fas fa-exchange-alt"></i></button>`;
+
+
+        tableHTML += `
+            <tr data-tutoria-id="${tutoriaId}">
+                <td>${subjectName}</td>
+                <td>${studentName}</td>
+                <td>${formatDate(session.Fecha || session.fecha || session.date)}</td>
+                <td>${formatTime(session.HoraInicio || session.hora_inicio || session.time)}</td>
+                <td>${session.Modalidad || session.modalidad || 'N/A'}</td>
+                <td><span class="status-badge status-${status.toLowerCase()}">${getStatusText(status)}</span></td>
+                <td title="${temas}">${temas.length > 20 ? temas.substring(0, 20) + '...' : temas}</td>
+                <td>${actionButtons}</td>
+            </tr>
+        `;
+    }
+    tableHTML += '</tbody>';
+    tutoriasTable.innerHTML = tableHTML;
+}
+
+function updateDisponibilidadTab(tutorSubjects, currentUser) {
+    const disponibilidadContainer = document.querySelector('#disponibilidad .dashboard-disponibilidad');
+    const pageTitle = document.querySelector('#disponibilidad .availability-container h2');
+    const additionalInfoDiv = document.querySelector('#disponibilidad .additional-info');
+    const formActionsButton = document.querySelector('#disponibilidad .form-actions button.btn-primary');
+
+
+    if (pageTitle) {
+        pageTitle.innerHTML = `<i class="fas fa-calendar-alt"></i> Mi Disponibilidad y Materias`;
+    }
+
+    if (disponibilidadContainer) {
+        let contentHTML = '<h4><i class="fas fa-book-reader"></i> Materias que Impartes:</h4>';
+        if (!tutorSubjects || tutorSubjects.length === 0) {
+            contentHTML += '<p>No tienes materias asignadas actualmente.</p>';
+        } else {
+            contentHTML += '<ul>';
+            tutorSubjects.forEach(subject => {
+                contentHTML += `<li>${subject.NombreMateria || subject.name || `ID: ${subject.MateriaID}`}</li>`;
+            });
+            contentHTML += '</ul>';
+        }
+        contentHTML += '<p style="margin-top: 20px;"><i>La configuración de horarios semanales y excepciones estará disponible aquí.</i></p>';
+        // Example: Button to open a modal for setting availability
+        contentHTML += '<button class="btn btn-secondary" style="margin-top:10px;" onclick="openAvailabilitySettingsModal()"><i class="fas fa-edit"></i> Configurar Horarios</button>';
+        disponibilidadContainer.innerHTML = contentHTML;
+    }
+
+    if (additionalInfoDiv && currentUser) {
+        additionalInfoDiv.innerHTML = `
+            <div class="form-group">
+                <label for="tutor-location"><i class="fas fa-map-marker-alt"></i> Lugar Predeterminado para Tutorías Presenciales:</label>
+                <input type="text" id="tutor-location" name="tutor-location" class="form-control" value="${currentUser.lugarPredeterminado || ''}">
+            </div>
+            <div class="form-group">
+                <label for="tutor-notes"><i class="fas fa-sticky-note"></i> Notas Predeterminadas para Estudiantes:</label>
+                <textarea id="tutor-notes" name="tutor-notes" class="form-control" rows="3">${currentUser.notasPredeterminadas || ''}</textarea>
+            </div>
+             <div class="form-group">
+                <label for="max-students"><i class="fas fa-users"></i> Máximo de estudiantes por tutoría grupal:</label>
+                <input type="number" id="max-students" name="max-students" class="form-control" value="${currentUser.maxEstudiantesGrupo || 5}" min="1">
+            </div>
+        `;
+    }
+    if (formActionsButton) {
+        formActionsButton.innerHTML = `<i class="fas fa-save"></i> Guardar Cambios de Disponibilidad`;
+        formActionsButton.onclick = saveTutorAvailabilityPreferences; // Ensure this function is defined
+    }
+}
+
+
+function updateReportesTab(performanceData) {
+    const reportsContainerTitle = document.querySelector('#reportes .reports-container h2');
+    const reportsGrid = document.querySelector('#reportes .reports-grid');
+    const performanceChartDiv = document.querySelector('#reportes .performance-chart');
+    const topTopicsCard = document.querySelector('#reportes .report-card'); // This is one of the cards in the grid, let's use a specific ID if needed or select differently
+    const actionButtonsDiv = document.querySelector('#reportes .reports-container div[style*="text-align: center"]');
+
+
+    if (reportsContainerTitle) {
+        reportsContainerTitle.innerHTML = `<i class="fas fa-chart-line"></i> Reportes de Desempeño`;
+    }
+
+    if (reportsGrid && performanceData) {
+        reportsGrid.innerHTML = `
+            <div class="report-card">
+                <h4><i class="fas fa-check-double"></i> Tutorías Completadas</h4>
+                <p class="stat">${performanceData.totalCompleted || 0}</p>
+            </div>
+            <div class="report-card">
+                <h4><i class="fas fa-clock"></i> Horas Impartidas</h4>
+                <p class="stat">${performanceData.totalHours || 0} hrs</p>
+            </div>
+            <div class="report-card">
+                <h4><i class="fas fa-user-check"></i> Tasa de Asistencia (Est.)</h4>
+                <p class="stat">${performanceData.attendanceRate || '0'}%</p>
+            </div>
+            <div class="report-card">
+                <h4><i class="fas fa-calendar-alt"></i> Próximas Agendadas</h4>
+                <p class="stat">${performanceData.upcomingScheduled || 0}</p>
+            </div>
+        `;
+    }
+    // This was targeting a generic .report-card, let's assume it's for top topics and it's separate or we add a new div
+    const topTopicsSpecificDiv = document.getElementById('topTopicsReportCard'); // Add this ID to tutor.html if needed
+    if (topTopicsSpecificDiv && performanceData && performanceData.topTopics) {
+         topTopicsSpecificDiv.innerHTML = `
+            <h4><i class="fas fa-tags"></i> Temas Más Solicitados</h4>
+            ${performanceData.topTopics.length > 0 ? 
+                `<ul>${performanceData.topTopics.map(topic => `<li>${topic.name} (${topic.count} veces)</li>`).join('')}</ul>`
+                : '<p>No hay datos de temas suficientes.</p>'
+            }
+        `;
+    } else if (topTopicsCard && performanceData && performanceData.topTopics) { // Fallback to the first .report-card if specific div not found
+        // This might overwrite one of the stats cards, better to have a dedicated div for topics.
+        // For now, I'll assume the user will add a div like: <div id="topTopicsReportCard" class="report-card"></div>
+        // Or, if the existing .report-card in HTML is meant for this:
+         topTopicsCard.innerHTML = `
+            <h4><i class="fas fa-tags"></i> Temas Más Solicitados</h4>
+            ${performanceData.topTopics.length > 0 ? 
+                `<ul>${performanceData.topTopics.map(topic => `<li>${topic.name} (${topic.count} veces)</li>`).join('')}</ul>`
+                : '<p>No hay datos de temas suficientes.</p>'
+            }
+        `;
+    }
+
+
+    if (performanceChartDiv) {
+        performanceChartDiv.innerHTML = '<h4><i class="fas fa-chart-bar"></i> Rendimiento por Materia (Gráfico)</h4><canvas id="tutorPerformanceChart"></canvas>';
+        // Placeholder for chart rendering logic, e.g., using Chart.js
+        // renderPerformanceChart(performanceData.performanceBySubject); // Needs a function and data
+        if (typeof Chart !== 'undefined' && performanceData.performanceBySubject) {
+            // renderPerformanceChart(performanceData.performanceBySubject);
+        } else {
+            performanceChartDiv.innerHTML += '<p><i>Visualización de gráfico próximamente (Chart.js no cargado o sin datos).</i></p>';
+        }
+    }
+
+    if (actionButtonsDiv) {
+        actionButtonsDiv.innerHTML = `
+            <button class="btn btn-secondary" onclick="exportReportData('pdf')"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+            <button class="btn btn-secondary" onclick="exportReportData('csv')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        `;
+    }
+}
+
+// --- Modal and Action Functions (Stubs/Placeholders) ---
+function openTutoriaDetailModal(tutoriaId) {
+    const tutoria = sessionData.tutoringSessions.find(t => (t.TutoriaID || t.id) == tutoriaId);
+    if (!tutoria) {
+        showNotification('Error: No se encontraron detalles para esta tutoría.', 'error');
+        return;
+    }
+    const modal = document.getElementById('detalleTutoria');
+    const modalContent = modal.querySelector('.modal-content .form-grid'); // Assuming form-grid is where details go
+    const modalTitle = modal.querySelector('.modal-content h2');
+
+    if (modalTitle) modalTitle.innerHTML = `<i class="fas fa-info-circle"></i> Detalle de Tutoría - ${getSubjectName(tutoria.MateriaID, tutoria)}`;
     
-    return {
-        totalTutorias: total,
-        tutoriasCompletadas: completed,
-        tutoriasCanceladas: cancelled,
-        tasaAsistencia: attendanceRate,
-        horasMes: Math.round(completed * 1.2), // Estimate based on completed sessions
-        horasTotal: Math.round(total * 1.5), // Estimate based on all sessions
-        promedioSemana: Math.round((total / 4) * 10) / 10, // Estimate weekly average
-        duracionPromedio: '60min' // Default duration
-    };
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <p><strong>Estudiante:</strong> ${getStudentName(tutoria.EstudianteID, tutoria)}</p>
+            <p><strong>Fecha:</strong> ${formatDate(tutoria.Fecha)}</p>
+            <p><strong>Hora:</strong> ${formatTime(tutoria.HoraInicio)} - ${formatTime(tutoria.HoraFin)}</p>
+            <p><strong>Modalidad:</strong> ${tutoria.Modalidad || 'N/A'}</p>
+            <p><strong>Estado:</strong> ${getStatusText(tutoria.Estado)}</p>
+            <p><strong>Lugar:</strong> ${tutoria.Lugar || 'No especificado'}</p>
+            <p><strong>Temas a tratar:</strong> ${Array.isArray(tutoria.TemasTratados) ? tutoria.TemasTratados.join(', ') : (tutoria.TemasTratados || 'N/A')}</p>
+            <p><strong>Notas del Estudiante:</strong> ${tutoria.NotasEstudiante || 'Ninguna'}</p>
+            <p><strong>Notas del Tutor:</strong> <textarea id="tutorNotesDetail" class="form-control">${tutoria.NotasTutor || ''}</textarea></p>
+        `;
+    }
+    const actionButtonsContainer = modal.querySelector('.modal-content div[style*="margin-top: 20px"]');
+    if(actionButtonsContainer){
+        actionButtonsContainer.innerHTML = `<button class="btn btn-primary" onclick="saveTutorNotesFromModal('${tutoriaId}')">Guardar Notas</button>`;
+    }
+
+
+    modal.style.display = 'block';
+    // Add event listener to close button of this modal
+    const closeBtn = modal.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+    }
 }
 
-// Variables globales
-let currentUser = 'tutor';
-let tutorings = []; // Will be replaced by sessionData.tutoringSessions
-let performanceData = {}; // Will be replaced by sessionData.performanceData
+function openCancelTutoriaModal(tutoriaId) {
+    // This would typically open a confirmation modal
+    if (confirm('¿Estás seguro de que quieres cancelar esta tutoría? Esta acción no se puede deshacer.')) {
+        cancelTutoria(tutoriaId);
+    }
+}
 
-// Función para cambiar entre pestañas
+async function cancelTutoria(tutoriaId) {
+    try {
+        await updateTutoringStatus(tutoriaId, 'cancelada'); // Assuming 'cancelada' is the status
+        showNotification('Tutoría cancelada exitosamente.', 'success');
+        // Refresh data
+        sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
+        updateTutoriasTable(sessionData.tutoringSessions);
+        updateDashboardTable(sessionData.tutoringSessions);
+        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects);
+        updateReportesTab(sessionData.performanceData);
+    } catch (error) {
+        showNotification('Error al cancelar la tutoría.', 'error');
+        console.error("Error cancelling tutoria:", error);
+    }
+}
+
+
+async function markTutoriaCompleted(tutoriaId) {
+    try {
+        await updateTutoringStatus(tutoriaId, 'completada');
+        showNotification('Tutoría marcada como completada.', 'success');
+        sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
+        updateTutoriasTable(sessionData.tutoringSessions);
+        updateDashboardTable(sessionData.tutoringSessions);
+        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects);
+        updateReportesTab(sessionData.performanceData);
+    } catch (error) {
+        showNotification('Error al marcar tutoría como completada.', 'error');
+    }
+}
+
+async function confirmTutoria(tutoriaId) {
+    try {
+        await updateTutoringStatus(tutoriaId, 'confirmada');
+        showNotification('Tutoría confirmada exitosamente.', 'success');
+        sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
+        updateTutoriasTable(sessionData.tutoringSessions);
+        updateDashboardTable(sessionData.tutoringSessions);
+    } catch (error) {
+        showNotification('Error al confirmar la tutoría.', 'error');
+    }
+}
+
+async function rejectTutoria(tutoriaId) {
+     // Ask for reason (optional)
+    const reason = prompt("Por favor, ingresa un motivo para rechazar la tutoría (opcional):");
+    try {
+        // Assuming PATCH /tutorias/{id}/estado also accepts a body for notes or reason
+        await apiCall(`/tutorias/${tutoriaId}/estado`, {
+            method: 'PATCH',
+            body: JSON.stringify({ estado: 'rechazada', notas_tutor: `Rechazada: ${reason || 'Sin motivo especificado'}` })
+        });
+        showNotification('Tutoría rechazada.', 'success');
+        sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
+        updateTutoriasTable(sessionData.tutoringSessions);
+        updateDashboardTable(sessionData.tutoringSessions);
+    } catch (error) {
+        showNotification('Error al rechazar la tutoría.', 'error');
+    }
+}
+
+
+function exportReportData(format) {
+    showNotification(`Funcionalidad de exportar reportes como ${format} no implementada.`, 'info');
+}
+
+function editProfile() {
+    showNotification('Funcionalidad de editar perfil no implementada.', 'info');
+    // Would typically show a modal or redirect to an edit page
+}
+
+function openAvailabilitySettingsModal() {
+    showNotification('Funcionalidad para configurar horarios no implementada.', 'info');
+    // const modal = document.getElementById('availabilitySettingsModal'); // Assuming such a modal exists
+    // if (modal) modal.style.display = 'block';
+}
+
+async function saveTutorAvailabilityPreferences() {
+    const location = document.getElementById('tutor-location')?.value;
+    const notes = document.getElementById('tutor-notes')?.value;
+    const maxStudents = document.getElementById('max-students')?.value;
+
+    const updateData = {
+        LugarPredeterminadoTutorias: location,
+        NotasPredeterminadasTutorias: notes,
+        MaxEstudiantesGrupo: parseInt(maxStudents) || 5,
+        // Potentially other availability settings from a more complex form
+    };
+
+    try {
+        // Assuming an endpoint to update tutor preferences
+        const response = await apiCall(`/tutores/${sessionData.currentUser.id}/preferencias`, {
+            method: 'PUT', // or PATCH
+            body: JSON.stringify(updateData)
+        });
+        if (response && (response.success || response.data)) { // Adjust based on actual API response
+            showNotification('Preferencias de disponibilidad guardadas.', 'success');
+            // Update local sessionData.currentUser if needed
+            sessionData.currentUser.lugarPredeterminado = location;
+            sessionData.currentUser.notasPredeterminadas = notes;
+            sessionData.currentUser.maxEstudiantesGrupo = parseInt(maxStudents) || 5;
+            updateProfileTab(sessionData.currentUser); // Re-render profile if it shows these
+        } else {
+            throw new Error(response.message || 'Error al guardar preferencias.');
+        }
+    } catch (error) {
+        showNotification(`Error al guardar preferencias: ${error.message}`, 'error');
+        console.error("Error saving availability preferences:", error);
+    }
+}
+
+async function saveTutorNotesFromModal(tutoriaId) {
+    const notes = document.getElementById('tutorNotesDetail')?.value;
+    if (notes === undefined) return;
+
+    try {
+        await updateTutoringDetails(tutoriaId, { NotasTutor: notes });
+        showNotification('Notas del tutor guardadas.', 'success');
+        // Update local data
+        const tutoria = sessionData.tutoringSessions.find(t => (t.TutoriaID || t.id) == tutoriaId);
+        if(tutoria) tutoria.NotasTutor = notes;
+        // No need to close modal here, user can continue viewing or close manually
+    } catch (error) {
+        showNotification('Error al guardar notas del tutor.', 'error');
+    }
+}
+
+
+// Main UI update orchestrator
+function updateTutorInterface() {
+    if (!sessionData.currentUser) {
+        console.error("No current user data to update interface.");
+        // Potentially redirect to login or show error message on page
+        document.body.innerHTML = '<p style="text-align:center; margin-top:50px;">Error: No se pudo cargar la información del usuario. Por favor, intente <a href="iniciosesion.html">iniciar sesión</a> de nuevo.</p>';
+        return;
+    }
+    updateNavbar(sessionData.currentUser);
+
+    console.log("Updating tutor interface with current user data:", sessionData.currentUser);
+    
+    // Determine active tab to potentially only update that one, or update all
+    const activeTabContent = document.querySelector('.tab-content.active');
+    const activeTabId = activeTabContent ? activeTabContent.id : 'dashboard'; // Default to dashboard
+
+    // Always update profile data as it's separate from main tab content
+    updateProfileTab(sessionData.currentUser);
+
+    // Update content based on current or all tabs
+    // For simplicity and to ensure data consistency on load, update all.
+    // Can be optimized later to update only the active tab if performance is an issue.
+    updateDashboardTable(sessionData.tutoringSessions);
+    updateTutoriasTable(sessionData.tutoringSessions);
+    updateDisponibilidadTab(sessionData.tutorSubjects, sessionData.currentUser);
+    updateReportesTab(sessionData.performanceData);
+
+    // If a specific tab needs refresh logic when shown:
+    // if (activeTabId === 'dashboard') updateDashboardTable(sessionData.tutoringSessions);
+    // else if (activeTabId === 'tutorias') updateTutoriasTable(sessionData.tutoringSessions);
+    // etc.
+}
+
+// Function to show notifications (ensure it's robust)
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notification-container') || document.body;
+    const notification = document.createElement('div');
+    // Ensure FontAwesome is loaded or use text indicators
+    let icon = '';
+    if (type === 'success') icon = '<i class="fas fa-check-circle"></i> ';
+    else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i> ';
+    else if (type === 'info') icon = '<i class="fas fa-info-circle"></i> ';
+    else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i> ';
+
+    notification.className = `notification ${type}`;
+    notification.innerHTML = icon + message;
+    
+    // If using a dedicated container, append there. Otherwise, append to body.
+    if (document.getElementById('notification-container')) {
+         container.appendChild(notification);
+    } else { // Fallback to simple body append if container doesn't exist
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '10000';
+        document.body.appendChild(notification);
+    }
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300); // Remove after fade out
+    }, 3000);
+}
+
+// Function to handle API status display
+function showAPIStatus() {
+    // This is a placeholder. Could be expanded to show a global API status indicator.
+    // For now, success/error of initial load is handled by initializeTutorData's try/catch
+    // and individual API calls show notifications.
+    // console.log("showAPIStatus called - current implementation is placeholder.");
+}
+
+// Add refresh button logic
+function addRefreshButton() {
+    // Example: Find a place in HTML to add it or append to a common actions bar
+    // const navTabsDiv = document.querySelector('.nav-tabs');
+    // if (navTabsDiv && !document.getElementById('refreshDataBtn')) {
+    //     const refreshBtn = document.createElement('button');
+    //     refreshBtn.id = 'refreshDataBtn';
+    //     refreshBtn.className = 'btn btn-secondary btn-refresh'; // Add appropriate classes
+    //     refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Datos';
+    //     refreshBtn.onclick = () => {
+    //         showNotification('Actualizando datos...', 'info');
+    //         initializeTutorData();
+    //     };
+    //     navTabsDiv.appendChild(refreshBtn); // Or prepend
+    // }
+}
+
+// Ensure DOM is fully loaded before initializing
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTutorData();
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        });
+    }
+    // Add close functionality to all modal close buttons (span with class 'close')
+    const closeButtons = document.querySelectorAll('.modal .close');
+    closeButtons.forEach(button => {
+        button.onclick = function() {
+            this.closest('.modal').style.display = 'none';
+        }
+    });
+});
+
+// Tab switching logic (ensure it's present and works with dynamic content)
 function showTab(tabName) {
-    // Ocultar todas las pestañas
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
     
-    // Mostrar la pestaña seleccionada
-    document.getElementById(tabName).classList.add('active');
+    const selectedTab = document.getElementById(tabName);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    } else {
+        console.error(`Tab with id '${tabName}' not found.`);
+        // Fallback to dashboard if requested tab not found
+        document.getElementById('dashboard').classList.add('active');
+    }
     
-    // Actualizar botones de navegación
     const navTabs = document.querySelectorAll('.nav-tab');
     navTabs.forEach(tab => tab.classList.remove('active'));
     
-    // Encontrar y activar el botón correspondiente
     const targetButton = Array.from(navTabs).find(tab => 
-        tab.getAttribute('onclick').includes(tabName)
+        tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(`showTab('${tabName}')`)
     );
     if (targetButton) {
         targetButton.classList.add('active');
     }
 
-    // Actualizar reportes si se selecciona esa pestaña
-    if (tabName === 'reportes') {
-        updateReports();
-    }
+    // Optional: Refresh tab content if needed, though initial load populates all.
+    // if (tabName === 'dashboard') updateDashboardTable(sessionData.tutoringSessions);
+    // else if (tabName === 'tutorias') updateTutoriasTable(sessionData.tutoringSessions);
+    // else if (tabName === 'disponibilidad') updateDisponibilidadTab(sessionData.tutorSubjects, sessionData.currentUser);
+    // else if (tabName === 'reportes') updateReportesTab(sessionData.performanceData);
+    // else if (tabName === 'perfil') updateProfileTab(sessionData.currentUser); // Profile is often static after load
 }
-
-// Función para completar tutoría
-async function completeTutoring(tutoringId) {
-    const tutoring = sessionData.tutoringSessions.find(t => t.id === tutoringId);
-    if (!tutoring) return;
-
-    try {
-        const result = await updateTutoringStatus(tutoringId, 'completada');
-        if (result) {
-            tutoring.status = 'completada';
-            await updateTutoringTable();
-            showNotification('Tutoría marcada como completada exitosamente', 'success');
-        } else {
-            showNotification('Error al completar la tutoría. Inténtalo nuevamente.', 'error');
-        }
-    } catch (error) {
-        console.error('Error completing tutoring:', error);
-        showNotification('Error al completar la tutoría. Inténtalo nuevamente.', 'error');
-    }
-}
-
-// Función para confirmar tutoría
-async function confirmTutoring(tutoringId) {
-    const tutoring = sessionData.tutoringSessions.find(t => t.id === tutoringId);
-    if (!tutoring) return;
-
-    try {
-        const result = await updateTutoringStatus(tutoringId, 'confirmada');
-        if (result) {
-            tutoring.status = 'confirmada';
-            await updateTutoringTable();
-            showNotification('Tutoría confirmada exitosamente', 'success');
-        } else {
-            showNotification('Error al confirmar la tutoría. Inténtalo nuevamente.', 'error');
-        }
-    } catch (error) {
-        console.error('Error confirming tutoring:', error);
-        showNotification('Error al confirmar la tutoría. Inténtalo nuevamente.', 'error');
-    }
-}
-
-// Función para abrir modal de reasignación
-function openReassignModal(tutoringId) {
-    const tutoring = sessionData.tutoringSessions.find(t => t.id === tutoringId);
-    
-    if (tutoring.status !== 'cancelada') {
-        showNotification('Solo se pueden reasignar tutorías canceladas', 'warning');
-        return;
-    }
-
-    document.getElementById('tutoriaReasignar').value = 
-        `${tutoring.subject} - ${tutoring.student} (${tutoring.date} ${tutoring.time})`;
-    document.getElementById('reasignarModal').style.display = 'block';
-    document.getElementById('reasignarModal').setAttribute('data-tutoria-id', tutoringId);
-}
-
-// Función para confirmar reasignación
-async function confirmarReasignacion() {
-    const tutoringId = document.getElementById('reasignarModal').getAttribute('data-tutoria-id');
-    const nuevoTutor = document.getElementById('nuevoTutor').value;
-    const nuevaFecha = document.getElementById('nuevaFecha').value;
-    const nuevaHora = document.getElementById('nuevaHora').value;
-    const motivo = document.getElementById('motivoReasignacion').value;
-
-    if (!nuevoTutor || !nuevaFecha || !nuevaHora || !motivo) {
-        showNotification('Por favor, complete todos los campos', 'error');
-        return;
-    }
-
-    const tutoring = sessionData.tutoringSessions.find(t => t.id == tutoringId);
-    if (!tutoring) return;
-
-    try {
-        const reassignmentData = {
-            nuevoTutor,
-            nuevaFecha,
-            nuevaHora,
-            motivo
-        };
-
-        const result = await reassignTutoring(tutoringId, reassignmentData);
-        if (result) {
-            tutoring.date = nuevaFecha;
-            tutoring.time = nuevaHora;
-            tutoring.status = 'confirmada';
-            tutoring.notes = `Reasignada: ${motivo}`;
-            
-            closeModal('reasignarModal');
-            await updateTutoringTable();
-            showNotification('Tutoría reasignada exitosamente', 'success');
-        } else {
-            showNotification('Error al reasignar la tutoría. Inténtalo nuevamente.', 'error');
-        }
-    } catch (error) {
-        console.error('Error reassigning tutoring:', error);
-        showNotification('Error al reasignar la tutoría. Inténtalo nuevamente.', 'error');
-    }
-}
-
-// Función para actualizar tabla de tutorías (dashboard - 6 columns)
-async function updateTutoringTable() {
-    const tableBody = document.getElementById('tutoriasTableBody');
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
-    
-    // Process each tutoring session asynchronously
-    for (const tutoring of sessionData.tutoringSessions) {
-        const row = document.createElement('tr');
-        
-        try {
-            // Map API data to display format - handle both API response format and local format
-            const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
-            row.setAttribute('data-tutoria-id', tutoriaId);
-            
-            // Handle materia name
-            let materiaName = 'N/A';
-            if (tutoring.materiaNombre) {
-                materiaName = tutoring.materiaNombre;
-            } else if (tutoring.materia_nombre) {
-                materiaName = tutoring.materia_nombre;
-            } else if (tutoring.subject) {
-                materiaName = tutoring.subject;
-            } else if (tutoring.materiaID || tutoring.MateriaID) {
-                materiaName = GetIdFromName(tutoring.materiaID || tutoring.MateriaID);
-            }
-            
-            // Handle student name
-            let student = 'N/A';
-            if (tutoring.estudianteNombre && tutoring.estudianteApellido) {
-                student = `${tutoring.estudianteNombre} ${tutoring.estudianteApellido}`;
-            } else if (tutoring.estudiante_nombre && tutoring.estudiante_apellido) {
-                student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
-            } else if (tutoring.student) {
-                student = tutoring.student;
-            } else if (tutoring.estudianteID || tutoring.EstudianteID) {
-                student = await getStudentName(tutoring.estudianteID || tutoring.EstudianteID);
-            }
-            
-            // Handle date
-            let fecha = 'N/A';
-            if (tutoring.fecha) {
-                if (typeof tutoring.fecha === 'object' && tutoring.fecha.time) {
-                    fecha = tutoring.fecha.time;
-                } else if (typeof tutoring.fecha === 'string') {
-                    fecha = tutoring.fecha;
-                }
-            } else if (tutoring.Fecha) {
-                fecha = tutoring.Fecha;
-            } else if (tutoring.date) {
-                fecha = tutoring.date;
-            }
-            
-            // Handle time
-            let time = 'N/A';
-            if (tutoring.time) {
-                time = tutoring.time;
-            } else if (tutoring.horaInicio && tutoring.horaFin) {
-                time = `${tutoring.horaInicio}-${tutoring.horaFin}`;
-            } else if (tutoring.hora_inicio && tutoring.hora_fin) {
-                time = `${tutoring.hora_inicio}-${tutoring.hora_fin}`;
-            } else if (tutoring.HoraInicio && tutoring.HoraFin) {
-                // Handle Go time format - convert microseconds to hours
-                if (tutoring.HoraInicio.Microseconds && tutoring.HoraFin.Microseconds) {
-                    const startHour = Math.floor(tutoring.HoraInicio.Microseconds / 3600000000);
-                    const endHour = Math.floor(tutoring.HoraFin.Microseconds / 3600000000);
-                    time = `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
-                }
-            }
-            
-            // Handle status
-            const status = tutoring.estado || tutoring.Estado || tutoring.status || 'N/A';
-            const statusClass = `status-${status}`;
-            const statusText = getStatusText(status);
-            
-            // Generate action buttons with comprehensive field access
-            let actions = `<button class="btn btn-primary" onclick="openModal('detalleTutoria')">Ver</button>`;
-            
-            if (status === 'confirmada') {
-                actions += ` <button class="btn btn-success" onclick="completeTutoring(${tutoriaId})">Completar</button>`;
-            } else if (status === 'solicitada') {
-                actions += ` <button class="btn btn-success" onclick="confirmTutoring(${tutoriaId})">Confirmar</button>`;
-            } else if (status === 'cancelada') {
-                actions += ` <button class="btn btn-warning" onclick="openReassignModal(${tutoriaId})">Reasignar</button>`;
-            }
-            
-            row.innerHTML = `
-                <td>${materiaName}</td>
-                <td>${student}</td>
-                <td>${formatDate(fecha)}</td>
-                <td>${time}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${actions}</td>
-            `;
-            
-            tableBody.appendChild(row);
-        } catch (error) {
-            console.error('Error processing tutoring session:', error, tutoring);
-            // Still add a row with fallback data to prevent the table from disappearing
-            row.innerHTML = `
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td><span class="status-badge status-error">Error</span></td>
-                <td>-</td>
-            `;
-            tableBody.appendChild(row);
-        }
-    }
-    
-    // Show message if no tutoring sessions
-    if (sessionData.tutoringSessions.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="6" style="text-align: center; color: #666;">No tienes tutorías programadas</td>';
-        tableBody.appendChild(row);
-    }
-}
-
-// Función para actualizar reportes
-function updateReports() {
-    if (!sessionData.performanceData) return;
-    
-    const data = sessionData.performanceData;
-    
-    // Actualizar valores de performance
-    const elements = {
-        'totalTutorias': data.totalTutorias,
-        'tutoriasCompletadas': data.tutoriasCompletadas,
-        'tutoriasCanceladas': data.tutoriasCanceladas,
-        'tasaAsistencia': `${data.tasaAsistencia}%`,
-        'horasMes': data.horasMes,
-        'horasTotal': data.horasTotal,
-        'promedioSemana': data.promedioSemana,
-        'duracionPromedio': data.duracionPromedio
-    };
-
-    Object.entries(elements).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    });
-}
-
-// Función para actualizar reportes
-function updateReports() {
-    // Actualizar métricas básicas
-    document.getElementById('totalTutorias').textContent = performanceData.totalTutorias;
-    document.getElementById('tutoriasCompletadas').textContent = performanceData.tutoriasCompletadas;
-    document.getElementById('tutoriasCanceladas').textContent = performanceData.tutoriasCanceladas;
-    document.getElementById('tasaAsistencia').textContent = performanceData.tasaAsistencia + '%';
-    
-    document.getElementById('horasMes').textContent = performanceData.horasMes;
-    document.getElementById('horasTotal').textContent = performanceData.horasTotal;
-    document.getElementById('promedioSemana').textContent = performanceData.promedioSemana;
-    document.getElementById('duracionPromedio').textContent = performanceData.duracionPromedio;
-}
-
-// Función para establecer disponibilidad
-function setAvailability() {
-    const day = document.getElementById('tutor-day').value;
-    const startTime = document.getElementById('tutor-start-time').value;
-    const endTime = document.getElementById('tutor-end-time').value;
-    
-    if (!startTime || !endTime) {
-        showNotification('Por favor, complete todos los campos de horario', 'error');
-        return;
-    }
-    
-    if (startTime >= endTime) {
-        showNotification('La hora de inicio debe ser anterior a la hora de fin', 'error');
-        return;
-    }
-    
-    showNotification(`Disponibilidad actualizada para ${day} de ${startTime} a ${endTime}`, 'success');
-}
-
-// Función para agregar notas a tutoría
-function addNotesToTutoring() {
-    // Aquí se abriría un modal para agregar notas
-    const notes = prompt('Ingrese sus notas sobre esta tutoría:');
-    if (notes) {
-        showNotification('Notas agregadas exitosamente', 'success');
-    }
-}
-
-// Función para generar reporte detallado
-function generateDetailedReport() {
-    showNotification('Generando reporte PDF...', 'success');
-    // Simular descarga de PDF
-    setTimeout(() => {
-        showNotification('Reporte PDF generado y descargado', 'success');
-    }, 2000);
-}
-
-// Función para exportar datos
-function exportData() {
-    showNotification('Exportando datos a Excel...', 'success');
-    // Simular descarga de Excel
-    setTimeout(() => {
-        showNotification('Datos exportados a Excel exitosamente', 'success');
-    }, 1500);
-}
-
-// Función para abrir modales
-function openModal(modalId) {
-    document.getElementById(modalId).style.display = 'block';
-}
-
-// Función para cerrar modales
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-// Función para limpiar filtros
-function limpiarFiltros() {
-    document.getElementById('filtroEstado').value = '';
-    document.getElementById('filtroMateriaModal').value = '';
-    document.getElementById('fechaInicio').value = '';
-    document.getElementById('fechaFin').value = '';
-}
-
-// Función para mostrar notificaciones
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 4px;
-        color: white;
-        font-weight: bold;
-        z-index: 10000;
-        ${type === 'success' ? 'background-color: #4CAF50;' : ''}
-        ${type === 'error' ? 'background-color: #f44336;' : ''}
-        ${type === 'warning' ? 'background-color: #ff9800;' : ''}
-        ${type === 'info' ? 'background-color: #2196F3;' : ''}
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 4000);
-}
-
-// API Status notification system
-function showAPIStatus() {
-    const statusMessage = document.createElement('div');
-    statusMessage.className = 'api-status-notification';
-    statusMessage.innerHTML = `
-        <div class="notification-content">
-            <span class="status-icon">⚠️</span>
-            <span class="status-text">Usando datos de prueba - API en desarrollo</span>
-            <button class="close-notification" onclick="this.parentElement.parentElement.remove()">×</button>
-        </div>
-    `;
-    statusMessage.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
-        border-radius: 8px;
-        padding: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        z-index: 1000;
-        max-width: 300px;
-        font-size: 14px;
-    `;
-    
-    const notificationContent = statusMessage.querySelector('.notification-content');
-    notificationContent.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    `;
-    
-    const closeButton = statusMessage.querySelector('.close-notification');
-    closeButton.style.cssText = `
-        background: none;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        color: #856404;
-        margin-left: auto;
-    `;
-    
-    document.body.appendChild(statusMessage);
-    
-    // Auto-remove after 10 seconds
-    setTimeout(() => {
-        if (statusMessage.parentElement) {
-            statusMessage.remove();
-        }
-    }, 10000);
-}
-
-// Action functions for tutor operations
-async function confirmarTutoria(tutoriaId) {
-    try {
-        const result = await updateTutoringStatus(tutoriaId, 'confirmada');
-        if (result) {
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
-            if (tutoring) {
-                tutoring.estado = 'confirmada';
-                tutoring.status = 'confirmada';
-            }
-            showNotification('Tutoría confirmada exitosamente', 'success');
-            await updateTutoriasTable();
-        }
-    } catch (error) {
-        console.error('Error confirming tutoring:', error);
-        showNotification('Error al confirmar la tutoría', 'error');
-    }
-}
-
-async function completarTutoria(tutoriaId) {
-    try {
-        const result = await updateTutoringStatus(tutoriaId, 'completada');
-        if (result) {
-            const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
-            if (tutoring) {
-                tutoring.estado = 'completada';
-                tutoring.status = 'completada';
-            }
-            showNotification('Tutoría marcada como completada', 'success');
-            await updateTutoriasTable();
-            await updateTutorDashboard();
-        }
-    } catch (error) {
-        console.error('Error completing tutoring:', error);
-        showNotification('Error al completar la tutoría', 'error');
-    }
-}
-
-async function rechazarTutoria(tutoriaId) {
-    if (confirm('¿Estás seguro de que quieres rechazar esta tutoría?')) {
-        try {
-            const result = await updateTutoringStatus(tutoriaId, 'cancelada');
-            if (result) {
-                const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
-                if (tutoring) {
-                    tutoring.estado = 'cancelada';
-                    tutoring.status = 'cancelada';
-                }
-                showNotification('Tutoría rechazada', 'info');
-                await updateTutoriasTable();
-            }
-        } catch (error) {
-            console.error('Error rejecting tutoring:', error);
-            showNotification('Error al rechazar la tutoría', 'error');
-        }
-    }
-}
-
-function openTutoriaDetail(tutoriaId) {
-    const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
-    if (!tutoring) return;
-
-    // Fill modal with tutoring details
-    // Implementation depends on the HTML structure of the modal
-    console.log('Opening tutoria detail for:', tutoring);
-    showNotification('Función de detalle en desarrollo', 'info');
-}
-
-function openRescheduleModal(tutoriaId) {
-    const tutoring = sessionData.tutoringSessions.find(t => (t.tutoria_id || t.id) === tutoriaId);
-    if (!tutoring) return;
-
-    // Open reschedule modal
-    console.log('Opening reschedule modal for:', tutoring);
-    showNotification('Función de reprogramación en desarrollo', 'info');
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Cerrar modales al hacer clic en la X
-    const closeButtons = document.querySelectorAll('.close');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            this.closest('.modal').style.display = 'none';
-        });
-    });
-
-    // Cerrar modales al hacer clic fuera del contenido
+// Make sure all modal close buttons work
+document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
-            }
-        });
-    });
-
-    // Manejar envío del formulario de filtros
-    const filtrosForm = document.getElementById('filtrosForm');
-    if (filtrosForm) {
-        filtrosForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            showNotification('Filtros aplicados correctamente', 'success');
-            closeModal('filtros');
-        });
-    }
-
-    // Establecer fecha mínima para reasignación
-    const nuevaFechaInput = document.getElementById('nuevaFecha');
-    if (nuevaFechaInput) {
-        const today = new Date().toISOString().split('T')[0];
-        nuevaFechaInput.min = today;
-    }
-
-    // Actualizar tabla inicial
-    updateTutoringTable().catch(error => {
-        console.error('Error updating tutoring table on load:', error);
-    });
-});
-
-// Animación de entrada suave al cargar la página
-window.addEventListener('load', () => {
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.5s ease-in';
-    setTimeout(() => {
-        document.body.style.opacity = '1';
-    }, 100);
-});
-
-// Efectos hover mejorados para elementos de información
-document.querySelectorAll('.info-item').forEach(item => {
-    item.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateX(10px) scale(1.02)';
-    });
-    
-    item.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateX(0) scale(1)';
-    });
-});
-
-// Validación en tiempo real para reasignación
-document.addEventListener('input', function(e) {
-    if (e.target.id === 'nuevaHora' || e.target.id === 'nuevaFecha') {
-        const fecha = document.getElementById('nuevaFecha').value;
-        const hora = document.getElementById('nuevaHora').value;
-        
-        if (fecha && hora) {
-            const fechaSeleccionada = new Date(fecha + 'T' + hora);
-            const ahora = new Date();
-            
-            if (fechaSeleccionada <= ahora) {
-                showNotification('La fecha y hora deben ser futuras', 'warning');
-            }
-        }
-    }
-});
-
-// Función para filtrar tutorías en tiempo real
-function filterTutorings() {
-    const estado = document.getElementById('filtroEstado').value;
-    const materia = document.getElementById('filtroMateriaModal').value;
-    const fechaInicio = document.getElementById('fechaInicio').value;
-    const fechaFin = document.getElementById('fechaFin').value;
-
-    // Use sessionData instead of global tutorings
-    if (!sessionData || !sessionData.tutoringSessions) {
-        return [];
-    }
-
-    let filteredTutorings = sessionData.tutoringSessions;
-
-    if (estado) {
-        filteredTutorings = filteredTutorings.filter(t => t.status === estado);
-    }
-
-    if (materia) {
-        filteredTutorings = filteredTutorings.filter(t => 
-            t.subject.toLowerCase().includes(materia.toLowerCase())
-        );
-    }
-
-    if (fechaInicio) {
-        filteredTutorings = filteredTutorings.filter(t => t.date >= fechaInicio);
-    }
-
-    if (fechaFin) {
-        filteredTutorings = filteredTutorings.filter(t => t.date <= fechaFin);
-    }
-
-    // Update the table with filtered results
-    updateTutoringTable(filteredTutorings);
-    return filteredTutorings;
-}
-
-// Function to update tutor interface on page load
-async function updateTutorInterface() {
-    console.log('updateTutorInterface called');
-    
-    const userSession = getUserSession();
-    if (!userSession) {
-        console.warn('No user session found in updateTutorInterface');
-        return;
-    }
-
-    console.log('User session found:', userSession);
-
-    // Get tutor data directly from session
-    let tutorData = null;
-    let currentUser = sessionData.currentUser;
-
-    // If we don't have currentUser in sessionData, create it from userSession
-    if (!currentUser && userSession.user && userSession.user.data) {
-        tutorData = userSession.user.data;
-        console.log('Tutor data from session:', tutorData);
-        
-        currentUser = {
-            id: tutorData?.TutorID,
-            name: `${tutorData?.Nombre || ''} ${tutorData?.Apellido || ''}`.trim(),
-            firstName: tutorData?.Nombre || '',
-            lastName: tutorData?.Apellido || '',
-            email: tutorData?.Correo || '',
-            role: "tutor",
-            especialidad: tutorData?.Especialidad || "Especialidad no especificada",
-            experiencia: tutorData?.AñosExperiencia || 0,
-            telefono: tutorData?.Telefono || '',
-            avatar: (tutorData?.Nombre?.[0] || '') + (tutorData?.Apellido?.[0] || ''),
-            documento: tutorData?.NumeroDocumento || ''
-        };
-        
-        // Update global sessionData
-        sessionData.currentUser = currentUser;
-        console.log('Created currentUser from session data:', currentUser);
-    }
-
-    // Final fallback - if still no user data, try to extract directly
-    if (!currentUser) {
-        tutorData = userSession.user?.data;
-        if (tutorData) {
-            currentUser = {
-                id: tutorData.TutorID || 'unknown',
-                name: `${tutorData.Nombre || ''} ${tutorData.Apellido || ''}`.trim() || 'Tutor',
-                firstName: tutorData.Nombre || '',
-                lastName: tutorData.Apellido || '',
-                email: tutorData.Correo || '',
-                role: "tutor",
-                especialidad: tutorData.Especialidad || "Especialidad no especificada",
-                experiencia: tutorData.AñosExperiencia || 0,
-                telefono: tutorData.Telefono || '',
-                avatar: (tutorData.Nombre?.[0] || 'T') + (tutorData.Apellido?.[0] || 'U'),
-                documento: tutorData.NumeroDocumento || ''
+        const closeButton = modal.querySelector('.close');
+        if (closeButton) {
+            closeButton.onclick = () => {
+                modal.style.display = 'none';
             };
-            console.log('Fallback currentUser created:', currentUser);
-        } else {
-            console.error('No tutor data available in session');
-            return;
         }
-    }
-
-    console.log('Final user data for navbar update:', currentUser);
-
-    // Update navbar with tutor info
-    const navbarUserName = document.getElementById('navbar-user-name');
-    const navbarUserSubtitle = document.getElementById('navbar-user-subtitle');
-    const navbarUserAvatar = document.getElementById('navbar-user-avatar');
-
-    console.log('Navbar elements found:', {
-        name: !!navbarUserName,
-        subtitle: !!navbarUserSubtitle,
-        avatar: !!navbarUserAvatar
-    });
-
-    if (navbarUserName) {
-        const nameText = currentUser.Nombre || 'Tutor';
-        navbarUserName.textContent = nameText;
-        console.log('Updated navbar name to:', nameText);
-    } else {
-        console.warn('navbar-user-name element not found');
-    }
-    
-    if (navbarUserSubtitle) {
-        const subtitleText = `Tutor - ${currentUser.especialidad || 'Especialidad'}`;
-        navbarUserSubtitle.textContent = subtitleText;
-        console.log('Updated navbar subtitle to:', subtitleText);
-    } else {
-        console.warn('navbar-user-subtitle element not found');
-    }
-    
-    if (navbarUserAvatar) {
-        const avatarText = currentUser.avatar || currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'TU';
-        
-        // Check if it's an img element or text element
-        if (navbarUserAvatar.tagName === 'IMG') {
-            // Replace img with text span
-            const textSpan = document.createElement('span');
-            textSpan.id = 'navbar-user-avatar';
-            textSpan.textContent = avatarText;
-            textSpan.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2196F3; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;';
-            navbarUserAvatar.parentNode.replaceChild(textSpan, navbarUserAvatar);
-            console.log('Replaced avatar img with text span:', avatarText);
-        } else {
-            navbarUserAvatar.textContent = avatarText;
-            console.log('Updated avatar text to:', avatarText);
-        }
-    } else {
-        console.warn('navbar-user-avatar element not found');
-    }
-
-    // Update profile section with tutor data
-    const profileNombre = document.getElementById('profile-nombre');
-    const profileApellido = document.getElementById('profile-apellido');
-    const profileEmail = document.getElementById('profile-email');
-    const profileTelefono = document.getElementById('profile-telefono');
-    const profileCarrera = document.getElementById('profile-carrera');
-    const profileMaterias = document.getElementById('profile-materias');
-    const profileFechaRegistro = document.getElementById('profile-fecha-registro');
-
-    console.log('Updating profile elements with user data');
-    
-    if (profileNombre) {
-        profileNombre.textContent = currentUser.firstName || '';
-        console.log('Updated profile nombre:', currentUser.firstName);
-    }
-    if (profileApellido) {
-        profileApellido.textContent = currentUser.lastName || '';
-        console.log('Updated profile apellido:', currentUser.lastName);
-    }
-    if (profileEmail) {
-        profileEmail.textContent = currentUser.email || '';
-        console.log('Updated profile email:', currentUser.email);
-    }
-    if (profileTelefono) {
-        profileTelefono.textContent = currentUser.telefono || '';
-        console.log('Updated profile telefono:', currentUser.telefono);
-    }
-    if (profileCarrera) {
-        profileCarrera.textContent = currentUser.especialidad || '';
-        console.log('Updated profile carrera:', currentUser.especialidad);
-    }
-    
-    // Display subjects that tutor teaches
-    if (profileMaterias && sessionData.tutorSubjects) {
-        const materiaNames = sessionData.tutorSubjects.map(ts => ts.materia_nombre || ts.Nombre).join(', ');
-        profileMaterias.textContent = materiaNames || 'No asignadas';
-        console.log('Updated profile materias:', materiaNames);
-    }
-    
-    if (profileFechaRegistro) {
-        const fechaRegistro = currentUser.fechaRegistro || userSession.user.data?.FechaRegistro;
-        if (fechaRegistro) {
-            const fecha = new Date(fechaRegistro).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            profileFechaRegistro.textContent = fecha;
-            console.log('Updated profile fecha registro:', fecha);
-        } else {
-            profileFechaRegistro.textContent = 'No disponible';
-            console.log('Profile fecha registro: No disponible');
-        }
-    }
-
-    // Update dashboard tables and statistics
-    await updateTutorDashboard();
-}
-
-// Mock function to simulate tutor name fetching
-async function getTutorName(tutorId) {
-   try {
-        const response = await fetch(`${API_BASE_URL}/tutores/${tutorId}/nombre`);
-        if (!response.ok) throw new Error('Failed to fetch tutor name');
-        const data = await response.json()
-        
-        // API returns both Nombre and Apellido, combine them
-        if (data.nombre && data.apellido) {
-            return `${data.nombre} ${data.apellido}`;
-        } else if (data.nombre) {
-            return data.nombre;
-        } else {
-            return 'Tutor no encontrado';
-        }
-   } catch (error) {
-        console.error('Error fetching tutor name:', error);
-        return 'Tutor no encontrado';
-    }
-}
-
-// Helper function to get subject name from materia ID
-function GetIdFromName(materiaId) {
-    if (!sessionData.tutorSubjects || !materiaId) return 'N/A';
-    
-    const materia = sessionData.tutorSubjects.find(m => 
-        m.materia_id === materiaId || 
-        m.MateriaID === materiaId || 
-        m.materiaID === materiaId ||
-        m.id === materiaId
-    );
-    return materia ? (materia.materia_nombre || materia.materiaNombre || materia.nombre || materia.name || 'N/A') : 'N/A';
-}
-
-// Helper function to get student name from API
-async function getStudentName(studentId) {
-    try {
-        const data = await apiCall(`/estudiantes/${studentId}`);
-        
-        // API returns both Nombre and Apellido, combine them
-        if (data.nombre && data.apellido) {
-            return `${data.nombre} ${data.apellido}`;
-        } else if (data.Nombre && data.Apellido) {
-            return `${data.Nombre} ${data.Apellido}`;
-        } else if (data.name) {
-            return data.name;
-        } else {
-            return 'Estudiante no encontrado';
-        }
-    } catch (error) {
-        console.error('Error fetching student name:', error);
-        return 'Error cargando estudiante';
-    }
-}
-
-// Update performance data periodically using session data
-setInterval(() => {
-    if (sessionData && sessionData.performanceData) {
-        // Simulate small updates to performance data
-        sessionData.performanceData.horasMes += Math.floor(Math.random() * 2);
-        sessionData.performanceData.tasaAsistencia = Math.min(100, sessionData.performanceData.tasaAsistencia + Math.floor(Math.random() * 3));
-        
-        if (document.getElementById('reportes') && document.getElementById('reportes').classList.contains('active')) {
-            updateReports();
-        }
-    }
-}, 30000); // Update every 30 seconds
-
-// Initialize tutor interface when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tutor data from session
-    initializeTutorData().then(() => {
-        console.log('Tutor data initialized successfully');
-        // Ensure interface is updated after initialization
-        updateTutorInterface();
-    }).catch(error => {
-        console.error('Error initializing tutor data:', error);
-        showNotification('Error cargando datos del tutor', 'error');
-        // Try to update interface with whatever session data we have
-        updateTutorInterface();
-    });
-    
-    // Also try to update interface immediately with session data
-    updateTutorInterface().catch(error => {
-        console.error('Error updating tutor interface on load:', error);
     });
 });
-
-// Also handle page visibility changes to refresh data
-document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) {
-        // Page became visible, refresh data
-        updateTutorInterface().catch(error => {
-            console.error('Error updating tutor interface on visibility change:', error);
-        });
-    }
-});
-
-// Update tutor dashboard with session data
-async function updateTutorDashboard() {
-    // Update statistics from performance data
-    if (sessionData.performanceData) {
-        const stats = sessionData.performanceData;
-        
-        // Update stat cards
-        const statElements = {
-            'total-tutorias': stats.totalTutorias,
-            'tasa-asistencia': `${stats.tasaAsistencia}%`,
-            'horas-mes': stats.horasMes,
-            'promedio-semana': stats.promedioSemana
-        };
-        
-        Object.keys(statElements).forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = statElements[id];
-            }
-        });
-    }
-    
-    // Update tutoring sessions table
-    await updateTutoriasTable();
-    
-    // Update reports if available
-    if (typeof updateReports === 'function') {
-        updateReports();
-    }
-}
-
-// Update tutoring sessions table with comprehensive field handling (full table - 8 columns)
-async function updateTutoriasTable() {
-    const tableBody = document.getElementById('allTutoriasTableBody');
-    if (!tableBody || !sessionData.tutoringSessions) return;
-
-    tableBody.innerHTML = '';
-    
-    // Process each tutoring session asynchronously
-    for (const tutoring of sessionData.tutoringSessions) {
-        const row = document.createElement('tr');
-        
-        try {
-            // Map API data to display format - handle both API response format and local format
-            const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
-            
-            // Handle materia name
-            let materiaName = 'N/A';
-            if (tutoring.materiaNombre) {
-                materiaName = tutoring.materiaNombre;
-            } else if (tutoring.materia_nombre) {
-                materiaName = tutoring.materia_nombre;
-            } else if (tutoring.subject) {
-                materiaName = tutoring.subject;
-            } else if (tutoring.MateriaID) {
-                materiaName = GetIdFromName(tutoring.MateriaID);
-            }
-            
-            // Handle student name
-            let student = 'N/A';
-            if (tutoring.estudianteNombre && tutoring.estudianteApellido) {
-                student = `${tutoring.estudianteNombre} ${tutoring.estudianteApellido}`;
-            } else if (tutoring.estudiante_nombre && tutoring.estudiante_apellido) {
-                student = `${tutoring.estudiante_nombre} ${tutoring.estudiante_apellido}`;
-            } else if (tutoring.student) {
-                student = tutoring.student;
-            } else if (tutoring.estudianteID || tutoring.EstudianteID) {
-                student = await getStudentName(tutoring.estudianteID || tutoring.EstudianteID);
-            }
-            
-            // Handle date
-            let fecha = 'N/A';
-            if (tutoring.fecha) {
-                if (typeof tutoring.fecha === 'object' && tutoring.fecha.time) {
-                    fecha = tutoring.fecha.time;
-                } else if (typeof tutoring.fecha === 'string') {
-                    fecha = tutoring.fecha;
-                }
-            } else if (tutoring.Fecha) {
-                fecha = tutoring.Fecha;
-            } else if (tutoring.date) {
-                fecha = tutoring.date;
-            }
-            
-            // Handle time
-            let time = 'N/A';
-            if (tutoring.time) {
-                time = tutoring.time;
-            } else if (tutoring.horaInicio && tutoring.horaFin) {
-                time = `${tutoring.horaInicio}-${tutoring.horaFin}`;
-            } else if (tutoring.hora_inicio && tutoring.hora_fin) {
-                time = `${tutoring.hora_inicio}-${tutoring.hora_fin}`;
-            } else if (tutoring.HoraInicio && tutoring.HoraFin) {
-                // Handle Go time format - convert microseconds to hours
-                if (tutoring.HoraInicio.Microseconds && tutoring.HoraFin.Microseconds) {
-                    const startHour = Math.floor(tutoring.HoraInicio.Microseconds / 3600000000);
-                    const endHour = Math.floor(tutoring.HoraFin.Microseconds / 3600000000);
-                    time = `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
-                } else {
-                    time = formatTime(tutoring.HoraInicio, tutoring.HoraFin);
-                }
-            } else {
-                time = formatTime(tutoring.hora_inicio, tutoring.hora_fin);
-            }
-            
-            // Handle location
-            const location = tutoring.lugar || tutoring.Lugar || tutoring.location || 'N/A';
-            
-            // Handle status
-            const status = tutoring.estado || tutoring.Estado || tutoring.status || 'N/A';
-            const statusClass = `status-${status}`;
-            const statusText = getStatusText(status);
-            
-            row.innerHTML = `
-                <td>#${tutoriaId.toString().padStart(3, '0')}</td>
-                <td>${materiaName}</td>
-                <td>${student}</td>
-                <td>${formatDate(fecha)}</td>
-                <td>${time}</td>
-                <td>${location}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${generateTutorActionButtons(tutoring)}</td>
-            `;
-            
-            tableBody.appendChild(row);
-        } catch (error) {
-            console.error('Error processing tutoring session:', error, tutoring);
-            // Still add a row with fallback data to prevent the table from disappearing
-            row.innerHTML = `
-                <td>Error</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td>Error cargando datos</td>
-                <td><span class="status-badge status-error">Error</span></td>
-                <td>-</td>
-            `;
-            tableBody.appendChild(row);
-        }
-    }
-    
-    // Show message if no tutoring sessions
-    if (sessionData.tutoringSessions.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="8" style="text-align: center; color: #666;">No tienes tutorías asignadas</td>';
-        tableBody.appendChild(row);
-    }
-}
-
-// Generate action buttons for tutor view with comprehensive field access
-function generateTutorActionButtons(tutoring) {
-    // Handle ID field variants
-    const tutoriaId = tutoring.tutoriaID || tutoring.TutoriaID || tutoring.tutoria_id || tutoring.id || '';
-    
-    // Handle status field variants
-    const status = tutoring.estado || tutoring.Estado || tutoring.status || '';
-    
-    let buttons = `<button class="btn btn-primary" onclick="openTutoriaDetail(${tutoriaId})">Ver</button>`;
-    
-    if (status === 'confirmada') {
-        buttons += ` <button class="btn btn-success" onclick="completarTutoria(${tutoriaId})">Completar</button>`;
-        buttons += ` <button class="btn btn-warning" onclick="openRescheduleModal(${tutoriaId})">Reprogramar</button>`;
-    } else if (status === 'solicitada') {
-        buttons += ` <button class="btn btn-success" onclick="confirmarTutoria(${tutoriaId})">Confirmar</button>`;
-        buttons += ` <button class="btn btn-danger" onclick="rechazarTutoria(${tutoriaId})">Rechazar</button>`;
-    }
-    
-    return buttons;
-}
-
-// Helper function to format time range
-function formatTime(inicio, fin) {
-    if (!inicio) return '';
-    if (!fin) return inicio;
-    return `${inicio}-${fin}`;
-}
-
-// Helper function to get status text
-function getStatusText(status) {
-    const statusTexts = {
-        'solicitada': 'Solicitada',
-        'confirmada': 'Confirmada', 
-        'completada': 'Completada',
-        'cancelada': 'Cancelada',
-        'rechazada': 'Rechazada'
-    };
-    return statusTexts[status] || status;
-}
-
-// Helper function to format date
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
-}
-
-// Real API functions for when endpoints become available
-// These will replace the mock functions once proper endpoints are implemented
-
-// Function to get tutoring sessions by tutor ID (when endpoint is available)
-async function getTutoringSessions(tutorId) {
-    try {
-        // TODO: Replace with actual endpoint when available
-        // Possible endpoints: /v1/tutorias/tutor/{tutorId} or /v1/tutores/{tutorId}/tutorias
-        console.warn('Real API endpoint not available yet - using mock data');
-        return getMockTutoringSessions();
-    } catch (error) {
-        console.error('Error fetching tutoring sessions:', error);
-        return getMockTutoringSessions();
-    }
-}
-
-// Function to get subjects taught by a tutor (when endpoint is available)
-async function getTutorSubjects(tutorId) {
-    try {
-        // Based on swagger, we might need to use: /v1/tutor-materias/{materia_id}
-        // But we need the reverse - materias for a specific tutor
-        console.warn('Real API endpoint not available yet - using mock data');
-        return getMockTutorSubjects();
-    } catch (error) {
-        console.error('Error fetching tutor subjects:', error);
-        return getMockTutorSubjects();
-    }
-}
-
-// Function to create a new tutoring session (when endpoint is available)
-async function createTutoringSession(sessionData) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/tutorias`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(sessionData)
-        });
-        
-        if (!response.ok) throw new Error('Failed to create tutoring session');
-        return await response.json();
-    } catch (error) {
-        console.error('Error creating tutoring session:', error);
-        throw error;
-    }
-}
-
-// Function to get individual tutoring session by ID
-async function getTutoringSession(tutoringId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/tutorias/${tutoringId}`);
-        if (!response.ok) throw new Error('Failed to fetch tutoring session');
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching tutoring session:', error);
-        throw error;
-    }
-}
-
-// Function to refresh all tutor data
-async function refreshTutorData() {
-    const userSession = getUserSession();
-    if (!userSession) return;
-    
-    try {
-        showNotification('Actualizando datos...', 'info');
-        
-        // Reload tutoring sessions
-        const tutoringSessions = await getTutoringSessions(sessionData.currentUser.id);
-        sessionData.tutoringSessions = tutoringSessions || [];
-        
-        // Reload tutor subjects
-        const tutorSubjects = await getTutorSubjects(sessionData.currentUser.id);
-        sessionData.tutorSubjects = tutorSubjects || [];
-        
-        // Recalculate performance data
-        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions);
-        
-        // Update UI
-        updateTutorInterface();
-        
-        showNotification('Datos actualizados correctamente', 'success');
-        
-    } catch (error) {
-        console.error('Error refreshing tutor data:', error);
-        showNotification('Error al actualizar los datos', 'error');
-    }
-}
-
-// Add refresh button functionality
-function addRefreshButton() {
-    const navbar = document.querySelector('.navbar');
-    if (navbar && !document.querySelector('.refresh-button')) {
-        const refreshButton = document.createElement('button');
-        refreshButton.className = 'refresh-button';
-        refreshButton.innerHTML = '🔄 Actualizar';
-        refreshButton.onclick = refreshTutorData;
-        refreshButton.style.cssText = `
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        `;
-        navbar.appendChild(refreshButton);
-    }
-}
-
-// Test function to verify navbar population
-function testNavbarPopulation() {
-    console.log('=== Testing Navbar Population ===');
-    console.log('sessionData:', sessionData);
-    console.log('sessionData.currentUser:', sessionData.currentUser);
-    
-    const userSession = getUserSession();
-    console.log('userSession:', userSession);
-    
-    const navbarUserName = document.getElementById('navbar-user-name');
-    const navbarUserSubtitle = document.getElementById('navbar-user-subtitle');
-    const navbarUserAvatar = document.getElementById('navbar-user-avatar');
-    
-    console.log('navbar elements found:');
-    console.log('- navbarUserName:', navbarUserName);
-    console.log('- navbarUserSubtitle:', navbarUserSubtitle);
-    console.log('- navbarUserAvatar:', navbarUserAvatar);
-    
-    // Try to update navbar manually
-    updateTutorInterface();
-    
-    console.log('=== After update attempt ===');
-    if (navbarUserName) console.log('navbar name content:', navbarUserName.textContent);
-    if (navbarUserSubtitle) console.log('navbar subtitle content:', navbarUserSubtitle.textContent);
-    if (navbarUserAvatar) console.log('navbar avatar content:', navbarUserAvatar.textContent || navbarUserAvatar.src);
-}
-
-// Make test function available globally for debugging
-window.testNavbarPopulation = testNavbarPopulation;

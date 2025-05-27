@@ -87,6 +87,11 @@ func main() {
 		handler.SelectTutoriaByEstudianteIDHandler(w, r, queries)
 	})
 
+	// Endpoint to get materias for a specific tutor
+	mux.HandleFunc("GET /v1/tutores/{id}/materias", func(w http.ResponseWriter, r *http.Request) {
+		handler.GetTutorMateriasHandler(w, r, queries)
+	})
+
 	reporteHandlers := handler.ReporteHandlers(queries)
 	mux.Handle("/v1/reportes", reporteHandlers)
 	mux.Handle("/v1/reportes/", reporteHandlers)

@@ -359,6 +359,13 @@ SELECT nombre
 FROM MATERIAS
 ORDER BY nombre;
 
+-- name: GetTutorMaterias :many
+SELECT m.materia_id, m.nombre, m.codigo, m.facultad, m.descripcion, m.creditos
+FROM MATERIAS m
+JOIN TUTOR_MATERIAS tm ON m.materia_id = tm.materia_id
+WHERE tm.tutor_id = $1 AND tm.activo = true
+ORDER BY m.codigo;
+
 -- name: GetTutorNameById :one
 SELECT nombre, apellido FROM TUTORES WHERE tutor_id = $1;
 

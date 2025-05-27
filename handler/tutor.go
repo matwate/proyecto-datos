@@ -343,3 +343,53 @@ func countTutorsWithMateriasHandler(w http.ResponseWriter, r *http.Request, quer
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+// GetTutorMateriasHandler handles GET /v1/tutores/{id}/materias
+// @Summary      Get Tutor Materias
+// @Description  Retrieves all materias taught by a specific tutor.
+// @Tags         Tutores
+// @Produce      json
+// @Param        id path int true "Tutor ID"
+// @Success      200 {array} db.Materia "Successfully retrieved materias"
+// @Failure      400 {object} ErrorResponse "Invalid tutor ID"
+// @Failure      404 {object} ErrorResponse "Tutor not found or no materias assigned"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve materias"
+// @Router       /v1/tutores/{id}/materias [get]
+func GetTutorMateriasHandler(w http.ResponseWriter, r *http.Request, queries *db.Queries) {
+	tutorIDStr := r.PathValue("id") // Assuming Go 1.22+ for r.PathValue
+	tutorID, err := strconv.ParseInt(tutorIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid tutor ID", http.StatusBadRequest)
+		return
+	}
+
+	// First, check if tutor exists to provide a 404 if not
+	_, err = queries.SelectTutorById(r.Context(), int32(tutorID))
+	if err != nil {
+		if err.Error() == "no rows in result set" || err == sql.ErrNoRows {
+			http.Error(w, "Tutor not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to check tutor: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	materias, err := queries.GetTutorMaterias(r.Context(), int32(tutorID))
+	if err != nil {
+		// This error might occur if the query itself fails, not necessarily if no materias are found
+		http.Error(w, "Failed to retrieve materias for tutor: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if len(materias) == 0 {
+		// Send a 200 with an empty array if tutor exists but has no active materias,
+		// or a 404 if you prefer to indicate "no resources found" for this specific sub-resource.
+		// For consistency with how other list endpoints might behave, 200 with empty is often preferred.
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]db.Materia{}) // Return empty array
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(materias)
+}

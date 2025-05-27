@@ -530,6 +530,41 @@ func (q *Queries) GetProximasTutoriasByEstudiante(ctx context.Context, estudiant
 	return items, nil
 }
 
+const getTutorMaterias = `-- name: GetTutorMaterias :many
+SELECT m.materia_id, m.nombre, m.codigo, m.facultad, m.descripcion, m.creditos
+FROM MATERIAS m
+JOIN TUTOR_MATERIAS tm ON m.materia_id = tm.materia_id
+WHERE tm.tutor_id = $1 AND tm.activo = true
+ORDER BY m.codigo
+`
+
+func (q *Queries) GetTutorMaterias(ctx context.Context, tutorID int32) ([]Materia, error) {
+	rows, err := q.db.Query(ctx, getTutorMaterias, tutorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Materia
+	for rows.Next() {
+		var i Materia
+		if err := rows.Scan(
+			&i.MateriaID,
+			&i.Nombre,
+			&i.Codigo,
+			&i.Facultad,
+			&i.Descripcion,
+			&i.Creditos,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTutorNameById = `-- name: GetTutorNameById :one
 SELECT nombre, apellido FROM TUTORES WHERE tutor_id = $1
 `
