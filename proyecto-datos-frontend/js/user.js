@@ -374,7 +374,7 @@ function getMockTutoringSessions() {
             }
             
             if (status === 'solicitada') {
-1                // Check attendance confirmation status more comprehensively
+                // Check attendance confirmation status more comprehensively
                 const attendanceConfirmed = tutoring.asistencia_confirmada || tutoring.asistenciaConfirmada || 
                                           tutoring.attendance_confirmed || tutoring.attendanceConfirmed;
                 
@@ -391,7 +391,9 @@ function getMockTutoringSessions() {
                 }
                 buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoriaId})">Cancelar</button>`;
             } else if (status === 'confirmada') {
-                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoriaId})">Cancelar</button>`;
+                // Disable cancel button if tutoria is confirmed
+                const cancelDisabled = status === 'confirmada' ? 'disabled' : '';
+                buttons += ` <button class="btn btn-danger" onclick="openCancelModal(${tutoriaId})" ${cancelDisabled}>Cancelar</button>`;
             }
             
             return buttons;

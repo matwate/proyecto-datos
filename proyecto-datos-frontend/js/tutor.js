@@ -116,6 +116,67 @@ async function loadTutorSubjects(tutorId) {
     }
 }
 
+// Enhanced fetch wrapper with logging
+async function apiCall(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const method = options.method || 'GET';
+    
+    logAPICall(endpoint, method, options.body);
+    
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            let apiErrorMessage = `Error ${response.status}: ${response.statusText}`; // Default message
+            try {
+                const errorBodyText = await response.text(); // Get the raw error body as text
+                if (errorBodyText) {
+                    try {
+                        // Attempt to parse the text as JSON
+                        const errorData = JSON.parse(errorBodyText);
+                        if (errorData) {
+                            if (errorData.message) apiErrorMessage = errorData.message;
+                            else if (errorData.detail) apiErrorMessage = errorData.detail; // Common in FastAPI/Django REST
+                            else if (errorData.error) apiErrorMessage = errorData.error;
+                            // If it's JSON but not one of the expected structures, stringify it if it's an object
+                            else if (typeof errorData === 'object' && errorData !== null) apiErrorMessage = JSON.stringify(errorData);
+                            // If errorData is a string after parsing (e.g. JSON.parse('"just a string"')) or already a string from a non-JSON text body
+                            else if (typeof errorData === 'string') apiErrorMessage = errorData;
+                        }
+                    } catch (jsonParseError) {
+                        // If JSON.parse fails, the errorBodyText itself is the message (e.g., plain text error from API)
+                        apiErrorMessage = errorBodyText;
+                    }
+                }
+            } catch (bodyReadError) {
+                // If reading the body text itself fails, log it, but we still have the default statusText message
+                console.warn('Failed to read error response body:', bodyReadError);
+            }
+            throw new Error(apiErrorMessage);
+        }
+        
+        if (response.status === 204) { // Handle No Content response
+            logAPIResponse(endpoint, { status: 204, message: "No Content" });
+            return { success: true, status: 204, message: "Operation successful, no content returned." }; 
+        }
+
+        const data = await response.json();
+        logAPIResponse(endpoint, data);
+        return data;
+        
+    } catch (error) { 
+        logAPIResponse(endpoint, null, error);
+        throw error;
+    }
+}
+
 // Function to update tutoring status via API
 async function updateTutoringStatus(tutoringId, newStatus) {
     try {
@@ -128,7 +189,12 @@ async function updateTutoringStatus(tutoringId, newStatus) {
         return result;
     } catch (error) {
         console.error('Error updating tutoring status:', error);
-        throw error;
+        // Check for the specific error message
+        if (error && error.message && error.message.includes('las tutorias deben ser confirmadas 12 horas antes')) {
+            // Throw a new error with a flag or specific message to be caught by callers
+            throw { specificError: true, message: 'las tutorias deben ser confirmadas 12 horas antes' };
+        }
+        throw error; // Re-throw other errors (these will have error.message from apiCall)
     }
 }
 
@@ -228,37 +294,6 @@ function logAPIResponse(endpoint, response, error = null) {
         console.error(`[API Error] ${endpoint}:`, error);
     } else {
         console.log(`[API Success] ${endpoint}:`, response);
-    }
-}
-
-// Enhanced fetch wrapper with logging
-async function apiCall(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const method = options.method || 'GET';
-    
-    logAPICall(endpoint, method, options.body);
-    
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...options.headers
-            },
-            ...options
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        logAPIResponse(endpoint, data);
-        return data;
-        
-    } catch (error) {
-        logAPIResponse(endpoint, null, error);
-        throw error;
     }
 }
 
@@ -795,10 +830,14 @@ async function cancelTutoria(tutoriaId) {
         sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
         updateTutoriasTable(sessionData.tutoringSessions);
         updateDashboardTable(sessionData.tutoringSessions);
-        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects);
-        // updateReportesTab(sessionData.performanceData);
+        // sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects); // Uncomment if needed
+        // updateReportesTab(sessionData.performanceData); // Uncomment if needed
     } catch (error) {
-        showNotification('Error al cancelar la tutoría.', 'error');
+        if (error && error.message) {
+            showNotification(error.message, 'error');
+        } else {
+            showNotification('Error al cancelar la tutoría.', 'error');
+        }
         console.error("Error cancelling tutoria:", error);
     }
 }
@@ -811,10 +850,15 @@ async function markTutoriaCompleted(tutoriaId) {
         sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
         updateTutoriasTable(sessionData.tutoringSessions);
         updateDashboardTable(sessionData.tutoringSessions);
-        sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects);
-        // updateReportesTab(sessionData.performanceData);
+        // sessionData.performanceData = calculatePerformanceData(sessionData.tutoringSessions, sessionData.tutorSubjects); // Uncomment if needed
+        // updateReportesTab(sessionData.performanceData); // Uncomment if needed
     } catch (error) {
-        showNotification('Error al marcar tutoría como completada.', 'error');
+        if (error && error.message) {
+            showNotification(error.message, 'error');
+        } else {
+            showNotification('Error al marcar tutoría como completada.', 'error');
+        }
+        console.error("Error marking tutoria completed:", error);
     }
 }
 
@@ -826,97 +870,37 @@ async function confirmTutoria(tutoriaId) {
         updateTutoriasTable(sessionData.tutoringSessions);
         updateDashboardTable(sessionData.tutoringSessions);
     } catch (error) {
-        showNotification('Error al confirmar la tutoría.', 'error');
+        if (error && error.message) {
+            showNotification(error.message, 'error');
+        } else {
+            showNotification('Error al confirmar la tutoría.', 'error');
+        }
+        console.error("Error confirming tutoria:", error);
     }
 }
 
 async function rejectTutoria(tutoriaId) {
-     // Ask for reason (optional)
-    const reason = prompt("Por favor, ingresa un motivo para rechazar la tutoría (opcional):");
+    if (!confirm('¿Estás seguro de que quieres eliminar esta solicitud de tutoría? Esta acción no se puede deshacer.')) {
+        return;
+    }
     try {
-        // Assuming PATCH /tutorias/{id}/estado also accepts a body for notes or reason
-        await apiCall(`/tutorias/${tutoriaId}/estado`, {
-            method: 'PATCH',
-            body: JSON.stringify({ estado: 'rechazada', notas_tutor: `Rechazada: ${reason || 'Sin motivo especificado'}` })
+        // Call DELETE endpoint for the tutoria
+        await apiCall(`/tutorias/${tutoriaId}`, {
+            method: 'DELETE'
         });
-        showNotification('Tutoría rechazada.', 'success');
+        showNotification('Tutoría eliminada exitosamente.', 'success');
         sessionData.tutoringSessions = await loadTutoringSessions(sessionData.currentUser.id);
         updateTutoriasTable(sessionData.tutoringSessions);
         updateDashboardTable(sessionData.tutoringSessions);
     } catch (error) {
-        showNotification('Error al rechazar la tutoría.', 'error');
-    }
-}
-
-
-function exportReportData(format) {
-    // This function is now orphaned as the reportes tab is removed.
-    // It can be fully removed or left as is if there's a chance it might be used elsewhere.
-    // For now, just logging that it's not implemented in the context of the removed tab.
-    showNotification(`Funcionalidad de exportar reportes como ${format} no implementada.`, 'info');
-}
-
-function editProfile() {
-    showNotification('Funcionalidad de editar perfil no implementada.', 'info');
-    // Would typically show a modal or redirect to an edit page
-}
-
-function openAvailabilitySettingsModal() {
-    showNotification('Funcionalidad para configurar horarios no implementada.', 'info');
-    // const modal = document.getElementById('availabilitySettingsModal'); // Assuming such a modal exists
-    // if (modal) modal.style.display = 'block';
-}
-
-async function saveTutorAvailabilityPreferences() {
-    const location = document.getElementById('tutor-location')?.value;
-    const notes = document.getElementById('tutor-notes')?.value;
-    const maxStudents = document.getElementById('max-students')?.value;
-
-    const updateData = {
-        LugarPredeterminadoTutorias: location,
-        NotasPredeterminadasTutorias: notes,
-        MaxEstudiantesGrupo: parseInt(maxStudents) || 5,
-        // Potentially other availability settings from a more complex form
-    };
-
-    try {
-        // Assuming an endpoint to update tutor preferences
-        const response = await apiCall(`/tutores/${sessionData.currentUser.id}/preferencias`, {
-            method: 'PUT', // or PATCH
-            body: JSON.stringify(updateData)
-        });
-        if (response && (response.success || response.data)) { // Adjust based on actual API response
-            showNotification('Preferencias de disponibilidad guardadas.', 'success');
-            // Update local sessionData.currentUser if needed
-            sessionData.currentUser.lugarPredeterminado = location;
-            sessionData.currentUser.notasPredeterminadas = notes;
-            sessionData.currentUser.maxEstudiantesGrupo = parseInt(maxStudents) || 5;
-            updateProfileTab(sessionData.currentUser); // Re-render profile if it shows these
+        if (error && error.message) {
+            showNotification(error.message, 'error');
         } else {
-            throw new Error(response.message || 'Error al guardar preferencias.');
+            showNotification('Error al eliminar la tutoría.', 'error');
         }
-    } catch (error) {
-        showNotification(`Error al guardar preferencias: ${error.message}`, 'error');
-        console.error("Error saving availability preferences:", error);
+        console.error("Error deleting tutoria:", error);
     }
 }
-
-async function saveTutorNotesFromModal(tutoriaId) {
-    const notes = document.getElementById('tutorNotesDetail')?.value;
-    if (notes === undefined) return;
-
-    try {
-        await updateTutoringDetails(tutoriaId, { NotasTutor: notes });
-        showNotification('Notas del tutor guardadas.', 'success');
-        // Update local data
-        const tutoria = sessionData.tutoringSessions.find(t => (t.TutoriaID || t.id) == tutoriaId);
-        if(tutoria) tutoria.NotasTutor = notes;
-        // No need to close modal here, user can continue viewing or close manually
-    } catch (error) {
-        showNotification('Error al guardar notas del tutor.', 'error');
-    }
-}
-
 
 // Main UI update orchestrator
 function updateTutorInterface() {

@@ -43,6 +43,19 @@ func main() {
 	queries := db.New(pool)
 	mux := http.NewServeMux()
 
+	// Serve static files from proyecto-datos-frontend
+	fs := http.FileServer(http.Dir("./proyecto-datos-frontend"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// Serve iniciosesion.html at the root path
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "./proyecto-datos-frontend/iniciosesion.html")
+		} else {
+			fs.ServeHTTP(w, r)
+		}
+	})
+
 	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK HEALTHY")
