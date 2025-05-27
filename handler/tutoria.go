@@ -202,25 +202,17 @@ func createTutoriaHandler(w http.ResponseWriter, r *http.Request, queries *db.Qu
 		// Find a tutor who is available at the requested time and has no conflicts
 		var selectedTutor *db.ListTutoresDisponiblesByMateriaAndDiaRow
 		for _, tutor := range availableTutors {
-			// Check if tutor is available at the requested time
-			tutorStartTime := tutor.HoraInicio.Microseconds / 1000000
-			tutorEndTime := tutor.HoraFin.Microseconds / 1000000
-			requestedStartTime := horaInicio.Microseconds / 1000000
-			requestedEndTime := horaFin.Microseconds / 1000000
 
-			// Check if requested time fits within tutor's availability
-			if requestedStartTime >= tutorStartTime && requestedEndTime <= tutorEndTime {
-				// Check for conflicts with existing tutorias
-				hasConflicts, err := checkTutorConflicts(r.Context(), queries, tutor.TutorID, fecha, horaInicio, horaFin)
-				if err != nil {
-					continue // Skip this tutor and try the next one
-				}
-
-				if !hasConflicts {
-					selectedTutor = &tutor
-					break
-				}
+			hasConflicts, err := checkTutorConflicts(r.Context(), queries, tutor.TutorID, fecha, horaInicio, horaFin)
+			if err != nil {
+				continue // Skip this tutor and try the next one
 			}
+
+			if !hasConflicts {
+				selectedTutor = &tutor
+				break
+			}
+
 		}
 
 		if selectedTutor == nil {
